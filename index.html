@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Dice Chess by Tony Berard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #1e293b;
+            --text-color: #f1f5f9;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; 
+            height: 100dvh; 
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Prevent text selection only on UI elements to avoid blocking select dropdowns on iOS */
+        header, .panel, .board-container {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- Layout --- */
+        header {
+            flex-shrink: 0;
+            background-color: #0f172a;
+            padding: 0.5rem;
+            text-align: center;
+            z-index: 10;
+        }
+
+        main {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Portrait */
+        .layout-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        #board-wrapper {
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sidebar {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        /* Landscape */
+        @media (orientation: landscape) {
+            header { display: none; }
+            .layout-container {
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                padding: 1rem;
+                padding-left: max(1rem, env(safe-area-inset-left)); 
+                padding-right: max(1rem, env(safe-area-inset-right));
+                gap: 2rem;
+            }
+            #board-wrapper {
+                height: 90vh; 
+                width: 90vh; 
+                max-width: none;
+            }
+            .sidebar {
+                width: 300px;
+                height: 90vh;
+                overflow-y: auto;
+                justify-content: center;
+            }
+        }
+
+        /* --- Board --- */
+        .board-container {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #475569;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            background-color: #475569;
+            gap: 1px;
+        }
+
+        .square {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0;
+            touch-action: manipulation; /* Prevents 300ms tap delay on mobile */
+        }
+
+        .square.light { background-color: #e2e8f0; }
+        .square.dark { background-color: #64748b; }
+        
+        .square.selected { background-color: #facc15 !important; } 
+        .square.valid-move::after {
+            content: '';
+            width: 25%;
+            height: 25%;
+            background-color: rgba(0, 200, 0, 0.5);
+            border-radius: 50%;
+        }
+        .square.valid-capture { background-color: #f87171 !important; }
+        .square.ai-highlight { background-color: #a855f7 !important; transition: background-color 0.5s; }
+
+        /* --- Dice --- */
+        .die {
+            width: 85%;
+            height: 85%;
+            border-radius: 15%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .die.white { background-color: #f8fafc; border: 2px solid #cbd5e1; }
+        .die.black { background-color: #0f172a; border: 2px solid #334155; }
+
+        .die-face {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 10%;
+        }
+
+        .pip-container { display: flex; justify-content: center; align-items: center; }
+        .pip {
+            border-radius: 50%;
+            width: 60%; 
+            height: 60%;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
+        }
+        
+        .die.white .pip { background-color: #000; }
+        .die.black .pip { background-color: #fff; }
+        
+        .die.white .king-symbol { color: #94a3b8; text-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .die.black .king-symbol { color: #e2e8f0; }
+
+        .king-symbol {
+            font-size: 6vmin; 
+            line-height: 1;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        @media (min-width: 600px) { .king-symbol { font-size: 2.5rem; } }
+
+        /* --- UI --- */
+        .panel {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            @apply flex justify-center items-center font-bold transition-all duration-200 shadow-md;
+            touch-action: manipulation;
+        }
+        
+        .btn-action {
+            @apply bg-blue-600 hover:bg-blue-500 text-white rounded px-4 py-3 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed;
+        }
+
+        /* Flashing Invalid Turn Alarm */
+        @keyframes flashRed {
+            0%, 100% { background-color: #dc2626; box-shadow: 0 0 12px #dc2626; }
+            50% { background-color: #7f1d1d; box-shadow: none; }
+        }
+        .flash-red {
+            animation: flashRed 1s ease-in-out infinite;
+        }
+
+        .log-container {
+            height: 80px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            font-family: monospace;
+            background: #0f172a;
+            border-radius: 4px;
+            padding: 0.5rem;
+            color: #cbd5e1;
+            margin-top: auto;
+        }
+
+        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+        
+        #flash-overlay {
+            position: fixed; inset: 0; display: flex; justify-content: center; align-items: center;
+            pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.3s ease;
+        }
+        #flash-text {
+            font-size: 3rem; font-weight: 900; color: #fbbf24; background: rgba(0,0,0,0.7);
+            padding: 1rem 3rem; border-radius: 1rem; text-align: center;
+        }
+        #flash-overlay.active { opacity: 1; }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content-scroll { max-height: 85vh; overflow-y: auto; }
+        #record-modal, #rules-modal { z-index: 150; }
+
+        textarea { @apply w-full h-48 bg-slate-900 text-slate-300 p-2 rounded text-sm font-mono border border-slate-700 resize-none mb-4; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="text-xl font-bold text-blue-400">DICE CHESS</h1>
+    </header>
+
+    <main>
+        <div class="layout-container">
+            
+            <!-- BOARD -->
+            <div id="board-wrapper">
+                <div id="board" class="board-container"></div>
+            </div>
+
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                
+                <!-- Status & AI Toggle -->
+                <div class="panel">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Turn</div>
+                            <div id="turn-indicator" class="text-xl font-bold text-white capitalize">White</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">Adv. Score</div>
+                            <div id="adv-score-display" class="text-lg font-bold text-white">0</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-400 uppercase tracking-wider">AP</div>
+                            <div class="flex items-baseline justify-end gap-1">
+                                <span id="ap-counter" class="text-3xl font-mono text-yellow-400 font-bold">3</span>
+                                <span class="text-sm text-slate-500">/ 6</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
+                        <span class="text-sm font-semibold text-slate-300">Play vs AI (Black)</span>
+                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="ai-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                            <label for="ai-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-400 cursor-pointer"></label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700 mt-2">
+                        <span class="text-sm font-semibold text-slate-300">Board Size</span>
+                        <select id="board-size-select" class="bg-slate-700 text-white text-sm rounded px-2 py-1 outline-none border border-slate-600">
+                            <option value="8">8x8</option>
+                            <option value="9">9x9</option>
+                            <option value="10" selected>10x10</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="panel flex flex-col gap-2 flex-grow">
+                    <div class="text-xs text-blue-300 font-semibold text-center h-5" id="selected-piece-display">Select a piece</div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="inc-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
+                            <span class="text-xl">▲</span>
+                            <span class="text-[10px] leading-tight text-slate-300">Inc (+1)</span>
+                        </button>
+                        <button id="dec-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
+                            <span class="text-xl">▼</span>
+                            <span class="text-[10px] leading-tight text-slate-300">Dec (-1)</span>
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2 mt-2">
+                        <button id="reset-turn-btn" class="btn text-sm px-4 py-3">Reset Turn</button>
+                        <button id="end-turn-btn" class="btn text-sm px-4 py-3">End Turn</button>
+                    </div>
+                    
+                    <!-- Utility Buttons Grid -->
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button id="rules-btn" class="btn rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2">Rules</button>
+                        <button id="record-btn" class="btn rounded bg-slate-600 hover:bg-slate-500 text-white text-xs py-2">Record</button>
+                        <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" class="btn rounded bg-pink-600 hover:bg-pink-500 text-white text-xs py-2 flex items-center justify-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> Support
+                        </a>
+                        <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" class="btn rounded bg-blue-700 hover:bg-blue-600 text-white text-xs py-2 flex items-center justify-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg> Facebook
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Log -->
+                <div id="game-log" class="log-container"></div>
+                <div class="text-[10px] text-center text-slate-500 mt-1">
+                    <span id="reset-btn" class="underline cursor-pointer hover:text-white">Restart Entire Game</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Overlays -->
+    <div id="flash-overlay"><div id="flash-text">White's Turn</div></div>
+
+    <!-- Rules Modal -->
+    <div id="rules-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-600 shadow-2xl w-full max-w-lg mx-4 modal-content-scroll">
+            <h3 class="text-2xl font-bold text-white mb-4 border-b border-slate-600 pb-2">Dice Chess Rules</h3>
+            <div class="text-sm text-slate-300 space-y-3 mb-4">
+                <p><strong>Goal:</strong> Capture the opponent's King Cube.</p>
+                <p><strong>Mobility & Power:</strong> Die face value = <strong>Mobility</strong> (max squares it can move). Lower value = more <strong>Power</strong> (can only capture pieces with an equal or higher face value).</p>
+                <p><strong>Action Points (AP):</strong> You have 6 AP per turn (White gets 3 AP on turn 1).</p>
+                <ul class="list-disc pl-5 mt-1 space-y-1 text-xs">
+                    <li><strong>Move (3 AP):</strong> Move a piece up to its face value.</li>
+                    <li><strong>Capture (5 AP):</strong> Move and capture an eligible enemy piece.</li>
+                    <li><strong>Increment (1 AP):</strong> +1 to face value (more mobility, less power). Max 6.</li>
+                    <li><strong>Decrement (1 AP):</strong> -1 to face value (less mobility, more power). Min 1.</li>
+                </ul>
+                <p><strong>The King Cube:</strong> Blank face. Neutral power (can capture/be captured by anything). Moves 1 square for 3 AP (can move twice per turn, e.g., in an L-shape).</p>
+                <p><strong>Advancement Score (Anti-Stalling):</strong> To prevent stalling, your <em>Advancement Score</em> (pieces closer to the enemy side score more points) MUST be strictly higher at the end of your turn than at the start.</p>
+                <p><strong>Suspension of Advancement:</strong> The Advancement Score rule is <strong>suspended</strong> if you perform a Capture. This allows for tactical retreats and lateral strikes.</p>
+            </div>
+            
+            <h4 class="text-lg font-bold text-white mt-4 border-b border-slate-600 pb-1 mb-2">How to Use the App</h4>
+            <div class="text-sm text-slate-300 space-y-2 mb-6">
+                <ul class="list-disc pl-5 space-y-1 text-xs">
+                    <li><strong>Moving:</strong> Tap a piece to select it, then tap a highlighted square to move or capture.</li>
+                    <li><strong>Inc/Dec:</strong> Use the ▲ and ▼ buttons to modify a selected piece's value.</li>
+                    <li><strong>Auto-End Turn:</strong> If your turn is legally valid and you reach 0 AP, the turn ends automatically!</li>
+                    <li><strong>Reset Turn:</strong> A rounded blue button appears once you spend AP. Use it to undo mistakes and restart your current turn.</li>
+                    <li><strong>Invalid Alarm:</strong> If your AP reaches 0 (or you make an illegal trivial King move) and your turn does not satisfy the Advancement Score, a flashing red alarm will appear. You <em>must</em> press Reset Turn!</li>
+                </ul>
+            </div>
+            
+            <div class="flex justify-end">
+                <button id="close-rules-btn" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-500">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Modal -->
+    <div id="record-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-600 shadow-2xl w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold text-white mb-2">Game Record</h3>
+            <textarea id="record-text" readonly></textarea>
+            <div class="flex justify-end gap-2">
+                <button id="copy-record-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Copy</button>
+                <button id="close-record-btn" class="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border-2 border-slate-500 text-center shadow-2xl max-w-sm mx-4">
+            <h3 class="text-xl font-bold text-white mb-6" id="confirm-text">Are you sure?</h3>
+            <div class="flex justify-center gap-4">
+                <button id="confirm-btn-no" class="px-6 py-2 bg-slate-600 text-white font-bold rounded hover:bg-slate-500 w-full">Cancel</button>
+                <button id="confirm-btn-yes" class="px-6 py-2 bg-red-600 text-white font-bold rounded hover:bg-red-500 w-full">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div id="winner-modal" class="modal hidden">
+        <div class="bg-slate-800 p-8 rounded-xl border-2 border-yellow-500 text-center shadow-2xl max-w-sm mx-4">
+            <h2 class="text-3xl font-bold text-yellow-400 mb-4">Game Over</h2>
+            <p id="winner-text" class="text-xl text-white mb-6">White Wins!</p>
+            <button onclick="initGame()" class="btn bg-blue-600 hover:bg-blue-500 text-white w-full rounded py-3">Play Again</button>
+            <button onclick="showRecord()" class="btn bg-slate-600 hover:bg-slate-500 text-white w-full rounded py-3 mt-2">View Record</button>
+            <button id="view-board-btn" class="btn bg-indigo-600 hover:bg-indigo-500 text-white w-full rounded py-3 mt-2">View Board</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Sound Engine (Web Audio API) ---
+        const SoundEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            play(type) {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                if (type === 'tap') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, t);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                } else if (type === 'slide') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, t);
+                    osc.frequency.exponentialRampToValueAtTime(600, t + 0.1);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.15);
+                    osc.start(t);
+                    osc.stop(t + 0.15);
+                } else if (type === 'inc') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(400, t);
+                    osc.frequency.setValueAtTime(600, t + 0.05);
+                    osc.frequency.setValueAtTime(800, t + 0.1);
+                    gain.gain.setValueAtTime(0.05, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.15);
+                    osc.start(t);
+                    osc.stop(t + 0.15);
+                } else if (type === 'dec') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(800, t);
+                    osc.frequency.setValueAtTime(600, t + 0.05);
+                    osc.frequency.setValueAtTime(400, t + 0.1);
+                    gain.gain.setValueAtTime(0.05, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.15);
+                    osc.start(t);
+                    osc.stop(t + 0.15);
+                } else if (type === 'capture') {
+                    const bufferSize = this.ctx.sampleRate * 0.5;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(1000, t);
+                    filter.frequency.exponentialRampToValueAtTime(100, t + 0.5);
+                    const noiseGain = this.ctx.createGain();
+                    noiseGain.gain.setValueAtTime(0.3, t);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    noise.connect(filter);
+                    filter.connect(noiseGain);
+                    noiseGain.connect(this.ctx.destination);
+                    noise.start(t);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(100, t);
+                    osc.frequency.exponentialRampToValueAtTime(30, t + 0.5);
+                    gain.gain.setValueAtTime(0.4, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                    osc.start(t);
+                    osc.stop(t + 0.5);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, t);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    osc.start(t); osc.stop(t + 0.2);
+                } else if (type === 'endTurn') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, t); // A4
+                    osc.frequency.setValueAtTime(554.37, t + 0.1); // C#5
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.1, t + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                    osc.start(t);
+                    osc.stop(t + 0.4);
+                } else if (type === 'gameover') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, t); // C5
+                    osc.frequency.setValueAtTime(659.25, t + 0.15); // E5
+                    osc.frequency.setValueAtTime(783.99, t + 0.3); // G5
+                    osc.frequency.setValueAtTime(1046.50, t + 0.45); // C6
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.15, t + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+                    osc.start(t);
+                    osc.stop(t + 1.5);
+                }
+            }
+        };
+
+        // Initialize audio on first click anywhere
+        document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
+
+        // --- Config ---
+        let BOARD_SIZE = 10;
+        const COST_MOVE = 3;
+        const COST_CAPTURE = 5;
+        const COST_MOD = 1;
+        const MAX_AP = 6;
+        const STARTING_AP_WHITE = 3;
+        const PIECE_VALUES = { 1: 70, 2: 60, 3: 50, 4: 40, 5: 30, 6: 20, 0: 1000 };
+
+        // --- State ---
+        let board = []; 
+        let turn = 'white'; 
+        let currentAP = STARTING_AP_WHITE;
+        let selectedSquare = null; 
+        let gameOver = false;
+        let isAIEnabled = false;
+        let aiThinking = false;
+        let boardHistory = []; 
+        
+        let moveHistory = []; 
+        let currentTurnActions = []; 
+        let fullMoveCount = 1;
+
+        // Turn Validation State
+        let turnStartBoardState = null;
+        let turnStartScore = 0;
+        let captureThisTurn = false;
+        let kingMovedThisTurn = false;
+        let turnStartKingPos = null;
+        let autoTurnTimeout = null;
+
+        // --- DOM ---
+        const boardEl = document.getElementById('board');
+        const turnIndicatorEl = document.getElementById('turn-indicator');
+        const apCounterEl = document.getElementById('ap-counter');
+        const endTurnBtn = document.getElementById('end-turn-btn');
+        const resetTurnBtn = document.getElementById('reset-turn-btn');
+        const advScoreDisplay = document.getElementById('adv-score-display');
+        const selectedPieceDisplay = document.getElementById('selected-piece-display');
+        const incBtn = document.getElementById('inc-btn');
+        const decBtn = document.getElementById('dec-btn');
+        const gameLog = document.getElementById('game-log');
+        const winnerModal = document.getElementById('winner-modal');
+        const winnerText = document.getElementById('winner-text');
+        const resetBtn = document.getElementById('reset-btn');
+        const aiToggle = document.getElementById('ai-toggle');
+        const boardSizeSelect = document.getElementById('board-size-select');
+        const flashOverlay = document.getElementById('flash-overlay');
+        const flashText = document.getElementById('flash-text');
+        const viewBoardBtn = document.getElementById('view-board-btn');
+        
+        const rulesBtn = document.getElementById('rules-btn');
+        const rulesModal = document.getElementById('rules-modal');
+        const closeRulesBtn = document.getElementById('close-rules-btn');
+        
+        const recordBtn = document.getElementById('record-btn');
+        const recordModal = document.getElementById('record-modal');
+        const recordText = document.getElementById('record-text');
+        const closeRecordBtn = document.getElementById('close-record-btn');
+        const copyRecordBtn = document.getElementById('copy-record-btn');
+
+        // Custom Confirm Logic
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmText = document.getElementById('confirm-text');
+        const confirmBtnYes = document.getElementById('confirm-btn-yes');
+        const confirmBtnNo = document.getElementById('confirm-btn-no');
+        let onConfirmYes = null;
+        let onConfirmNo = null;
+
+        function askConfirm(msg, yesCb, noCb = null) {
+            confirmText.innerText = msg;
+            onConfirmYes = yesCb;
+            onConfirmNo = noCb;
+            confirmModal.classList.remove('hidden');
+        }
+
+        confirmBtnYes.addEventListener('click', () => {
+            SoundEngine.play('tap');
+            confirmModal.classList.add('hidden');
+            if (onConfirmYes) onConfirmYes();
+        });
+
+        confirmBtnNo.addEventListener('click', () => {
+            SoundEngine.play('tap');
+            confirmModal.classList.add('hidden');
+            if (onConfirmNo) onConfirmNo();
+        });
+
+        // --- Init ---
+        function initGame(forceSize = null) {
+            clearTimeout(autoTurnTimeout);
+            if (forceSize !== null) {
+                boardSizeSelect.value = forceSize.toString();
+            }
+            BOARD_SIZE = parseInt(boardSizeSelect.value);
+            
+            // Apply Dynamic Grid CSS
+            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
+
+            turn = 'white';
+            currentAP = STARTING_AP_WHITE;
+            selectedSquare = null;
+            gameOver = false;
+            aiThinking = false;
+            moveHistory = [];
+            currentTurnActions = [];
+            fullMoveCount = 1;
+            boardHistory = [];
+
+            board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+
+            const backRanks = {
+                8: [5, 4, 3, 6, 0, 3, 4, 5],
+                9: [5, 4, 3, 6, 0, 2, 3, 4, 5], 
+                10: [5, 4, 3, 2, 6, 0, 2, 3, 4, 5]
+            };
+            const backRank = backRanks[BOARD_SIZE];
+
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                board[0][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'black' };
+                board[1][c] = { type: 'die', value: 2, owner: 'black' };
+            }
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                board[BOARD_SIZE - 2][c] = { type: 'die', value: 2, owner: 'white' };
+                board[BOARD_SIZE - 1][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'white' };
+            }
+
+            winnerModal.classList.add('hidden');
+            recordModal.classList.add('hidden');
+            gameLog.innerHTML = `<div class="text-green-500">Game started (${BOARD_SIZE}x${BOARD_SIZE}).</div><div class="text-yellow-500">White\'s first turn (3 AP).</div>`;
+            
+            captureTurnStartState();
+            updateUI();
+        }
+
+        function calculateAdvancementScore(b, player) {
+            let score = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    if (p && p.owner === player) {
+                        if (player === 'white') score += (BOARD_SIZE - r); 
+                        if (player === 'black') score += (r + 1); 
+                    }
+                }
+            }
+            return score;
+        }
+
+        function captureTurnStartState() {
+            turnStartBoardState = JSON.stringify(board);
+            turnStartScore = calculateAdvancementScore(board, turn);
+            captureThisTurn = false;
+            kingMovedThisTurn = false;
+            turnStartKingPos = null;
+            
+            for(let r=0; r<BOARD_SIZE; r++){
+                for(let c=0; c<BOARD_SIZE; c++){
+                    if(board[r][c] && board[r][c].owner === turn && board[r][c].type === 'king') {
+                        turnStartKingPos = {r,c};
+                        break;
+                    }
+                }
+            }
+        }
+
+        function handleResetTurn() {
+            if (aiThinking || (turn === 'black' && isAIEnabled) || gameOver) return;
+            SoundEngine.play('tap');
+            board = JSON.parse(turnStartBoardState);
+            currentAP = (fullMoveCount === 1 && turn === 'white') ? STARTING_AP_WHITE : MAX_AP;
+            currentTurnActions = [];
+            selectedSquare = null;
+            captureThisTurn = false;
+            kingMovedThisTurn = false;
+            log("Turn reset.", "text-orange-400");
+            updateUI();
+        }
+
+        // --- Core Logic ---
+        function getPiece(r, c) {
+            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return null;
+            return board[r][c];
+        }
+
+        function checkTrivialKingState(b, pTurn) {
+            if (!kingMovedThisTurn || !turnStartKingPos) return false;
+            const currentKing = b[turnStartKingPos.r][turnStartKingPos.c];
+            if (currentKing && currentKing.type === 'king' && currentKing.owner === pTurn) {
+                return true;
+            }
+            return false;
+        }
+
+        function switchTurn() {
+            if (gameOver || aiThinking) return; 
+            clearTimeout(autoTurnTimeout);
+
+            const isTrivialKingState = checkTrivialKingState(board, turn);
+            if (isTrivialKingState) {
+                SoundEngine.play('error');
+                log(`Invalid Turn: Trivial King move not allowed. Reset your turn.`, "text-red-500");
+                return;
+            }
+
+            // Final Validation just in case UI validation was bypassed
+            const currentScore = calculateAdvancementScore(board, turn);
+            if (!captureThisTurn && currentScore <= turnStartScore) {
+                SoundEngine.play('error');
+                log(`Invalid Turn: Score must exceed ${turnStartScore}`, "text-red-500");
+                return;
+            }
+
+            SoundEngine.play('endTurn');
+            selectedSquare = null;
+
+            const actionsStr = currentTurnActions.join(', ');
+            if (turn === 'white') {
+                moveHistory.push({ n: fullMoveCount, w: actionsStr, b: '' });
+            } else {
+                if (moveHistory.length > 0) moveHistory[moveHistory.length - 1].b = actionsStr;
+                else moveHistory.push({ n: 0, w: '...', b: actionsStr });
+                fullMoveCount++;
+            }
+            currentTurnActions = [];
+
+            if (turn === 'black') { 
+                boardHistory.push(JSON.stringify(board));
+                if (boardHistory.length > 6) boardHistory.shift(); 
+            }
+
+            turn = turn === 'white' ? 'black' : 'white';
+            currentAP = MAX_AP;
+            
+            captureTurnStartState();
+
+            log(`Turn: ${capitalize(turn)} (${currentAP} AP)`);
+            flashTurnMessage();
+            updateUI();
+
+            if (turn === 'black' && isAIEnabled && !gameOver) {
+                runAITurn();
+            }
+        }
+
+        function checkAutoTurnEnd() {
+            if (isAIEnabled && turn === 'black') return;
+            
+            const currentScore = calculateAdvancementScore(board, turn);
+            const isScoreValid = currentScore > turnStartScore;
+            const isTrivialKing = checkTrivialKingState(board, turn);
+            const isValidEndTurn = (isScoreValid || captureThisTurn) && !isTrivialKing;
+
+            clearTimeout(autoTurnTimeout);
+            if (currentAP === 0 && isValidEndTurn && !gameOver && !aiThinking) {
+                autoTurnTimeout = setTimeout(() => { switchTurn(); }, 400);
+            }
+        }
+
+        function flashTurnMessage() {
+            flashText.innerText = `${capitalize(turn)}'s Turn`;
+            flashText.style.color = turn === 'white' ? '#f1f5f9' : '#fbbf24'; 
+            flashOverlay.classList.add('active');
+            setTimeout(() => { flashOverlay.classList.remove('active'); }, 800);
+        }
+
+        function getCoord(r, c) { return `${String.fromCharCode(97 + c)}${BOARD_SIZE - r}`; }
+        function recordMove(notation) { currentTurnActions.push(notation); }
+
+        function showRecord() {
+            let output = moveHistory.map(m => {
+                let line = `${m.n}. ${m.w}`;
+                if (m.b) line += ` : ${m.b}`;
+                return line;
+            }).join('\n');
+
+            if (gameOver && currentTurnActions.length > 0) {
+                 const actionsStr = currentTurnActions.join(', ');
+                 if (turn === 'white') output += `\n${fullMoveCount}. ${actionsStr}`;
+                 else if (moveHistory.length > 0) {
+                     const last = moveHistory[moveHistory.length - 1];
+                     if (last && !last.b) {
+                         output = output.substring(0, output.lastIndexOf(last.w) + last.w.length); 
+                         output += ` : ${actionsStr}`;
+                     }
+                 }
+            }
+            recordText.value = output;
+            recordModal.classList.remove('hidden');
+        }
+
+        // --- User Interaction ---
+        function selectPiece(r, c) {
+            if (gameOver || aiThinking) return; 
+            if (isAIEnabled && turn === 'black') return;
+            
+            const piece = getPiece(r, c);
+            
+            if (!piece || piece.owner !== turn) {
+                if (selectedSquare) {
+                    attemptMove(selectedSquare.r, selectedSquare.c, r, c);
+                } else {
+                    SoundEngine.play('tap');
+                }
+                return;
+            }
+            
+            SoundEngine.play('tap');
+            if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) selectedSquare = null;
+            else selectedSquare = { r, c };
+            updateUI();
+        }
+
+        // --- Mechanics ---
+        function isValidMove(fromR, fromC, toR, toC, checkAP = false) {
+            const piece = getPiece(fromR, fromC);
+            const target = getPiece(toR, toC);
+            if (!piece) return false;
+
+            const dx = toC - fromC;
+            const dy = toR - fromR;
+            const dist = Math.max(Math.abs(dx), Math.abs(dy));
+
+            if (dist === 0) return false;
+
+            const range = piece.type === 'king' ? 1 : piece.value;
+            if (dist > range) return false;
+
+            const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
+            if (!isLine) return false;
+
+            const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
+            const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
+            for (let i = 1; i < dist; i++) {
+                if (getPiece(fromR + stepR * i, fromC + stepC * i)) return false; 
+            }
+
+            if (target) {
+                if (target.owner === piece.owner) return false; 
+                const canCapture = (piece.type === 'king' || target.type === 'king') || (piece.value <= target.value);
+                if (!canCapture) return false;
+                if (checkAP && currentAP < COST_CAPTURE) return false;
+            } else {
+                if (checkAP && currentAP < COST_MOVE) return false;
+            }
+            return true;
+        }
+
+        function attemptMove(fromR, fromC, toR, toC) {
+            if (!isValidMove(fromR, fromC, toR, toC, true)) {
+                if (turn !== 'black' || !isAIEnabled) {
+                    SoundEngine.play('error');
+                    log("Invalid move.", "text-red-400");
+                }
+                return false;
+            }
+            const target = getPiece(toR, toC);
+            const type = target ? 'capture' : 'move';
+            executeAction(type, fromR, fromC, toR, toC, target);
+            return true;
+        }
+
+        function executeAction(type, fromR, fromC, toR, toC, target = null) {
+            const piece = board[fromR][fromC];
+            
+            if (piece.type === 'king') kingMovedThisTurn = true;
+            if (type === 'capture') captureThisTurn = true;
+            
+            const fromStr = getCoord(fromR, fromC);
+            const toStr = getCoord(toR, toC);
+            let notStr = type === 'capture' ? `${fromStr}x${toStr}` : `${fromStr}-${toStr}`;
+            recordMove(notStr);
+
+            board[toR][toC] = piece;
+            board[fromR][fromC] = null;
+            
+            currentAP -= type === 'capture' ? COST_CAPTURE : COST_MOVE;
+
+            if (type === 'capture') {
+                SoundEngine.play('capture');
+                log(`${capitalize(piece.owner)} takes ${target.type === 'king' ? 'King' : target.value} at ${toStr}`);
+                if (target.type === 'king') { endGame(piece.owner); return; }
+            } else {
+                SoundEngine.play('slide');
+                log(`${capitalize(piece.owner)} to ${toStr}`);
+            }
+            
+            selectedSquare = { r: toR, c: toC };
+            updateUI();
+            checkAutoTurnEnd();
+            
+            if (turn === 'black' && isAIEnabled) {
+                const sq = document.querySelector(`.square[data-r="${toR}"][data-c="${toC}"]`);
+                if(sq) {
+                    sq.classList.add('ai-highlight');
+                    setTimeout(() => sq.classList.remove('ai-highlight'), 500);
+                }
+            }
+        }
+
+        function handleIncDec(isInc) {
+            if (!selectedSquare || gameOver) return;
+            const p = board[selectedSquare.r][selectedSquare.c];
+            if (!p || p.owner !== turn || p.type === 'king' || currentAP < COST_MOD) return;
+
+            const coord = getCoord(selectedSquare.r, selectedSquare.c);
+
+            if (isInc && p.value < 6) {
+                p.value++;
+                currentAP -= COST_MOD;
+                SoundEngine.play('inc');
+                log(`${capitalize(turn)} inc to ${p.value}`);
+                recordMove(`${coord}+`);
+            } else if (!isInc && p.value > 1) {
+                p.value--;
+                currentAP -= COST_MOD;
+                SoundEngine.play('dec');
+                log(`${capitalize(turn)} dec to ${p.value}`);
+                recordMove(`${coord}-`);
+            } else { 
+                SoundEngine.play('error');
+                return; 
+            }
+            
+            updateUI();
+            checkAutoTurnEnd();
+        }
+
+        function endGame(winner) {
+            gameOver = true;
+            SoundEngine.play('gameover');
+            const actionsStr = currentTurnActions.join(', ');
+            if (turn === 'white') moveHistory.push({ n: fullMoveCount, w: actionsStr, b: '' });
+            else if (moveHistory.length > 0) moveHistory[moveHistory.length - 1].b = actionsStr;
+            
+            winnerText.innerText = `${capitalize(winner)} Wins!`;
+            winnerModal.classList.remove('hidden');
+        }
+
+        // --- AI ENGINE ---
+        function getPieceValue(p) { return !p ? 0 : (p.type === 'king' ? 1000 : (PIECE_VALUES[p.value] || 0)); }
+
+        function isKingInDanger(simBoard, kingOwner) {
+            let kingPos = null;
+            for(let r=0; r<BOARD_SIZE; r++){
+                for(let c=0; c<BOARD_SIZE; c++){
+                    const p = simBoard[r][c];
+                    if(p && p.type === 'king' && p.owner === kingOwner) { kingPos = {r,c}; break; }
+                }
+            }
+            if(!kingPos) return true; 
+
+            const enemyOwner = kingOwner === 'white' ? 'black' : 'white';
+            for(let r=0; r<BOARD_SIZE; r++){
+                for(let c=0; c<BOARD_SIZE; c++){
+                    const p = simBoard[r][c];
+                    if(p && p.owner === enemyOwner) {
+                        const dx = kingPos.c - c; const dy = kingPos.r - r;
+                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                        const range = p.type === 'king' ? 1 : p.value;
+                        if (dist > 0 && dist <= range) {
+                             const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
+                             if (isLine) {
+                                 let blocked = false;
+                                 const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
+                                 const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
+                                 for (let i = 1; i < dist; i++) if (simBoard[r + stepR * i][c + stepC * i]) { blocked = true; break; }
+                                 if (!blocked) return true; 
+                             }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function copyBoard(src) { return src.map(row => row.map(p => p ? {...p} : null)); }
+
+        async function runAITurn() {
+            aiThinking = true;
+            updateUI(); 
+            await new Promise(r => setTimeout(r, 800));
+
+            let modifiedPieces = new Set(); 
+
+            try {
+                while (currentAP > 0 && !gameOver) {
+                    let actionTaken = false;
+                    const initialKingDanger = isKingInDanger(board, 'black');
+                    const currentAdvScore = calculateAdvancementScore(board, 'black');
+                    const needsAdvancement = !captureThisTurn && (currentAdvScore <= turnStartScore);
+
+                    let myPieces = [];
+                    let enemyPieces = [];
+                    let enemyKingPos = null;
+                    
+                    for(let r=0; r<BOARD_SIZE; r++){
+                        for(let c=0; c<BOARD_SIZE; c++){
+                            const p = board[r][c];
+                            if(p) {
+                                if(p.owner === 'black') myPieces.push({r,c, val: p.value, type: p.type});
+                                else { enemyPieces.push({r,c, val: p.value, type: p.type}); if(p.type === 'king') enemyKingPos = {r,c}; }
+                            }
+                        }
+                    }
+
+                    let possibleActions = [];
+
+                    // 1. Scan for "Modify-to-Capture" Combos
+                    if (currentAP >= (COST_MOD + COST_CAPTURE)) {
+                        for (let p of myPieces) {
+                            if (p.type === 'king') continue; 
+                            for (let e of enemyPieces) {
+                                const dx = e.c - p.c; const dy = e.r - p.r;
+                                const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                                const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
+                                if (!isLine) continue;
+
+                                let blocked = false;
+                                const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
+                                const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
+                                for (let i = 1; i < dist; i++) if (getPiece(p.r + stepR * i, p.c + stepC * i)) { blocked = true; break; }
+                                if (blocked) continue;
+
+                                if (p.val > e.val) {
+                                    const stepsNeeded = p.val - e.val; 
+                                    const cost = (stepsNeeded * COST_MOD) + COST_CAPTURE;
+                                    
+                                    if (currentAP >= cost && dist <= e.val) {
+                                        const simBoard = copyBoard(board);
+                                        simBoard[p.r][p.c].value = e.val; 
+                                        if (isKingInDanger(simBoard, 'black')) continue; 
+
+                                        let score = 500; 
+                                        if (e.type === 'king') score = 2000;
+                                        score += (7 - e.val) * 20;
+
+                                        possibleActions.push({ type: 'dec', from: p, score: score, reason: 'tactical_dec' });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Standard Moves & Captures
+                    for (let p of myPieces) {
+                         const range = p.type === 'king' ? 1 : p.val;
+                        for (let r=0; r<BOARD_SIZE; r++) {
+                            for (let c=0; c<BOARD_SIZE; c++) {
+                                if (isValidMove(p.r, p.c, r, c, true)) {
+                                    const target = board[r][c];
+                                    const cost = target ? COST_CAPTURE : COST_MOVE;
+                                    
+                                    const simBoard = copyBoard(board);
+                                    simBoard[r][c] = simBoard[p.r][p.c]; 
+                                    simBoard[p.r][p.c] = null; 
+                                    
+                                    if (isKingInDanger(simBoard, 'black')) continue; 
+
+                                    // NEW: ADVANCEMENT RULE CHECK
+                                    const simScore = calculateAdvancementScore(simBoard, 'black');
+                                    const willCapture = target !== null;
+                                    const isASSuspended = captureThisTurn || willCapture;
+                                    
+                                    if (!isASSuspended && simScore <= turnStartScore && (currentAP - cost) < COST_MOVE) {
+                                        continue; 
+                                    }
+
+                                    const boardHash = JSON.stringify(simBoard);
+                                    const isRepetition = boardHistory.includes(boardHash);
+                                    let isSafe = true; let tradeProfit = 0; let threatDetected = false;
+                                    const myValPoints = getPieceValue({value: p.val, type: p.type});
+
+                                    for(let e of enemyPieces) {
+                                        if (target && target.r === e.r && target.c === e.c) continue; 
+                                        const dx = c - e.c; const dy = r - e.r;
+                                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                                        const eRange = e.type === 'king' ? 1 : e.val;
+                                        
+                                        if (dist > 0 && dist <= eRange) {
+                                            const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
+                                            if (isLine) {
+                                                let blocked = false;
+                                                const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
+                                                const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
+                                                for (let i = 1; i < dist; i++) if (simBoard[e.r + stepR * i][e.c + stepC * i]) { blocked = true; break; }
+                                                
+                                                if (!blocked) {
+                                                    const eVal = e.type === 'king' ? 100 : e.val;
+                                                    let canCapture = false;
+                                                    if (p.type === 'king' || e.type === 'king') canCapture = true;
+                                                    else if (eVal <= (p.type === 'king' ? 100 : p.val)) canCapture = true;
+                                                    
+                                                    if (canCapture) {
+                                                        threatDetected = true; isSafe = false; tradeProfit -= myValPoints; 
+                                                        let defended = false;
+                                                        for(let buddy of myPieces) {
+                                                            if (buddy.r === p.r && buddy.c === p.c) continue; 
+                                                            const bdx = c - buddy.c; const bdy = r - buddy.r;
+                                                            const bdist = Math.max(Math.abs(bdx), Math.abs(bdy));
+                                                            const bRange = buddy.type === 'king' ? 1 : buddy.val;
+                                                            if (bdist > 0 && bdist <= bRange) {
+                                                                const bisLine = (bdx === 0 || bdy === 0 || Math.abs(bdx) === Math.abs(bdy));
+                                                                if (bisLine) {
+                                                                    let bBlocked = false;
+                                                                    const bsR = bdy === 0 ? 0 : bdy / Math.abs(bdy);
+                                                                    const bsC = bdx === 0 ? 0 : bdx / Math.abs(bdx);
+                                                                    for (let k = 1; k < bdist; k++) {
+                                                                        if (simBoard[buddy.r + bsR * k][buddy.c + bsC * k]) { 
+                                                                            if (buddy.r + bsR * k === r && buddy.c + bsC * k === c) continue;
+                                                                            bBlocked = true; break; 
+                                                                        }
+                                                                    }
+                                                                    if (!bBlocked) {
+                                                                        const bVal = buddy.type === 'king' ? 100 : buddy.val;
+                                                                        if (bVal <= eVal || buddy.type === 'king' || e.type === 'king') { defended = true; break; }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        if (defended) tradeProfit += getPieceValue({value: e.val, type: e.type});
+                                                        break; 
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    let score = 0;
+                                    if (target) {
+                                        score = 50;
+                                        if (target.type === 'king') score = 10000; 
+                                        else score += getPieceValue(target); 
+                                        if (threatDetected) {
+                                            if (initialKingDanger) score += 500; 
+                                            else {
+                                                if (tradeProfit > 0) score += tradeProfit; 
+                                                else if (tradeProfit === 0) score += 1; 
+                                                else score -= 60; 
+                                            }
+                                        }
+                                    } else {
+                                        score = 1;
+                                        if (enemyKingPos) {
+                                            const oldDist = Math.abs(p.r - enemyKingPos.r) + Math.abs(p.c - enemyKingPos.c);
+                                            const newDist = Math.abs(r - enemyKingPos.r) + Math.abs(c - enemyKingPos.c);
+                                            if (newDist < oldDist) score += 5;
+                                        }
+                                        
+                                        // Trivial King move penalty for AI
+                                        if (p.type === 'king' && r === turnStartKingPos.r && c === turnStartKingPos.c) {
+                                            score -= 10000;
+                                        }
+
+                                        const mid = BOARD_SIZE / 2;
+                                        if (r >= mid - 1 && r <= mid && c >= mid - 1 && c <= mid) score += 2;
+                                        
+                                        if (threatDetected) {
+                                            if (initialKingDanger) score += 500; 
+                                            else { if (tradeProfit >= 0) score -= 10; else score -= 80; }
+                                        }
+                                    }
+                                    if (isRepetition) score -= 100;
+                                    if (needsAdvancement && simScore > turnStartScore) score += 800; 
+
+                                    possibleActions.push({ type: 'move', from: p, to: {r,c}, score: score });
+                                }
+                            }
+                        }
+
+                        // 3. Mod Logic
+                        if (currentAP >= COST_MOD && p.type !== 'king') {
+                            const pKey = `${p.r},${p.c}`;
+                            if (!modifiedPieces.has(pKey)) {
+                                let nearestDist = 99;
+                                for(let e of enemyPieces) {
+                                    const d = Math.max(Math.abs(p.r - e.r), Math.abs(p.c - e.c));
+                                    if(d < nearestDist) nearestDist = d;
+                                }
+                                
+                                if (p.val > 1) {
+                                    let needsPower = false;
+                                    for(let e of enemyPieces) {
+                                        const d = Math.max(Math.abs(p.r - e.r), Math.abs(p.c - e.c));
+                                        if (d <= p.val && p.val > e.val) { needsPower = true; break; }
+                                    }
+                                    if (needsPower || initialKingDanger) { 
+                                        const simBoard = copyBoard(board);
+                                        simBoard[p.r][p.c].value--;
+                                        if (!isKingInDanger(simBoard, 'black')) {
+                                            const simScore = calculateAdvancementScore(simBoard, 'black');
+                                            if (captureThisTurn || !(simScore <= turnStartScore && (currentAP - COST_MOD) < COST_MOVE)) {
+                                                possibleActions.push({ type: 'dec', from: p, score: needsPower ? 5 : 0.5 });
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (p.val < 6) {
+                                    if (nearestDist > p.val) {
+                                        const simBoard = copyBoard(board);
+                                        simBoard[p.r][p.c].value++;
+                                        if (!isKingInDanger(simBoard, 'black')) {
+                                            const simScore = calculateAdvancementScore(simBoard, 'black');
+                                            if (captureThisTurn || !(simScore <= turnStartScore && (currentAP - COST_MOD) < COST_MOVE)) {
+                                                possibleActions.push({ type: 'inc', from: p, score: 3 });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    possibleActions.sort((a,b) => b.score - a.score);
+
+                    if (possibleActions.length > 0) {
+                        const best = possibleActions[0];
+                        if (best.score > -20 || initialKingDanger || needsAdvancement) { 
+                            if (best.type === 'move') {
+                                selectedSquare = {r: best.from.r, c: best.from.c};
+                                executeAction(board[best.to.r][best.to.c] ? 'capture' : 'move', best.from.r, best.from.c, best.to.r, best.to.c, board[best.to.r][best.to.c]);
+                                actionTaken = true;
+                            } else if (best.type === 'inc') {
+                                selectedSquare = {r: best.from.r, c: best.from.c};
+                                handleIncDec(true);
+                                modifiedPieces.add(`${best.from.r},${best.from.c}`); 
+                                actionTaken = true;
+                            } else if (best.type === 'dec') {
+                                selectedSquare = {r: best.from.r, c: best.from.c};
+                                handleIncDec(false);
+                                modifiedPieces.add(`${best.from.r},${best.from.c}`); 
+                                actionTaken = true;
+                            }
+                        }
+                    }
+
+                    if (!actionTaken) break; 
+                    await new Promise(r => setTimeout(r, 600)); 
+                }
+            } catch (err) {
+                console.error("AI Error:", err);
+                log("AI crashed, passing turn.", "text-red-500");
+            }
+
+            aiThinking = false;
+            if (!gameOver && turn === 'black') {
+                const finalScore = calculateAdvancementScore(board, 'black');
+                if (!captureThisTurn && finalScore <= turnStartScore) {
+                    log("AI could not satisfy advancement rule! Resigning.", "text-red-500 font-bold");
+                    endGame('white');
+                } else {
+                    switchTurn();
+                }
+            } else {
+                updateUI(); 
+            }
+        }
+
+        // --- UI Rendering ---
+        function updateUI() {
+            renderBoard();
+            updateSidebar();
+        }
+
+        function renderBoard() {
+            boardEl.innerHTML = '';
+            let validMoves = [], validCaptures = [];
+
+            if (selectedSquare && !gameOver && (!isAIEnabled || turn === 'white') && !aiThinking) {
+                 for(let r=0; r<BOARD_SIZE; r++){
+                     for(let c=0; c<BOARD_SIZE; c++){
+                         if(r===selectedSquare.r && c===selectedSquare.c) continue;
+                         if(isValidMove(selectedSquare.r, selectedSquare.c, r, c, true)) {
+                             if(board[r][c]) validCaptures.push(`${r},${c}`);
+                             else validMoves.push(`${r},${c}`);
+                         }
+                     }
+                 }
+            }
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const square = document.createElement('div');
+                    
+                    let isDark = false;
+                    if (BOARD_SIZE === 9) {
+                        isDark = (r + c) % 2 === 0;
+                    } else {
+                        isDark = (r + c) % 2 !== 0;
+                    }
+                    square.className = `square ${isDark ? 'dark' : 'light'}`;
+                    
+                    square.dataset.r = r; square.dataset.c = c;
+                    
+                    if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) square.classList.add('selected');
+                    if (validMoves.includes(`${r},${c}`)) square.classList.add('valid-move');
+                    if (validCaptures.includes(`${r},${c}`)) square.classList.add('valid-capture');
+
+                    square.onclick = () => selectPiece(r, c);
+
+                    const piece = board[r][c];
+                    if (piece) {
+                        const die = document.createElement('div');
+                        die.className = `die ${piece.owner}`;
+                        
+                        if (piece.type === 'king') {
+                            const k = document.createElement('div');
+                            k.className = 'king-symbol'; k.innerText = '♔'; die.appendChild(k);
+                        } else {
+                            const face = document.createElement('div');
+                            face.className = 'die-face';
+                            let dots = [];
+                            if (piece.value === 1) dots = [4];
+                            if (piece.value === 2) dots = [2, 6];
+                            if (piece.value === 3) dots = [2, 4, 6];
+                            if (piece.value === 4) dots = [0, 2, 6, 8];
+                            if (piece.value === 5) dots = [0, 2, 4, 6, 8];
+                            if (piece.value === 6) dots = [0, 2, 3, 5, 6, 8];
+
+                            for(let i=0; i<9; i++) {
+                                const cell = document.createElement('div');
+                                cell.className = 'pip-container';
+                                if (dots.includes(i)) {
+                                    const pip = document.createElement('div');
+                                    pip.className = 'pip'; cell.appendChild(pip);
+                                }
+                                face.appendChild(cell);
+                            }
+                            die.appendChild(face);
+                        }
+                        square.appendChild(die);
+                    }
+                    boardEl.appendChild(square);
+                }
+            }
+        }
+
+        function updateSidebar() {
+            turnIndicatorEl.innerText = turn;
+            turnIndicatorEl.className = `text-xl font-bold capitalize ${turn === 'white' ? 'text-white' : 'text-slate-400'}`;
+            apCounterEl.innerText = currentAP;
+            
+            const isLocked = aiThinking;
+            
+            // Check for Trivial King State
+            const isTrivialKingState = checkTrivialKingState(board, turn);
+
+            // Advancement Score UI Updates
+            const currentScore = calculateAdvancementScore(board, turn);
+            const isScoreValid = currentScore > turnStartScore;
+            const isValidEndTurn = (isScoreValid || captureThisTurn) && !isTrivialKingState;
+            
+            if (isTrivialKingState) {
+                advScoreDisplay.innerHTML = `<span class="text-xs text-red-400 font-bold block mt-1">✗ Illegal King Move</span>`;
+            } else if (captureThisTurn) {
+                advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-blue-400 ml-1 block">✓ Suspended (Capture)</span>`;
+            } else if (isScoreValid) {
+                advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-green-400 ml-1 block">✓ Valid (Need >${turnStartScore})</span>`;
+            } else {
+                advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-red-400 ml-1 block">✗ Need >${turnStartScore}</span>`;
+            }
+
+            // DYNAMIC BUTTON STYLING
+            const maxApForTurn = (fullMoveCount === 1 && turn === 'white') ? STARTING_AP_WHITE : MAX_AP;
+            const apSpent = currentAP < maxApForTurn;
+            const btnBase = "btn text-sm px-4 py-3 w-full ";
+
+            // 1. Reset Button Logic
+            if (isLocked || gameOver || !apSpent) {
+                resetTurnBtn.className = btnBase + "bg-slate-700 text-slate-500 cursor-not-allowed rounded-full";
+                resetTurnBtn.disabled = true;
+            } else {
+                resetTurnBtn.className = btnBase + "bg-blue-600 hover:bg-blue-500 text-white rounded-full";
+                resetTurnBtn.disabled = false;
+            }
+
+            // 2. End Turn / Invalid Turn Logic
+            if (isLocked || gameOver) {
+                endTurnBtn.className = btnBase + "bg-slate-700 text-slate-500 cursor-not-allowed rounded";
+                endTurnBtn.innerText = "End Turn";
+                endTurnBtn.disabled = true;
+            } else if (isValidEndTurn) {
+                endTurnBtn.className = btnBase + "bg-green-600 hover:bg-green-500 text-white rounded";
+                endTurnBtn.innerText = "End Turn";
+                endTurnBtn.disabled = false; // Enabled for manual clicking if they choose to end early
+            } else {
+                if (currentAP === 0 || isTrivialKingState) {
+                    endTurnBtn.className = btnBase + "bg-red-600 text-white cursor-not-allowed rounded flash-red";
+                    endTurnBtn.innerText = "Invalid Turn";
+                    endTurnBtn.disabled = true;
+                } else {
+                    endTurnBtn.className = btnBase + "bg-slate-700 text-slate-400 cursor-not-allowed rounded";
+                    endTurnBtn.innerText = "End Turn";
+                    endTurnBtn.disabled = true;
+                }
+            }
+
+            const hasSelection = selectedSquare && board[selectedSquare.r][selectedSquare.c];
+            if (hasSelection && board[selectedSquare.r][selectedSquare.c].owner === turn && (!isAIEnabled || turn === 'white') && !isLocked) {
+                const p = board[selectedSquare.r][selectedSquare.c];
+                selectedPieceDisplay.innerText = p.type === 'king' ? "Selected: King" : `Selected: Value ${p.value}`;
+                incBtn.disabled = p.type === 'king' || p.value >= 6 || currentAP < COST_MOD;
+                decBtn.disabled = p.type === 'king' || p.value <= 1 || currentAP < COST_MOD;
+                if (p.type === 'king') { incBtn.disabled = true; decBtn.disabled = true; }
+            } else {
+                selectedPieceDisplay.innerText = isLocked ? "AI Thinking..." : "Select a piece";
+                incBtn.disabled = true; decBtn.disabled = true;
+            }
+        }
+
+        function log(msg, colorClass = '') {
+            const entry = document.createElement('div');
+            entry.textContent = `> ${msg}`;
+            if (colorClass) entry.className = colorClass;
+            gameLog.appendChild(entry);
+            gameLog.scrollTop = gameLog.scrollHeight;
+        }
+
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        // --- Event Listeners ---
+        endTurnBtn.addEventListener('click', () => { SoundEngine.play('tap'); switchTurn(); });
+        resetTurnBtn.addEventListener('click', handleResetTurn);
+        incBtn.addEventListener('click', () => handleIncDec(true));
+        decBtn.addEventListener('click', () => handleIncDec(false));
+        resetBtn.addEventListener('click', () => { 
+            SoundEngine.play('tap');
+            askConfirm('Restart completely?', () => initGame()); 
+        });
+        
+        boardSizeSelect.addEventListener('change', (e) => {
+            SoundEngine.play('tap');
+            const newSize = parseInt(e.target.value);
+            setTimeout(() => {
+                askConfirm(`Change board size to ${newSize}x${newSize} and restart game?`, 
+                    () => { initGame(newSize); }, 
+                    () => { boardSizeSelect.value = BOARD_SIZE.toString(); }
+                );
+            }, 10);
+        });
+
+        aiToggle.addEventListener('change', (e) => {
+            SoundEngine.play('tap');
+            isAIEnabled = e.target.checked;
+            if(turn === 'black' && isAIEnabled) runAITurn();
+        });
+        
+        rulesBtn.addEventListener('click', () => { SoundEngine.play('tap'); rulesModal.classList.remove('hidden'); });
+        closeRulesBtn.addEventListener('click', () => { SoundEngine.play('tap'); rulesModal.classList.add('hidden'); });
+
+        recordBtn.addEventListener('click', () => { SoundEngine.play('tap'); showRecord(); });
+        closeRecordBtn.addEventListener('click', () => { SoundEngine.play('tap'); recordModal.classList.add('hidden'); });
+        copyRecordBtn.addEventListener('click', () => {
+            SoundEngine.play('tap');
+            recordText.select();
+            document.execCommand('copy');
+            copyRecordBtn.innerText = 'Copied!';
+            setTimeout(() => copyRecordBtn.innerText = 'Copy', 1500);
+        });
+
+        viewBoardBtn.addEventListener('click', () => {
+            SoundEngine.play('tap');
+            winnerModal.classList.add('hidden');
+        });
+
+        initGame();
+
+    </script>
+</body>
+</html>
