@@ -178,7 +178,7 @@
         .die.black .king-symbol { color: #e2e8f0; }
 
         .king-symbol {
-            font-size: 6vmin; 
+            font-size: 8vmin; 
             line-height: 1;
             font-weight: bold;
             display: flex;
@@ -186,8 +186,9 @@
             align-items: center;
             width: 100%;
             height: 100%;
+            margin-top: -5%; /* Optical center adjustment for unicode crown */
         }
-        @media (min-width: 600px) { .king-symbol { font-size: 2.5rem; } }
+        @media (min-width: 600px) { .king-symbol { font-size: 3.5rem; } }
 
         /* --- UI --- */
         .panel {
@@ -972,7 +973,7 @@
             winnerModal.classList.remove('hidden');
         }
 
-        // --- AI ENGINE ---
+        // --- AI ENGINE (Combinatorial Beam Search) ---
         function getPieceValue(p) { return !p ? 0 : (p.type === 'king' ? 1000 : (PIECE_VALUES[p.value] || 0)); }
 
         function isKingInDanger(simBoard, kingOwner) {
@@ -988,12 +989,21 @@
             const enemyOwner = kingOwner === 'white' ? 'black' : 'white';
             for(let r=0; r<BOARD_SIZE; r++){
                 for(let c=0; c<BOARD_SIZE; c++){
-                    const p = simBoard[r][c];
-                    if(p && p.owner === enemyOwner) {
+                    const e = simBoard[r][c];
+                    if(e && e.owner === enemyOwner) {
                         const dx = kingPos.c - c; const dy = kingPos.r - r;
                         const dist = Math.max(Math.abs(dx), Math.abs(dy));
-                        const range = p.type === 'king' ? 1 : p.value;
-                        if (dist > 0 && dist <= range) {
+                        
+                        let threatens = false;
+                        if (e.type === 'king') {
+                            threatens = dist <= 1;
+                        } else {
+                            // Can enemy reach the King considering dynamic AP? (Direct or Inc+Cap)
+                            if (e.value >= dist) threatens = true;
+                            else if (e.value < 6 && e.value + 1 >= dist) threatens = true;
+                        }
+
+                        if (threatens) {
                              const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
                              if (isLine) {
                                  let blocked = false;
@@ -1009,284 +1019,311 @@
             return false;
         }
 
+        // NEW: Threat Detection Matrix to stop kamikaze plays
+        function getThreatenedMaterial(b, owner) {
+            let enemyOwner = owner === 'white' ? 'black' : 'white';
+            let threatenedPoints = 0;
+            let threatenedPositions = new Set();
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    let e = b[r][c];
+                    if (e && e.owner === enemyOwner) {
+                        // Enemy could increment, giving them +1 range
+                        let maxRange = e.type === 'king' ? 1 : Math.min(6, e.value + 1);
+                        
+                        let dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+                        for (let d of dirs) {
+                            for (let dist = 1; dist <= maxRange; dist++) {
+                                let nr = r + d[0]*dist;
+                                let nc = c + d[1]*dist;
+                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
+
+                                let target = b[nr][nc];
+                                if (target) {
+                                    if (target.owner === owner && target.type !== 'king') {
+                                        let canCap = false;
+                                        if (e.type === 'king') {
+                                            canCap = (dist <= 1);
+                                        } else {
+                                            // Evaluates if the enemy can capture directly, or spend 1 AP to inc/dec and then capture
+                                            if (e.value >= dist && e.value <= target.value) canCap = true;
+                                            else if (e.value < 6 && (e.value + 1) >= dist && (e.value + 1) <= target.value) canCap = true;
+                                            else if (e.value > 1 && (e.value - 1) >= dist && (e.value - 1) <= target.value) canCap = true;
+                                        }
+
+                                        if (canCap) {
+                                            let key = `${nr},${nc}`;
+                                            if (!threatenedPositions.has(key)) {
+                                                threatenedPositions.add(key);
+                                                threatenedPoints += getPieceValue(target);
+                                            }
+                                        }
+                                    }
+                                    break; // Raycast blocked by piece
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return threatenedPoints;
+        }
+
         function copyBoard(src) { return src.map(row => row.map(p => p ? {...p} : null)); }
+
+        function getBoardHash(b) {
+            let s = '';
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    let p = b[r][c];
+                    s += p ? `${p.owner[0]}${p.type==='king'?'K':p.value}` : '.';
+                }
+            }
+            return s;
+        }
+
+        function getAtomicActions(b, player, ap) {
+            let actions = [];
+            for (let r=0; r<BOARD_SIZE; r++) {
+                for (let c=0; c<BOARD_SIZE; c++) {
+                    let p = b[r][c];
+                    if (p && p.owner === player) {
+                        if (p.type === 'die' && p.value < 6 && ap >= COST_MOD) {
+                            actions.push({ type: 'inc', r, c, cost: COST_MOD });
+                        }
+                        if (p.type === 'die' && p.value > 1 && ap >= COST_MOD) {
+                            actions.push({ type: 'dec', r, c, cost: COST_MOD });
+                        }
+                        
+                        let maxDist = p.type === 'king' ? 1 : p.value;
+                        let dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+                        for (let d of dirs) {
+                            for (let dist=1; dist<=maxDist; dist++) {
+                                let nr = r + d[0]*dist;
+                                let nc = c + d[1]*dist;
+                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
+
+                                let target = b[nr][nc];
+                                if (target) {
+                                    if (target.owner !== player) {
+                                        let canCap = (p.type === 'king' || target.type === 'king' || p.value <= target.value);
+                                        if (canCap && ap >= COST_CAPTURE) {
+                                            actions.push({ type: 'cap', r, c, nr, nc, cost: COST_CAPTURE });
+                                        }
+                                    }
+                                    break; 
+                                } else {
+                                    if (ap >= COST_MOVE) {
+                                        actions.push({ type: 'move', r, c, nr, nc, cost: COST_MOVE });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return actions;
+        }
+
+        function applyAction(state, a) {
+            let nb = copyBoard(state.board);
+            let p = nb[a.r][a.c];
+            
+            let nState = {
+                board: nb,
+                ap: state.ap - a.cost,
+                seq: [...state.seq, a],
+                captured: state.captured || a.type === 'cap',
+                kingMoved: state.kingMoved || (p && p.type === 'king' && (a.type === 'move' || a.type === 'cap')),
+                initialKingPos: state.initialKingPos,
+                turnStartScore: state.turnStartScore,
+                heuristic: 0
+            };
+            
+            if (a.type === 'inc') nb[a.r][a.c].value++;
+            if (a.type === 'dec') nb[a.r][a.c].value--;
+            if (a.type === 'move' || a.type === 'cap') {
+                nb[a.nr][a.nc] = nb[a.r][a.c];
+                nb[a.r][a.c] = null;
+            }
+            return nState;
+        }
+
+        function isValidEndState(state) {
+            let whiteKingAlive = false;
+            for(let r=0; r<BOARD_SIZE; r++){
+                for(let c=0; c<BOARD_SIZE; c++){
+                    let p = state.board[r][c];
+                    if (p && p.owner === 'white' && p.type === 'king') whiteKingAlive = true;
+                }
+            }
+            if (!whiteKingAlive) return true; // We won!
+
+            if (isKingInDanger(state.board, 'black')) return false;
+
+            if (state.kingMoved && state.initialKingPos) {
+                let kp = state.initialKingPos;
+                let p = state.board[kp.r][kp.c];
+                if (p && p.type === 'king' && p.owner === 'black') return false; // Trivial king move
+            }
+
+            let currAdv = calculateAdvancementScore(state.board, 'black');
+            if (!state.captured && currAdv <= state.turnStartScore) return false;
+
+            return true;
+        }
+
+        function calcHeuristic(state) {
+            let b = state.board;
+            let myMat = 0, enMat = 0;
+            let myAdv = calculateAdvancementScore(b, 'black');
+            let enKingPos = null;
+
+            for (let r=0; r<BOARD_SIZE; r++) {
+                for (let c=0; c<BOARD_SIZE; c++) {
+                    let p = b[r][c];
+                    if (p) {
+                        if (p.owner === 'black') {
+                            myMat += getPieceValue(p);
+                        } else {
+                            enMat += getPieceValue(p);
+                            if (p.type === 'king') enKingPos = {r,c};
+                        }
+                    }
+                }
+            }
+
+            // Execute Threat Analysis
+            let myThreatenedMat = getThreatenedMaterial(b, 'black');
+            let enThreatenedMat = getThreatenedMaterial(b, 'white');
+
+            let score = (myMat - enMat) * 100;
+            score += myAdv * 10;
+            
+            // Massively penalize the AI for leaving its pieces hanging where you can capture them dynamically.
+            score -= myThreatenedMat * 120; 
+            // Slight bonus for positioning its pieces to threaten yours safely
+            score += enThreatenedMat * 10; 
+
+            if (enKingPos) {
+                if (isKingInDanger(b, 'black')) score -= 500000;
+                if (isKingInDanger(b, 'white')) score += 2000; // Significantly reduced to prevent sacrificing a piece just for a check
+            } else {
+                score += 10000000; // Checkmate
+            }
+            
+            let hash = getBoardHash(b);
+            if (boardHistory.includes(hash)) score -= 80000; // Anti-looping
+
+            if (state.captured || myAdv > state.turnStartScore) {
+                score += 30000;
+            }
+
+            if (isValidEndState(state)) score += 50000; // Keep valid states heavily prioritized
+            if (state.seq) score -= state.seq.length * 10; // Prefer shorter sequences for same board result
+
+            return score;
+        }
 
         async function runAITurn() {
             aiThinking = true;
             updateUI(); 
-            await new Promise(r => setTimeout(r, 800));
+            await new Promise(r => setTimeout(r, 600)); // UI flush delay
 
-            let modifiedPieces = new Set(); 
+            let bestFinalState = null;
+            let bestFinalScore = -Infinity;
 
-            try {
-                while (currentAP > 0 && !gameOver) {
-                    let actionTaken = false;
-                    const initialKingDanger = isKingInDanger(board, 'black');
-                    const currentAdvScore = calculateAdvancementScore(board, 'black');
-                    const needsAdvancement = !captureThisTurn && (currentAdvScore <= turnStartScore);
+            let initialState = {
+                board: copyBoard(board),
+                ap: currentAP,
+                seq: [],
+                captured: false,
+                kingMoved: false,
+                initialKingPos: turnStartKingPos,
+                turnStartScore: turnStartScore,
+                heuristic: 0
+            };
 
-                    let myPieces = [];
-                    let enemyPieces = [];
-                    let enemyKingPos = null;
+            let queue = [initialState];
+            let BEAM_WIDTH = 150; // Max states evaluated per depth level
+
+            // Beam Search loop (Max depth is 6, since min cost is 1 AP)
+            for (let d = 0; d < 6; d++) {
+                let nextQueue = [];
+                for (let state of queue) {
                     
-                    for(let r=0; r<BOARD_SIZE; r++){
-                        for(let c=0; c<BOARD_SIZE; c++){
-                            const p = board[r][c];
-                            if(p) {
-                                if(p.owner === 'black') myPieces.push({r,c, val: p.value, type: p.type});
-                                else { enemyPieces.push({r,c, val: p.value, type: p.type}); if(p.type === 'king') enemyKingPos = {r,c}; }
-                            }
+                    if (isValidEndState(state)) {
+                        let h = calcHeuristic(state);
+                        if (h > bestFinalScore) {
+                            bestFinalScore = h;
+                            bestFinalState = state;
                         }
                     }
 
-                    let possibleActions = [];
+                    if (state.ap === 0) continue;
 
-                    // 1. Scan for "Modify-to-Capture" Combos
-                    if (currentAP >= (COST_MOD + COST_CAPTURE)) {
-                        for (let p of myPieces) {
-                            if (p.type === 'king') continue; 
-                            for (let e of enemyPieces) {
-                                const dx = e.c - p.c; const dy = e.r - p.r;
-                                const dist = Math.max(Math.abs(dx), Math.abs(dy));
-                                const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
-                                if (!isLine) continue;
-
-                                let blocked = false;
-                                const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
-                                const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
-                                for (let i = 1; i < dist; i++) if (getPiece(p.r + stepR * i, p.c + stepC * i)) { blocked = true; break; }
-                                if (blocked) continue;
-
-                                if (p.val > e.val) {
-                                    const stepsNeeded = p.val - e.val; 
-                                    const cost = (stepsNeeded * COST_MOD) + COST_CAPTURE;
-                                    
-                                    if (currentAP >= cost && dist <= e.val) {
-                                        const simBoard = copyBoard(board);
-                                        simBoard[p.r][p.c].value = e.val; 
-                                        if (isKingInDanger(simBoard, 'black')) continue; 
-
-                                        let score = 500; 
-                                        if (e.type === 'king') score = 2000;
-                                        score += (7 - e.val) * 20;
-
-                                        possibleActions.push({ type: 'dec', from: p, score: score, reason: 'tactical_dec' });
-                                    }
-                                }
-                            }
-                        }
+                    let actions = getAtomicActions(state.board, 'black', state.ap);
+                    for (let a of actions) {
+                        let nextState = applyAction(state, a);
+                        nextState.heuristic = calcHeuristic(nextState);
+                        nextQueue.push(nextState);
                     }
-
-                    // 2. Standard Moves & Captures
-                    for (let p of myPieces) {
-                         const range = p.type === 'king' ? 1 : p.val;
-                        for (let r=0; r<BOARD_SIZE; r++) {
-                            for (let c=0; c<BOARD_SIZE; c++) {
-                                if (isValidMove(p.r, p.c, r, c, true)) {
-                                    const target = board[r][c];
-                                    const cost = target ? COST_CAPTURE : COST_MOVE;
-                                    
-                                    const simBoard = copyBoard(board);
-                                    simBoard[r][c] = simBoard[p.r][p.c]; 
-                                    simBoard[p.r][p.c] = null; 
-                                    
-                                    if (isKingInDanger(simBoard, 'black')) continue; 
-
-                                    // NEW: ADVANCEMENT RULE CHECK
-                                    const simScore = calculateAdvancementScore(simBoard, 'black');
-                                    const willCapture = target !== null;
-                                    const isASSuspended = captureThisTurn || willCapture;
-                                    
-                                    if (!isASSuspended && simScore <= turnStartScore && (currentAP - cost) < COST_MOVE) {
-                                        continue; 
-                                    }
-
-                                    const boardHash = JSON.stringify(simBoard);
-                                    const isRepetition = boardHistory.includes(boardHash);
-                                    let isSafe = true; let tradeProfit = 0; let threatDetected = false;
-                                    const myValPoints = getPieceValue({value: p.val, type: p.type});
-
-                                    for(let e of enemyPieces) {
-                                        if (target && target.r === e.r && target.c === e.c) continue; 
-                                        const dx = c - e.c; const dy = r - e.r;
-                                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
-                                        const eRange = e.type === 'king' ? 1 : e.val;
-                                        
-                                        if (dist > 0 && dist <= eRange) {
-                                            const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
-                                            if (isLine) {
-                                                let blocked = false;
-                                                const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
-                                                const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
-                                                for (let i = 1; i < dist; i++) if (simBoard[e.r + stepR * i][e.c + stepC * i]) { blocked = true; break; }
-                                                
-                                                if (!blocked) {
-                                                    const eVal = e.type === 'king' ? 100 : e.val;
-                                                    let canCapture = false;
-                                                    if (p.type === 'king' || e.type === 'king') canCapture = true;
-                                                    else if (eVal <= (p.type === 'king' ? 100 : p.val)) canCapture = true;
-                                                    
-                                                    if (canCapture) {
-                                                        threatDetected = true; isSafe = false; tradeProfit -= myValPoints; 
-                                                        let defended = false;
-                                                        for(let buddy of myPieces) {
-                                                            if (buddy.r === p.r && buddy.c === p.c) continue; 
-                                                            const bdx = c - buddy.c; const bdy = r - buddy.r;
-                                                            const bdist = Math.max(Math.abs(bdx), Math.abs(bdy));
-                                                            const bRange = buddy.type === 'king' ? 1 : buddy.val;
-                                                            if (bdist > 0 && bdist <= bRange) {
-                                                                const bisLine = (bdx === 0 || bdy === 0 || Math.abs(bdx) === Math.abs(bdy));
-                                                                if (bisLine) {
-                                                                    let bBlocked = false;
-                                                                    const bsR = bdy === 0 ? 0 : bdy / Math.abs(bdy);
-                                                                    const bsC = bdx === 0 ? 0 : bdx / Math.abs(bdx);
-                                                                    for (let k = 1; k < bdist; k++) {
-                                                                        if (simBoard[buddy.r + bsR * k][buddy.c + bsC * k]) { 
-                                                                            if (buddy.r + bsR * k === r && buddy.c + bsC * k === c) continue;
-                                                                            bBlocked = true; break; 
-                                                                        }
-                                                                    }
-                                                                    if (!bBlocked) {
-                                                                        const bVal = buddy.type === 'king' ? 100 : buddy.val;
-                                                                        if (bVal <= eVal || buddy.type === 'king' || e.type === 'king') { defended = true; break; }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                        if (defended) tradeProfit += getPieceValue({value: e.val, type: e.type});
-                                                        break; 
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    let score = 0;
-                                    if (target) {
-                                        score = 50;
-                                        if (target.type === 'king') score = 10000; 
-                                        else score += getPieceValue(target); 
-                                        if (threatDetected) {
-                                            if (initialKingDanger) score += 500; 
-                                            else {
-                                                if (tradeProfit > 0) score += tradeProfit; 
-                                                else if (tradeProfit === 0) score += 1; 
-                                                else score -= 60; 
-                                            }
-                                        }
-                                    } else {
-                                        score = 1;
-                                        if (enemyKingPos) {
-                                            const oldDist = Math.abs(p.r - enemyKingPos.r) + Math.abs(p.c - enemyKingPos.c);
-                                            const newDist = Math.abs(r - enemyKingPos.r) + Math.abs(c - enemyKingPos.c);
-                                            if (newDist < oldDist) score += 5;
-                                        }
-                                        
-                                        // Trivial King move penalty for AI
-                                        if (p.type === 'king' && r === turnStartKingPos.r && c === turnStartKingPos.c) {
-                                            score -= 10000;
-                                        }
-
-                                        const mid = BOARD_SIZE / 2;
-                                        if (r >= mid - 1 && r <= mid && c >= mid - 1 && c <= mid) score += 2;
-                                        
-                                        if (threatDetected) {
-                                            if (initialKingDanger) score += 500; 
-                                            else { if (tradeProfit >= 0) score -= 10; else score -= 80; }
-                                        }
-                                    }
-                                    if (isRepetition) score -= 100;
-                                    if (needsAdvancement && simScore > turnStartScore) score += 800; 
-
-                                    possibleActions.push({ type: 'move', from: p, to: {r,c}, score: score });
-                                }
-                            }
-                        }
-
-                        // 3. Mod Logic
-                        if (currentAP >= COST_MOD && p.type !== 'king') {
-                            const pKey = `${p.r},${p.c}`;
-                            if (!modifiedPieces.has(pKey)) {
-                                let nearestDist = 99;
-                                for(let e of enemyPieces) {
-                                    const d = Math.max(Math.abs(p.r - e.r), Math.abs(p.c - e.c));
-                                    if(d < nearestDist) nearestDist = d;
-                                }
-                                
-                                if (p.val > 1) {
-                                    let needsPower = false;
-                                    for(let e of enemyPieces) {
-                                        const d = Math.max(Math.abs(p.r - e.r), Math.abs(p.c - e.c));
-                                        if (d <= p.val && p.val > e.val) { needsPower = true; break; }
-                                    }
-                                    if (needsPower || initialKingDanger) { 
-                                        const simBoard = copyBoard(board);
-                                        simBoard[p.r][p.c].value--;
-                                        if (!isKingInDanger(simBoard, 'black')) {
-                                            const simScore = calculateAdvancementScore(simBoard, 'black');
-                                            if (captureThisTurn || !(simScore <= turnStartScore && (currentAP - COST_MOD) < COST_MOVE)) {
-                                                possibleActions.push({ type: 'dec', from: p, score: needsPower ? 5 : 0.5 });
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                if (p.val < 6) {
-                                    if (nearestDist > p.val) {
-                                        const simBoard = copyBoard(board);
-                                        simBoard[p.r][p.c].value++;
-                                        if (!isKingInDanger(simBoard, 'black')) {
-                                            const simScore = calculateAdvancementScore(simBoard, 'black');
-                                            if (captureThisTurn || !(simScore <= turnStartScore && (currentAP - COST_MOD) < COST_MOVE)) {
-                                                possibleActions.push({ type: 'inc', from: p, score: 3 });
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    possibleActions.sort((a,b) => b.score - a.score);
-
-                    if (possibleActions.length > 0) {
-                        const best = possibleActions[0];
-                        if (best.score > -20 || initialKingDanger || needsAdvancement) { 
-                            if (best.type === 'move') {
-                                selectedSquare = {r: best.from.r, c: best.from.c};
-                                executeAction(board[best.to.r][best.to.c] ? 'capture' : 'move', best.from.r, best.from.c, best.to.r, best.to.c, board[best.to.r][best.to.c]);
-                                actionTaken = true;
-                            } else if (best.type === 'inc') {
-                                selectedSquare = {r: best.from.r, c: best.from.c};
-                                handleIncDec(true);
-                                modifiedPieces.add(`${best.from.r},${best.from.c}`); 
-                                actionTaken = true;
-                            } else if (best.type === 'dec') {
-                                selectedSquare = {r: best.from.r, c: best.from.c};
-                                handleIncDec(false);
-                                modifiedPieces.add(`${best.from.r},${best.from.c}`); 
-                                actionTaken = true;
-                            }
-                        }
-                    }
-
-                    if (!actionTaken) break; 
-                    await new Promise(r => setTimeout(r, 600)); 
                 }
-            } catch (err) {
-                console.error("AI Error:", err);
-                log("AI crashed, passing turn.", "text-red-500");
+
+                if (nextQueue.length === 0) break;
+
+                // Sort and Prune (Beam Search)
+                nextQueue.sort((a, b) => b.heuristic - a.heuristic);
+                
+                let unique = [];
+                let seen = new Set();
+                for(let ns of nextQueue) {
+                    let hash = getBoardHash(ns.board) + "_" + ns.ap;
+                    if(!seen.has(hash)) {
+                        seen.add(hash);
+                        unique.push(ns);
+                        if(unique.length >= BEAM_WIDTH) break; 
+                    }
+                }
+                queue = unique;
+            }
+
+            // Final check on remaining queue
+            for (let state of queue) {
+                if (isValidEndState(state)) {
+                    let h = calcHeuristic(state);
+                    if (h > bestFinalScore) {
+                        bestFinalScore = h;
+                        bestFinalState = state;
+                    }
+                }
+            }
+
+            if (!bestFinalState || bestFinalState.seq.length === 0) {
+                log("Checkmate! AI cannot escape and satisfy the Advancement Score. Resigning.", "text-red-500 font-bold");
+                aiThinking = false;
+                endGame('white');
+                return;
+            }
+
+            // Execute the optimal sequence found by the beam search
+            for (let act of bestFinalState.seq) {
+                if (gameOver) break;
+
+                if (act.type === 'inc' || act.type === 'dec') {
+                    selectedSquare = {r: act.r, c: act.c};
+                    handleIncDec(act.type === 'inc');
+                } else {
+                    selectedSquare = {r: act.r, c: act.c};
+                    executeAction(act.type === 'cap' ? 'capture' : 'move', act.r, act.c, act.nr, act.nc, board[act.nr][act.nc]);
+                }
+                await new Promise(r => setTimeout(r, 600));
             }
 
             aiThinking = false;
             if (!gameOver && turn === 'black') {
-                const finalScore = calculateAdvancementScore(board, 'black');
-                if (!captureThisTurn && finalScore <= turnStartScore) {
-                    log("AI could not satisfy advancement rule! Resigning.", "text-red-500 font-bold");
-                    endGame('white');
-                } else {
-                    switchTurn();
-                }
+                switchTurn();
             } else {
                 updateUI(); 
             }
