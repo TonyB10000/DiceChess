@@ -247,7 +247,7 @@
             justify-content: center; align-items: center; z-index: 100;
         }
         .modal-content-scroll { max-height: 85vh; overflow-y: auto; }
-        #record-modal, #rules-modal { z-index: 150; }
+        #record-modal, #rules-modal, #analysis-modal { z-index: 150; }
 
         textarea { @apply w-full h-48 bg-slate-900 text-slate-300 p-2 rounded text-sm font-mono border border-slate-700 resize-none mb-4; }
     </style>
@@ -289,7 +289,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
+                    <div id="ai-toggle-wrapper" class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
                         <span class="text-sm font-semibold text-slate-300">Play vs AI (Black)</span>
                         <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                             <input type="checkbox" name="toggle" id="ai-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
@@ -297,7 +297,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700 mt-2">
+                    <div id="board-size-wrapper" class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700 mt-2">
                         <span class="text-sm font-semibold text-slate-300">Board Size</span>
                         <select id="board-size-select" class="bg-slate-700 text-white text-sm rounded px-2 py-1 outline-none border border-slate-600">
                             <option value="8">8x8</option>
@@ -308,29 +308,52 @@
                 </div>
 
                 <!-- Controls -->
-                <div class="panel flex flex-col gap-2 flex-grow">
+                <div class="panel flex flex-col gap-2 flex-grow relative">
                     <div class="text-xs text-blue-300 font-semibold text-center h-5" id="selected-piece-display">Select a piece</div>
                     
-                    <div class="grid grid-cols-2 gap-3">
-                        <button id="inc-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
-                            <span class="text-xl">▲</span>
-                            <span class="text-[10px] leading-tight text-slate-300">Inc (+1)</span>
-                        </button>
-                        <button id="dec-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
-                            <span class="text-xl">▼</span>
-                            <span class="text-[10px] leading-tight text-slate-300">Dec (-1)</span>
-                        </button>
+                    <!-- Standard Play Controls -->
+                    <div id="play-controls" class="flex flex-col gap-2">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="inc-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
+                                <span class="text-xl">▲</span>
+                                <span class="text-[10px] leading-tight text-slate-300">Inc (+1)</span>
+                            </button>
+                            <button id="dec-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
+                                <span class="text-xl">▼</span>
+                                <span class="text-[10px] leading-tight text-slate-300">Dec (-1)</span>
+                            </button>
+                        </div>
+
+                        <div class="flex gap-2 mt-2">
+                            <button id="reset-turn-btn" class="btn text-sm px-4 py-3">Reset Turn</button>
+                            <button id="end-turn-btn" class="btn text-sm px-4 py-3">End Turn</button>
+                        </div>
                     </div>
 
-                    <div class="flex gap-2 mt-2">
-                        <button id="reset-turn-btn" class="btn text-sm px-4 py-3">Reset Turn</button>
-                        <button id="end-turn-btn" class="btn text-sm px-4 py-3">End Turn</button>
+                    <!-- Replay Controls (Hidden by Default) -->
+                    <div id="replay-controls" class="hidden flex flex-col gap-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="replay-back-btn" class="btn bg-slate-600 hover:bg-slate-500 text-white rounded py-3">◄ Back</button>
+                            <button id="replay-forward-btn" class="btn bg-slate-600 hover:bg-slate-500 text-white rounded py-3">Forward ►</button>
+                        </div>
+                        <button id="what-if-btn" class="btn bg-purple-600 hover:bg-purple-500 text-white rounded py-3 w-full mt-2">What If...</button>
+                        <button id="exit-analysis-btn" class="btn bg-red-600 hover:bg-red-500 text-white rounded py-2 w-full mt-1 text-xs">Exit Analysis</button>
+                    </div>
+
+                    <!-- What If Extras (Appended below Play controls during What If) -->
+                    <div id="what-if-extras" class="hidden grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-600">
+                        <button id="what-if-fresh-btn" class="btn bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-2 rounded">Fresh</button>
+                        <button id="what-if-leave-btn" class="btn bg-slate-600 hover:bg-slate-500 text-white text-xs py-2 rounded">Leave</button>
                     </div>
                     
                     <!-- Utility Buttons Grid -->
-                    <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="grid grid-cols-3 gap-2 mt-2" id="utility-grid">
                         <button id="rules-btn" class="btn rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2">Rules</button>
                         <button id="record-btn" class="btn rounded bg-slate-600 hover:bg-slate-500 text-white text-xs py-2">Record</button>
+                        <button id="analysis-btn" class="btn rounded bg-teal-600 hover:bg-teal-500 text-white text-xs py-2">Analysis</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mt-1" id="social-grid">
                         <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" class="btn rounded bg-pink-600 hover:bg-pink-500 text-white text-xs py-2 flex items-center justify-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> Support
                         </a>
@@ -342,7 +365,7 @@
 
                 <!-- Log -->
                 <div id="game-log" class="log-container"></div>
-                <div class="text-[10px] text-center text-slate-500 mt-1">
+                <div class="text-[10px] text-center text-slate-500 mt-1" id="reset-footer">
                     <span id="reset-btn" class="underline cursor-pointer hover:text-white">Restart Entire Game</span>
                 </div>
             </div>
@@ -352,6 +375,19 @@
 
     <!-- Overlays -->
     <div id="flash-overlay"><div id="flash-text">White's Turn</div></div>
+
+    <!-- Analysis Modal -->
+    <div id="analysis-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-600 shadow-2xl w-full max-w-lg mx-4">
+            <h3 class="text-xl font-bold text-white mb-2">Analysis Mode</h3>
+            <p class="text-xs text-slate-400 mb-4">Paste a game record here to replay and analyze it.</p>
+            <textarea id="analysis-text" class="w-full h-48 bg-slate-900 text-slate-300 p-2 rounded text-sm font-mono border border-slate-700 resize-none mb-4" placeholder="1. e2-e4 : a7-a6..."></textarea>
+            <div class="flex justify-end gap-2">
+                <button id="load-analysis-btn" class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-500 font-bold">Load Game</button>
+                <button id="close-analysis-btn" class="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 font-bold">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Rules Modal -->
     <div id="rules-modal" class="modal hidden">
@@ -377,9 +413,8 @@
                 <ul class="list-disc pl-5 space-y-1 text-xs">
                     <li><strong>Moving:</strong> Tap a piece to select it, then tap a highlighted square to move or capture.</li>
                     <li><strong>Inc/Dec:</strong> Use the ▲ and ▼ buttons to modify a selected piece's value.</li>
-                    <li><strong>Auto-End Turn:</strong> If your turn is legally valid and you reach 0 AP, the turn ends automatically!</li>
-                    <li><strong>Reset Turn:</strong> A rounded blue button appears once you spend AP. Use it to undo mistakes and restart your current turn.</li>
-                    <li><strong>Invalid Alarm:</strong> If your AP reaches 0 (or you make an illegal trivial King move) and your turn does not satisfy the Advancement Score, a flashing red alarm will appear. You <em>must</em> press Reset Turn!</li>
+                    <li><strong>Auto-End Turn:</strong> If your turn is legally valid and you reach 0 AP, the turn ends automatically.</li>
+                    <li><strong>Analysis Mode:</strong> Use the Analysis button to paste game records and replay/branch them using "What If" logic.</li>
                 </ul>
             </div>
             
@@ -530,7 +565,6 @@
             }
         };
 
-        // Initialize audio on first click anywhere
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
         // --- Config ---
@@ -542,7 +576,10 @@
         const STARTING_AP_WHITE = 3;
         const PIECE_VALUES = { 1: 70, 2: 60, 3: 50, 4: 40, 5: 30, 6: 20, 0: 1000 };
 
-        // --- State ---
+        // --- App State ---
+        let appMode = 'play'; // 'play', 'replay', 'what_if'
+        
+        // Live Game State
         let board = []; 
         let turn = 'white'; 
         let currentAP = STARTING_AP_WHITE;
@@ -551,7 +588,6 @@
         let isAIEnabled = false;
         let aiThinking = false;
         let boardHistory = []; 
-        
         let moveHistory = []; 
         let currentTurnActions = []; 
         let fullMoveCount = 1;
@@ -563,6 +599,12 @@
         let kingMovedThisTurn = false;
         let turnStartKingPos = null;
         let autoTurnTimeout = null;
+
+        // Analysis / Replay State
+        let replayStates = [];
+        let replayIndex = 0;
+        let liveGameSnapshot = null;
+        let whatIfAnchorSnapshot = null;
 
         // --- DOM ---
         const boardEl = document.getElementById('board');
@@ -587,12 +629,34 @@
         const rulesBtn = document.getElementById('rules-btn');
         const rulesModal = document.getElementById('rules-modal');
         const closeRulesBtn = document.getElementById('close-rules-btn');
-        
         const recordBtn = document.getElementById('record-btn');
         const recordModal = document.getElementById('record-modal');
         const recordText = document.getElementById('record-text');
         const closeRecordBtn = document.getElementById('close-record-btn');
         const copyRecordBtn = document.getElementById('copy-record-btn');
+
+        // Analysis DOM
+        const analysisBtn = document.getElementById('analysis-btn');
+        const analysisModal = document.getElementById('analysis-modal');
+        const closeAnalysisBtn = document.getElementById('close-analysis-btn');
+        const loadAnalysisBtn = document.getElementById('load-analysis-btn');
+        const analysisText = document.getElementById('analysis-text');
+
+        const playControls = document.getElementById('play-controls');
+        const replayControls = document.getElementById('replay-controls');
+        const whatIfExtras = document.getElementById('what-if-extras');
+        const utilityGrid = document.getElementById('utility-grid');
+        const socialGrid = document.getElementById('social-grid');
+        const aiToggleWrapper = document.getElementById('ai-toggle-wrapper');
+        const boardSizeWrapper = document.getElementById('board-size-wrapper');
+        const resetFooter = document.getElementById('reset-footer');
+
+        const replayBackBtn = document.getElementById('replay-back-btn');
+        const replayForwardBtn = document.getElementById('replay-forward-btn');
+        const whatIfBtn = document.getElementById('what-if-btn');
+        const exitAnalysisBtn = document.getElementById('exit-analysis-btn');
+        const whatIfFreshBtn = document.getElementById('what-if-fresh-btn');
+        const whatIfLeaveBtn = document.getElementById('what-if-leave-btn');
 
         // Custom Confirm Logic
         const confirmModal = document.getElementById('confirm-modal');
@@ -621,6 +685,33 @@
             if (onConfirmNo) onConfirmNo();
         });
 
+        // --- State Management Helpers ---
+        function copyBoard(src) { return src.map(row => row.map(p => p ? {...p} : null)); }
+
+        function captureFullState() {
+            return {
+                board: copyBoard(board),
+                turn, currentAP, selectedSquare, gameOver,
+                boardHistory: JSON.parse(JSON.stringify(boardHistory)),
+                moveHistory: JSON.parse(JSON.stringify(moveHistory)),
+                currentTurnActions: JSON.parse(JSON.stringify(currentTurnActions)),
+                fullMoveCount, turnStartBoardState, turnStartScore,
+                captureThisTurn, kingMovedThisTurn, turnStartKingPos
+            };
+        }
+
+        function restoreFullState(state) {
+            board = copyBoard(state.board);
+            turn = state.turn; currentAP = state.currentAP;
+            selectedSquare = state.selectedSquare; gameOver = state.gameOver;
+            boardHistory = JSON.parse(JSON.stringify(state.boardHistory));
+            moveHistory = JSON.parse(JSON.stringify(state.moveHistory));
+            currentTurnActions = JSON.parse(JSON.stringify(state.currentTurnActions));
+            fullMoveCount = state.fullMoveCount; turnStartBoardState = state.turnStartBoardState;
+            turnStartScore = state.turnStartScore; captureThisTurn = state.captureThisTurn;
+            kingMovedThisTurn = state.kingMovedThisTurn; turnStartKingPos = state.turnStartKingPos;
+        }
+
         // --- Init ---
         function initGame(forceSize = null) {
             clearTimeout(autoTurnTimeout);
@@ -628,11 +719,10 @@
                 boardSizeSelect.value = forceSize.toString();
             }
             BOARD_SIZE = parseInt(boardSizeSelect.value);
-            
-            // Apply Dynamic Grid CSS
             boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
 
+            appMode = 'play';
             turn = 'white';
             currentAP = STARTING_AP_WHITE;
             selectedSquare = null;
@@ -701,7 +791,7 @@
         }
 
         function handleResetTurn() {
-            if (aiThinking || (turn === 'black' && isAIEnabled) || gameOver) return;
+            if (aiThinking || (turn === 'black' && isAIEnabled && appMode === 'play') || gameOver) return;
             SoundEngine.play('tap');
             board = JSON.parse(turnStartBoardState);
             currentAP = (fullMoveCount === 1 && turn === 'white') ? STARTING_AP_WHITE : MAX_AP;
@@ -739,7 +829,6 @@
                 return;
             }
 
-            // Final Validation just in case UI validation was bypassed
             const currentScore = calculateAdvancementScore(board, turn);
             if (!captureThisTurn && currentScore <= turnStartScore) {
                 SoundEngine.play('error');
@@ -770,17 +859,20 @@
             
             captureTurnStartState();
 
-            log(`Turn: ${capitalize(turn)} (${currentAP} AP)`);
-            flashTurnMessage();
+            if(appMode === 'play' || appMode === 'what_if') {
+                log(`Turn: ${capitalize(turn)} (${currentAP} AP)`);
+                flashTurnMessage();
+            }
             updateUI();
 
-            if (turn === 'black' && isAIEnabled && !gameOver) {
+            if (turn === 'black' && isAIEnabled && !gameOver && appMode === 'play') {
                 runAITurn();
             }
         }
 
         function checkAutoTurnEnd() {
-            if (isAIEnabled && turn === 'black') return;
+            if (appMode !== 'play' && appMode !== 'what_if') return;
+            if (isAIEnabled && turn === 'black' && appMode === 'play') return;
             
             const currentScore = calculateAdvancementScore(board, turn);
             const isScoreValid = currentScore > turnStartScore;
@@ -825,10 +917,205 @@
             recordModal.classList.remove('hidden');
         }
 
+        // --- Analysis & Replay Engine ---
+        function parseNotationCoord(s, bSize) {
+            let c = s.charCodeAt(0) - 97;
+            let r = bSize - parseInt(s.substring(1));
+            return {r, c};
+        }
+
+        function loadAnalysis() {
+            const text = analysisText.value.trim();
+            if (!text) return;
+            
+            SoundEngine.play('tap');
+            analysisModal.classList.add('hidden');
+            
+            // Deduce board size
+            let parsedSize = 8;
+            if (text.includes('10')) parsedSize = 10;
+            else if (text.includes('9')) parsedSize = 9;
+
+            // Save Live Game before destroying it
+            if (appMode === 'play') {
+                liveGameSnapshot = captureFullState();
+            }
+            appMode = 'replay';
+            BOARD_SIZE = parsedSize;
+            boardSizeSelect.value = parsedSize.toString();
+            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
+
+            // Setup mock board
+            let b = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+            const backRanks = {
+                8: [5, 4, 3, 6, 0, 3, 4, 5],
+                9: [5, 4, 3, 6, 0, 2, 3, 4, 5], 
+                10: [5, 4, 3, 2, 6, 0, 2, 3, 4, 5]
+            };
+            const backRank = backRanks[BOARD_SIZE];
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                b[0][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'black' };
+                b[1][c] = { type: 'die', value: 2, owner: 'black' };
+                b[BOARD_SIZE - 2][c] = { type: 'die', value: 2, owner: 'white' };
+                b[BOARD_SIZE - 1][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'white' };
+            }
+
+            replayStates = [];
+            let hist = [];
+
+            // Push Initial State
+            replayStates.push({
+                board: copyBoard(b),
+                turn: 'white',
+                currentAP: STARTING_AP_WHITE,
+                fullMoveCount: 1,
+                moveHistory: []
+            });
+
+            const lines = text.split('\n');
+            let mCount = 1;
+
+            try {
+                for (let line of lines) {
+                    let match = line.match(/\d+\.\s+([^:]+)(?:\s*:\s*(.*))?/);
+                    if (!match) continue;
+                    
+                    let wStr = match[1].trim();
+                    let bStr = match[2] ? match[2].trim() : '';
+
+                    // Apply White
+                    applyNotationStr(b, wStr, parsedSize);
+                    hist.push({ n: mCount, w: wStr, b: '' });
+                    replayStates.push({
+                        board: copyBoard(b),
+                        turn: 'black',
+                        currentAP: 6,
+                        fullMoveCount: mCount,
+                        moveHistory: JSON.parse(JSON.stringify(hist))
+                    });
+
+                    // Apply Black
+                    if (bStr) {
+                        applyNotationStr(b, bStr, parsedSize);
+                        hist[hist.length-1].b = bStr;
+                        replayStates.push({
+                            board: copyBoard(b),
+                            turn: 'white',
+                            currentAP: 6,
+                            fullMoveCount: mCount + 1,
+                            moveHistory: JSON.parse(JSON.stringify(hist))
+                        });
+                    }
+                    mCount++;
+                }
+            } catch(e) {
+                console.error("Parse Error:", e);
+                alert("There was an error parsing the game record. Showing up to point of failure.");
+            }
+
+            replayIndex = 0;
+            loadReplayState(replayIndex);
+        }
+
+        function applyNotationStr(b, str, bSize) {
+            if (!str || str === '...') return;
+            let actions = str.split(',').map(s => s.trim());
+            for (let act of actions) {
+                if (act.endsWith('+')) {
+                    let c = parseNotationCoord(act.replace('+', ''), bSize);
+                    if(b[c.r][c.c]) b[c.r][c.c].value++;
+                } else if (act.endsWith('-')) {
+                    let c = parseNotationCoord(act.replace('-', ''), bSize);
+                    if(b[c.r][c.c]) b[c.r][c.c].value--;
+                } else if (act.includes('x')) {
+                    let p = act.split('x');
+                    let from = parseNotationCoord(p[0], bSize), to = parseNotationCoord(p[1], bSize);
+                    b[to.r][to.c] = b[from.r][from.c];
+                    b[from.r][from.c] = null;
+                } else if (act.includes('-')) {
+                    let p = act.split('-');
+                    let from = parseNotationCoord(p[0], bSize), to = parseNotationCoord(p[1], bSize);
+                    b[to.r][to.c] = b[from.r][from.c];
+                    b[from.r][from.c] = null;
+                }
+            }
+        }
+
+        function loadReplayState(idx) {
+            let rs = replayStates[idx];
+            board = copyBoard(rs.board);
+            turn = rs.turn;
+            currentAP = rs.currentAP;
+            fullMoveCount = rs.fullMoveCount;
+            moveHistory = JSON.parse(JSON.stringify(rs.moveHistory));
+            currentTurnActions = [];
+            selectedSquare = null;
+            gameOver = false;
+            
+            captureTurnStartState(); // Ensure AS score references the current snapshot
+            
+            gameLog.innerHTML = '';
+            log(`Replay Mode: Step ${idx} / ${replayStates.length - 1}`, "text-teal-400 font-bold");
+            if (moveHistory.length > 0) {
+                let last = moveHistory[moveHistory.length-1];
+                log(`Last played: ${last.b ? last.b : last.w}`);
+            }
+            
+            updateUI();
+        }
+
+        function exitAnalysis() {
+            SoundEngine.play('tap');
+            appMode = 'play';
+            if (liveGameSnapshot) {
+                restoreFullState(liveGameSnapshot);
+                BOARD_SIZE = board.length;
+                boardSizeSelect.value = BOARD_SIZE.toString();
+                boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+                boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
+                liveGameSnapshot = null;
+            } else {
+                initGame(BOARD_SIZE);
+            }
+            updateUI();
+        }
+
+        function enterWhatIf() {
+            SoundEngine.play('tap');
+            whatIfAnchorSnapshot = captureFullState();
+            appMode = 'what_if';
+            gameLog.innerHTML = '';
+            log("Entered What If Sandbox", "text-purple-400 font-bold");
+            updateUI();
+        }
+
+        function freshWhatIf() {
+            SoundEngine.play('tap');
+            if (whatIfAnchorSnapshot) {
+                restoreFullState(whatIfAnchorSnapshot);
+                gameLog.innerHTML = '';
+                log("What If Sandbox Reset", "text-yellow-400 font-bold");
+                updateUI();
+            }
+        }
+
+        function leaveWhatIf() {
+            SoundEngine.play('tap');
+            if (whatIfAnchorSnapshot) {
+                restoreFullState(whatIfAnchorSnapshot);
+                appMode = 'replay';
+                gameLog.innerHTML = '';
+                log(`Returned to Replay Mode`, "text-teal-400 font-bold");
+                updateUI();
+            }
+        }
+
         // --- User Interaction ---
         function selectPiece(r, c) {
+            if (appMode === 'replay') return; 
             if (gameOver || aiThinking) return; 
-            if (isAIEnabled && turn === 'black') return;
+            if (isAIEnabled && turn === 'black' && appMode === 'play') return;
             
             const piece = getPiece(r, c);
             
@@ -884,7 +1171,7 @@
 
         function attemptMove(fromR, fromC, toR, toC) {
             if (!isValidMove(fromR, fromC, toR, toC, true)) {
-                if (turn !== 'black' || !isAIEnabled) {
+                if (turn !== 'black' || !isAIEnabled || appMode !== 'play') {
                     SoundEngine.play('error');
                     log("Invalid move.", "text-red-400");
                 }
@@ -925,7 +1212,7 @@
             updateUI();
             checkAutoTurnEnd();
             
-            if (turn === 'black' && isAIEnabled) {
+            if (turn === 'black' && isAIEnabled && appMode === 'play') {
                 const sq = document.querySelector(`.square[data-r="${toR}"][data-c="${toC}"]`);
                 if(sq) {
                     sq.classList.add('ai-highlight');
@@ -998,7 +1285,6 @@
                         if (e.type === 'king') {
                             threatens = dist <= 1;
                         } else {
-                            // Can enemy reach the King considering dynamic AP? (Direct or Inc+Cap)
                             if (e.value >= dist) threatens = true;
                             else if (e.value < 6 && e.value + 1 >= dist) threatens = true;
                         }
@@ -1019,7 +1305,6 @@
             return false;
         }
 
-        // NEW: Threat Detection Matrix to stop kamikaze plays
         function getThreatenedMaterial(b, owner) {
             let enemyOwner = owner === 'white' ? 'black' : 'white';
             let threatenedPoints = 0;
@@ -1029,9 +1314,7 @@
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     let e = b[r][c];
                     if (e && e.owner === enemyOwner) {
-                        // Enemy could increment, giving them +1 range
                         let maxRange = e.type === 'king' ? 1 : Math.min(6, e.value + 1);
-                        
                         let dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
                         for (let d of dirs) {
                             for (let dist = 1; dist <= maxRange; dist++) {
@@ -1046,7 +1329,6 @@
                                         if (e.type === 'king') {
                                             canCap = (dist <= 1);
                                         } else {
-                                            // Evaluates if the enemy can capture directly, or spend 1 AP to inc/dec and then capture
                                             if (e.value >= dist && e.value <= target.value) canCap = true;
                                             else if (e.value < 6 && (e.value + 1) >= dist && (e.value + 1) <= target.value) canCap = true;
                                             else if (e.value > 1 && (e.value - 1) >= dist && (e.value - 1) <= target.value) canCap = true;
@@ -1060,7 +1342,7 @@
                                             }
                                         }
                                     }
-                                    break; // Raycast blocked by piece
+                                    break; 
                                 }
                             }
                         }
@@ -1158,14 +1440,14 @@
                     if (p && p.owner === 'white' && p.type === 'king') whiteKingAlive = true;
                 }
             }
-            if (!whiteKingAlive) return true; // We won!
+            if (!whiteKingAlive) return true; 
 
             if (isKingInDanger(state.board, 'black')) return false;
 
             if (state.kingMoved && state.initialKingPos) {
                 let kp = state.initialKingPos;
                 let p = state.board[kp.r][kp.c];
-                if (p && p.type === 'king' && p.owner === 'black') return false; // Trivial king move
+                if (p && p.type === 'king' && p.owner === 'black') return false; 
             }
 
             let currAdv = calculateAdvancementScore(state.board, 'black');
@@ -1194,42 +1476,39 @@
                 }
             }
 
-            // Execute Threat Analysis
             let myThreatenedMat = getThreatenedMaterial(b, 'black');
             let enThreatenedMat = getThreatenedMaterial(b, 'white');
 
             let score = (myMat - enMat) * 100;
             score += myAdv * 10;
-            
-            // Massively penalize the AI for leaving its pieces hanging where you can capture them dynamically.
             score -= myThreatenedMat * 120; 
-            // Slight bonus for positioning its pieces to threaten yours safely
             score += enThreatenedMat * 10; 
 
             if (enKingPos) {
                 if (isKingInDanger(b, 'black')) score -= 500000;
-                if (isKingInDanger(b, 'white')) score += 2000; // Significantly reduced to prevent sacrificing a piece just for a check
+                if (isKingInDanger(b, 'white')) score += 2000; 
             } else {
-                score += 10000000; // Checkmate
+                score += 10000000; 
             }
             
             let hash = getBoardHash(b);
-            if (boardHistory.includes(hash)) score -= 80000; // Anti-looping
+            if (boardHistory.includes(hash)) score -= 80000; 
 
             if (state.captured || myAdv > state.turnStartScore) {
                 score += 30000;
             }
 
-            if (isValidEndState(state)) score += 50000; // Keep valid states heavily prioritized
-            if (state.seq) score -= state.seq.length * 10; // Prefer shorter sequences for same board result
+            if (isValidEndState(state)) score += 50000; 
+            if (state.seq) score -= state.seq.length * 10; 
 
             return score;
         }
 
         async function runAITurn() {
+            if (appMode !== 'play') return;
             aiThinking = true;
             updateUI(); 
-            await new Promise(r => setTimeout(r, 600)); // UI flush delay
+            await new Promise(r => setTimeout(r, 600)); 
 
             let bestFinalState = null;
             let bestFinalScore = -Infinity;
@@ -1246,9 +1525,8 @@
             };
 
             let queue = [initialState];
-            let BEAM_WIDTH = 150; // Max states evaluated per depth level
+            let BEAM_WIDTH = 150; 
 
-            // Beam Search loop (Max depth is 6, since min cost is 1 AP)
             for (let d = 0; d < 6; d++) {
                 let nextQueue = [];
                 for (let state of queue) {
@@ -1273,7 +1551,6 @@
 
                 if (nextQueue.length === 0) break;
 
-                // Sort and Prune (Beam Search)
                 nextQueue.sort((a, b) => b.heuristic - a.heuristic);
                 
                 let unique = [];
@@ -1289,7 +1566,6 @@
                 queue = unique;
             }
 
-            // Final check on remaining queue
             for (let state of queue) {
                 if (isValidEndState(state)) {
                     let h = calcHeuristic(state);
@@ -1307,7 +1583,6 @@
                 return;
             }
 
-            // Execute the optimal sequence found by the beam search
             for (let act of bestFinalState.seq) {
                 if (gameOver) break;
 
@@ -1322,7 +1597,7 @@
             }
 
             aiThinking = false;
-            if (!gameOver && turn === 'black') {
+            if (!gameOver && turn === 'black' && appMode === 'play') {
                 switchTurn();
             } else {
                 updateUI(); 
@@ -1339,7 +1614,7 @@
             boardEl.innerHTML = '';
             let validMoves = [], validCaptures = [];
 
-            if (selectedSquare && !gameOver && (!isAIEnabled || turn === 'white') && !aiThinking) {
+            if (selectedSquare && !gameOver && (!isAIEnabled || turn === 'white' || appMode === 'what_if') && !aiThinking && appMode !== 'replay') {
                  for(let r=0; r<BOARD_SIZE; r++){
                      for(let c=0; c<BOARD_SIZE; c++){
                          if(r===selectedSquare.r && c===selectedSquare.c) continue;
@@ -1413,12 +1688,9 @@
             turnIndicatorEl.className = `text-xl font-bold capitalize ${turn === 'white' ? 'text-white' : 'text-slate-400'}`;
             apCounterEl.innerText = currentAP;
             
-            const isLocked = aiThinking;
+            const isLocked = aiThinking || appMode === 'replay';
             
-            // Check for Trivial King State
             const isTrivialKingState = checkTrivialKingState(board, turn);
-
-            // Advancement Score UI Updates
             const currentScore = calculateAdvancementScore(board, turn);
             const isScoreValid = currentScore > turnStartScore;
             const isValidEndTurn = (isScoreValid || captureThisTurn) && !isTrivialKingState;
@@ -1433,12 +1705,43 @@
                 advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-red-400 ml-1 block">✗ Need >${turnStartScore}</span>`;
             }
 
-            // DYNAMIC BUTTON STYLING
+            // UI Mode Toggling
+            if (appMode === 'play') {
+                playControls.classList.remove('hidden');
+                replayControls.classList.add('hidden');
+                whatIfExtras.classList.add('hidden');
+                utilityGrid.classList.remove('hidden');
+                socialGrid.classList.remove('hidden');
+                aiToggleWrapper.classList.remove('hidden');
+                boardSizeWrapper.classList.remove('hidden');
+                resetFooter.classList.remove('hidden');
+            } else if (appMode === 'replay') {
+                playControls.classList.add('hidden');
+                replayControls.classList.remove('hidden');
+                whatIfExtras.classList.add('hidden');
+                utilityGrid.classList.add('hidden');
+                socialGrid.classList.add('hidden');
+                aiToggleWrapper.classList.add('hidden');
+                boardSizeWrapper.classList.add('hidden');
+                resetFooter.classList.add('hidden');
+                
+                replayBackBtn.disabled = replayIndex === 0;
+                replayForwardBtn.disabled = replayIndex === replayStates.length - 1;
+            } else if (appMode === 'what_if') {
+                playControls.classList.remove('hidden');
+                replayControls.classList.add('hidden');
+                whatIfExtras.classList.remove('hidden');
+                utilityGrid.classList.add('hidden');
+                socialGrid.classList.add('hidden');
+                aiToggleWrapper.classList.add('hidden');
+                boardSizeWrapper.classList.add('hidden');
+                resetFooter.classList.add('hidden');
+            }
+
             const maxApForTurn = (fullMoveCount === 1 && turn === 'white') ? STARTING_AP_WHITE : MAX_AP;
             const apSpent = currentAP < maxApForTurn;
             const btnBase = "btn text-sm px-4 py-3 w-full ";
 
-            // 1. Reset Button Logic
             if (isLocked || gameOver || !apSpent) {
                 resetTurnBtn.className = btnBase + "bg-slate-700 text-slate-500 cursor-not-allowed rounded-full";
                 resetTurnBtn.disabled = true;
@@ -1447,7 +1750,6 @@
                 resetTurnBtn.disabled = false;
             }
 
-            // 2. End Turn / Invalid Turn Logic
             if (isLocked || gameOver) {
                 endTurnBtn.className = btnBase + "bg-slate-700 text-slate-500 cursor-not-allowed rounded";
                 endTurnBtn.innerText = "End Turn";
@@ -1455,7 +1757,7 @@
             } else if (isValidEndTurn) {
                 endTurnBtn.className = btnBase + "bg-green-600 hover:bg-green-500 text-white rounded";
                 endTurnBtn.innerText = "End Turn";
-                endTurnBtn.disabled = false; // Enabled for manual clicking if they choose to end early
+                endTurnBtn.disabled = false; 
             } else {
                 if (currentAP === 0 || isTrivialKingState) {
                     endTurnBtn.className = btnBase + "bg-red-600 text-white cursor-not-allowed rounded flash-red";
@@ -1469,14 +1771,14 @@
             }
 
             const hasSelection = selectedSquare && board[selectedSquare.r][selectedSquare.c];
-            if (hasSelection && board[selectedSquare.r][selectedSquare.c].owner === turn && (!isAIEnabled || turn === 'white') && !isLocked) {
+            if (hasSelection && board[selectedSquare.r][selectedSquare.c].owner === turn && (!isAIEnabled || turn === 'white' || appMode === 'what_if') && !isLocked) {
                 const p = board[selectedSquare.r][selectedSquare.c];
                 selectedPieceDisplay.innerText = p.type === 'king' ? "Selected: King" : `Selected: Value ${p.value}`;
                 incBtn.disabled = p.type === 'king' || p.value >= 6 || currentAP < COST_MOD;
                 decBtn.disabled = p.type === 'king' || p.value <= 1 || currentAP < COST_MOD;
                 if (p.type === 'king') { incBtn.disabled = true; decBtn.disabled = true; }
             } else {
-                selectedPieceDisplay.innerText = isLocked ? "AI Thinking..." : "Select a piece";
+                selectedPieceDisplay.innerText = isLocked ? "Replay / AI Mode" : "Select a piece";
                 incBtn.disabled = true; decBtn.disabled = true;
             }
         }
@@ -1515,7 +1817,7 @@
         aiToggle.addEventListener('change', (e) => {
             SoundEngine.play('tap');
             isAIEnabled = e.target.checked;
-            if(turn === 'black' && isAIEnabled) runAITurn();
+            if(turn === 'black' && isAIEnabled && appMode === 'play') runAITurn();
         });
         
         rulesBtn.addEventListener('click', () => { SoundEngine.play('tap'); rulesModal.classList.remove('hidden'); });
@@ -1535,6 +1837,32 @@
             SoundEngine.play('tap');
             winnerModal.classList.add('hidden');
         });
+
+        // Analysis Listeners
+        analysisBtn.addEventListener('click', () => { SoundEngine.play('tap'); analysisModal.classList.remove('hidden'); });
+        closeAnalysisBtn.addEventListener('click', () => { SoundEngine.play('tap'); analysisModal.classList.add('hidden'); });
+        loadAnalysisBtn.addEventListener('click', loadAnalysis);
+        
+        replayBackBtn.addEventListener('click', () => {
+            SoundEngine.play('tap');
+            if (replayIndex > 0) {
+                replayIndex--;
+                loadReplayState(replayIndex);
+            }
+        });
+
+        replayForwardBtn.addEventListener('click', () => {
+            SoundEngine.play('tap');
+            if (replayIndex < replayStates.length - 1) {
+                replayIndex++;
+                loadReplayState(replayIndex);
+            }
+        });
+
+        exitAnalysisBtn.addEventListener('click', exitAnalysis);
+        whatIfBtn.addEventListener('click', enterWhatIf);
+        whatIfFreshBtn.addEventListener('click', freshWhatIf);
+        whatIfLeaveBtn.addEventListener('click', leaveWhatIf);
 
         initGame();
 
