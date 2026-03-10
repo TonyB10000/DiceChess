@@ -939,20 +939,17 @@
             SoundEngine.play('tap');
             analysisModal.classList.add('hidden');
             
-            // Get explicitly selected board size from the Analysis Modal
             let parsedSize = parseInt(analysisBoardSizeSelect.value);
 
-            // Save Live Game before destroying it
             if (appMode === 'play') {
                 liveGameSnapshot = captureFullState();
             }
             appMode = 'replay';
             BOARD_SIZE = parsedSize;
-            boardSizeSelect.value = parsedSize.toString(); // Sync main app dropdown
+            boardSizeSelect.value = parsedSize.toString(); 
             boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
 
-            // Setup mock board
             let b = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             const backRanks = {
                 8: [5, 4, 3, 6, 0, 3, 4, 5],
@@ -970,7 +967,6 @@
             replayStates = [];
             let hist = [];
 
-            // Push Initial State
             replayStates.push({
                 board: copyBoard(b),
                 turn: 'white',
@@ -990,7 +986,6 @@
                     let wStr = match[1].trim();
                     let bStr = match[2] ? match[2].trim() : '';
 
-                    // Apply White
                     applyNotationStr(b, wStr, parsedSize);
                     hist.push({ n: mCount, w: wStr, b: '' });
                     replayStates.push({
@@ -1001,7 +996,6 @@
                         moveHistory: JSON.parse(JSON.stringify(hist))
                     });
 
-                    // Apply Black
                     if (bStr) {
                         applyNotationStr(b, bStr, parsedSize);
                         hist[hist.length-1].b = bStr;
@@ -1059,7 +1053,7 @@
             selectedSquare = null;
             gameOver = false;
             
-            captureTurnStartState(); // Ensure AS score references the current snapshot
+            captureTurnStartState(); 
             
             gameLog.innerHTML = '';
             log(`Replay Mode: Step ${idx} / ${replayStates.length - 1}`, "text-teal-400 font-bold");
@@ -1467,6 +1461,9 @@
             let myMat = 0, enMat = 0;
             let myAdv = calculateAdvancementScore(b, 'black');
             let enKingPos = null;
+            let myKingPos = null;
+            let myPiecesList = [];
+            let shieldCount = 0;
 
             for (let r=0; r<BOARD_SIZE; r++) {
                 for (let c=0; c<BOARD_SIZE; c++) {
@@ -1474,6 +1471,10 @@
                     if (p) {
                         if (p.owner === 'black') {
                             myMat += getPieceValue(p);
+                            let mid = BOARD_SIZE / 2;
+                            if (r >= mid - 1 && r <= mid && c >= mid - 1 && c <= mid) myMat += 2; // Center control
+                            if (p.type === 'king') myKingPos = {r,c};
+                            else myPiecesList.push({r,c, val: p.value});
                         } else {
                             enMat += getPieceValue(p);
                             if (p.type === 'king') enKingPos = {r,c};
@@ -1489,6 +1490,29 @@
             score += myAdv * 10;
             score -= myThreatenedMat * 120; 
             score += enThreatenedMat * 10; 
+
+            // --- NEW: Royal Guard & Threat Projection ---
+            if (myKingPos) {
+                for (let p of myPiecesList) {
+                    let dist = Math.max(Math.abs(p.r - myKingPos.r), Math.abs(p.c - myKingPos.c));
+                    if (dist >= 1 && dist <= 2) shieldCount++;
+                }
+                // Reward having 1 to 3 guards. Prevents the naked king.
+                score += Math.min(shieldCount, 3) * 1500; 
+                if (shieldCount === 0) score -= 8000; 
+            }
+
+            let numHighMobility = 0;
+            for (let p of myPiecesList) {
+                if (p.val >= 4) numHighMobility++;
+            }
+            // Offset the "material" points lost by not decrementing. 
+            // Keeps 2-3 pieces highly mobile to respond to double checks.
+            score += Math.min(numHighMobility, 3) * 1500; 
+            if (numHighMobility === 0 && myPiecesList.length >= 4) {
+                score -= 5000; 
+            }
+            // --------------------------------------------
 
             if (enKingPos) {
                 if (isKingInDanger(b, 'black')) score -= 500000;
