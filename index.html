@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess by Tony Berard</title>
+    <title>Dice Chess Ultra v22 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg-color: #1e293b;
+            --bg-color: #0f172a;
             --text-color: #f1f5f9;
         }
         
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             overflow: hidden; 
             height: 100dvh; 
             width: 100vw;
@@ -22,18 +22,17 @@
             flex-direction: column;
         }
 
-        /* Prevent text selection only on UI elements to avoid blocking select dropdowns on iOS */
         header, .panel, .board-container {
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* --- Layout --- */
         header {
             flex-shrink: 0;
-            background-color: #0f172a;
+            background-color: #020617;
             padding: 0.5rem;
             text-align: center;
+            border-bottom: 1px solid #1e293b;
             z-index: 10;
         }
 
@@ -46,21 +45,23 @@
             height: 100%;
         }
 
-        /* Portrait */
         .layout-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
             height: 100%;
-            padding: 1rem;
-            gap: 1rem;
+            padding: 0.5rem;
+            gap: 0.5rem;
             overflow-y: auto;
         }
 
         #board-wrapper {
-            width: 100%;
-            max-width: 600px;
+            position: relative;
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 580px;
+            max-height: 580px;
             aspect-ratio: 1 / 1;
             flex-shrink: 0;
             display: flex;
@@ -70,13 +71,12 @@
 
         .sidebar {
             width: 100%;
-            max-width: 600px;
+            max-width: 580px;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
 
-        /* Landscape */
         @media (orientation: landscape) {
             header { display: none; }
             .layout-container {
@@ -84,32 +84,45 @@
                 justify-content: center;
                 align-items: center;
                 padding: 1rem;
-                padding-left: max(1rem, env(safe-area-inset-left)); 
-                padding-right: max(1rem, env(safe-area-inset-right));
-                gap: 2rem;
+                gap: 1.5rem;
             }
             #board-wrapper {
-                height: 90vh; 
-                width: 90vh; 
+                height: 88vh; 
+                width: 88vh; 
                 max-width: none;
+                max-height: none;
             }
             .sidebar {
-                width: 300px;
-                height: 90vh;
+                width: 320px;
+                height: 88vh;
                 overflow-y: auto;
-                justify-content: center;
             }
         }
 
-        /* --- Board --- */
         .board-container {
             display: grid;
             width: 100%;
             height: 100%;
-            border: 4px solid #475569;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            background-color: #475569;
-            gap: 1px;
+            border: 6px solid #334155;
+            border-radius: 8px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+            background-color: #334155;
+            gap: 2px;
+            padding: 1px;
+        }
+
+        #start-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            gap: 1rem;
         }
 
         .square {
@@ -118,1789 +131,661 @@
             align-items: center;
             position: relative;
             cursor: pointer;
-            overflow: hidden;
-            min-width: 0;
-            min-height: 0;
-            touch-action: manipulation; /* Prevents 300ms tap delay on mobile */
+            transition: background-color 0.1s ease;
+            aspect-ratio: 1 / 1; 
         }
 
-        .square.light { background-color: #e2e8f0; }
-        .square.dark { background-color: #64748b; }
-        
-        .square.selected { background-color: #facc15 !important; } 
+        .square.light { background-color: #cbd5e1; }
+        .square.dark { background-color: #475569; }
+        .square.selected { background-color: #fbbf24 !important; z-index: 5; } 
         .square.valid-move::after {
             content: '';
             width: 25%;
             height: 25%;
-            background-color: rgba(0, 200, 0, 0.5);
+            background-color: rgba(34, 197, 94, 0.7);
             border-radius: 50%;
         }
-        .square.valid-capture { background-color: #f87171 !important; }
-        .square.ai-highlight { background-color: #a855f7 !important; transition: background-color 0.5s; }
+        .square.valid-capture { background-color: #ef4444 !important; }
 
-        /* --- Dice --- */
         .die {
-            width: 85%;
-            height: 85%;
-            border-radius: 15%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            width: 86%;
+            height: 86%;
+            border-radius: 18%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
-            transition: transform 0.2s;
         }
 
-        .die.white { background-color: #f8fafc; border: 2px solid #cbd5e1; }
-        .die.black { background-color: #0f172a; border: 2px solid #334155; }
+        .die.white { background: linear-gradient(135deg, #ffffff, #e2e8f0); border: 1px solid #94a3b8; }
+        .die.black { background: linear-gradient(135deg, #1e293b, #020617); border: 1px solid #334155; }
 
         .die-face {
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            padding: 10%;
+            width: 100%; height: 100%; display: grid;
+            grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 12%;
         }
 
         .pip-container { display: flex; justify-content: center; align-items: center; }
-        .pip {
-            border-radius: 50%;
-            width: 60%; 
-            height: 60%;
-            box-shadow: inset 0 0 2px rgba(0,0,0,0.5);
-        }
+        .pip { border-radius: 50%; width: 65%; height: 65%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.5); }
+        .die.white .pip { background-color: #1e293b; }
+        .die.black .pip { background-color: #f8fafc; }
         
-        .die.white .pip { background-color: #000; }
-        .die.black .pip { background-color: #fff; }
-        
-        .die.white .king-symbol { color: #94a3b8; text-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-        .die.black .king-symbol { color: #e2e8f0; }
+        .king-symbol { font-size: 6vmin; font-weight: bold; display: flex; justify-content: center; align-items: center; }
+        .die.white .king-symbol { color: #475569; }
+        .die.black .king-symbol { color: #f1f5f9; }
+        @media (min-width: 600px) { .king-symbol { font-size: 2.8rem; } }
 
-        .king-symbol {
-            font-size: 8vmin; 
-            line-height: 1;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-            margin-top: -5%; /* Optical center adjustment for unicode crown */
-        }
-        @media (min-width: 600px) { .king-symbol { font-size: 3.5rem; } }
+        .panel { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
 
-        /* --- UI --- */
-        .panel {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
+        .btn { @apply flex justify-center items-center font-bold transition-all duration-200 active:scale-95; border-radius: 0.5rem; }
+        .btn-action { @apply bg-blue-600 hover:bg-blue-500 text-white shadow-lg disabled:opacity-20 disabled:cursor-not-allowed; }
+        .btn-utility { @apply bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] py-1.5 uppercase tracking-widest; }
 
-        .btn {
-            @apply flex justify-center items-center font-bold transition-all duration-200 shadow-md;
-            touch-action: manipulation;
-        }
-        
-        .btn-action {
-            @apply bg-blue-600 hover:bg-blue-500 text-white rounded px-4 py-3 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed;
-        }
+        .clock { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+        .clock-off { color: #475569; }
+        .flash-red { animation: flashRed 0.8s infinite; }
+        @keyframes flashRed { 0%, 100% { background-color: #dc2626; } 50% { background-color: #7f1d1d; } }
 
-        /* Flashing Invalid Turn Alarm */
-        @keyframes flashRed {
-            0%, 100% { background-color: #dc2626; box-shadow: 0 0 12px #dc2626; }
-            50% { background-color: #7f1d1d; box-shadow: none; }
-        }
-        .flash-red {
-            animation: flashRed 1s ease-in-out infinite;
-        }
+        .log-container { height: 70px; overflow-y: auto; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; background: #020617; border-radius: 0.5rem; padding: 0.4rem; color: #94a3b8; border: 1px solid #1e293b; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); }
 
-        .log-container {
-            height: 80px;
-            overflow-y: auto;
-            font-size: 0.85rem;
-            font-family: monospace;
-            background: #0f172a;
-            border-radius: 4px;
-            padding: 0.5rem;
-            color: #cbd5e1;
-            margin-top: auto;
-        }
+        .ai-thinking { animation: pulse-blue 1.5s infinite; }
+        .predator-thinking { animation: pulse-red 0.8s infinite; }
+        @keyframes pulse-blue { 0%, 100% { color: #818cf8; text-shadow: 0 0 5px #4f46e5; } 50% { color: #f1f5f9; text-shadow: none; } }
+        @keyframes pulse-red { 0%, 100% { color: #f87171; text-shadow: 0 0 5px #ef4444; } 50% { color: #f1f5f9; text-shadow: none; } }
 
-        .toggle-checkbox:checked { right: 0; border-color: #68D391; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
-        
-        #flash-overlay {
-            position: fixed; inset: 0; display: flex; justify-content: center; align-items: center;
-            pointer-events: none; z-index: 50; opacity: 0; transition: opacity 0.3s ease;
+        .start-btn {
+            @apply bg-green-600 hover:bg-green-500 text-white font-black py-6 px-12 rounded-2xl text-2xl shadow-2xl transition-all active:scale-90 uppercase;
+            border: 4px solid rgba(255,255,255,0.2);
+            letter-spacing: 0.1em;
         }
-        #flash-text {
-            font-size: 3rem; font-weight: 900; color: #fbbf24; background: rgba(0,0,0,0.7);
-            padding: 1rem 3rem; border-radius: 1rem; text-align: center;
-        }
-        #flash-overlay.active { opacity: 1; }
-
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex;
-            justify-content: center; align-items: center; z-index: 100;
-        }
-        .modal-content-scroll { max-height: 85vh; overflow-y: auto; }
-        #record-modal, #rules-modal, #analysis-modal { z-index: 150; }
-
-        textarea { @apply w-full h-48 bg-slate-900 text-slate-300 p-2 rounded text-sm font-mono border border-slate-700 resize-none mb-4; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1 class="text-xl font-bold text-blue-400">DICE CHESS</h1>
+        <div class="flex items-center justify-center gap-2">
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v22 Survivalist</span>
+            <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
+        </div>
     </header>
 
     <main>
         <div class="layout-container">
             
-            <!-- BOARD -->
             <div id="board-wrapper">
                 <div id="board" class="board-container"></div>
+                <div id="start-overlay">
+                    <button id="start-game-btn" class="start-btn">START GAME</button>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Timers will engage on press</p>
+                </div>
             </div>
 
-            <!-- SIDEBAR -->
             <div class="sidebar">
                 
-                <!-- Status & AI Toggle -->
-                <div class="panel">
-                    <div class="flex justify-between items-center mb-3">
-                        <div>
-                            <div class="text-xs text-slate-400 uppercase tracking-wider">Turn</div>
-                            <div id="turn-indicator" class="text-xl font-bold text-white capitalize">White</div>
+                <div class="flex gap-2">
+                    <div id="white-clock-panel" class="flex-1 panel flex flex-col items-center border-b-4 border-slate-700 transition-all">
+                        <div class="text-[8px] text-slate-400 uppercase font-black">White Time</div>
+                        <div id="white-time" class="clock text-2xl font-bold clock-off uppercase">OFF</div>
+                    </div>
+                    <div id="black-clock-panel" class="flex-1 panel flex flex-col items-center border-b-4 border-slate-700 transition-all">
+                        <div class="text-[8px] text-slate-400 uppercase font-black">Black Time</div>
+                        <div id="black-time" class="clock text-2xl font-bold clock-off uppercase">OFF</div>
+                    </div>
+                </div>
+
+                <div class="panel text-center">
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex-1">
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Status</div>
+                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center">WHITE TURN</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-xs text-slate-400 uppercase tracking-wider">Adv. Score</div>
-                            <div id="adv-score-display" class="text-lg font-bold text-white">0</div>
+                        <div class="flex-1 px-3 border-l border-r border-slate-700">
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Adv. Score</div>
+                            <div id="adv-score-display" class="text-xs font-bold text-white text-center">0</div>
                         </div>
-                        <div class="text-right">
-                            <div class="text-xs text-slate-400 uppercase tracking-wider">AP</div>
-                            <div class="flex items-baseline justify-end gap-1">
-                                <span id="ap-counter" class="text-3xl font-mono text-yellow-400 font-bold">3</span>
-                                <span class="text-sm text-slate-500">/ 6</span>
+                        <div class="flex-1">
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">AP Left</div>
+                            <div class="flex items-baseline justify-center gap-0.5">
+                                <span id="ap-counter" class="text-lg font-black text-yellow-400">3</span>
+                                <span class="text-[8px] text-slate-500">/ 6</span>
                             </div>
                         </div>
                     </div>
 
-                    <div id="ai-toggle-wrapper" class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
-                        <span class="text-sm font-semibold text-slate-300">Play vs AI (Black)</span>
-                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" name="toggle" id="ai-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                            <label for="ai-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-400 cursor-pointer"></label>
+                    <div class="grid grid-cols-2 gap-2 px-2">
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI Sparring</span>
+                            <input type="checkbox" id="ai-toggle" class="w-3 h-3 rounded bg-slate-900 border-slate-600 text-blue-600 cursor-pointer" checked>
                         </div>
-                    </div>
-
-                    <div id="board-size-wrapper" class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700 mt-2">
-                        <span class="text-sm font-semibold text-slate-300">Board Size</span>
-                        <select id="board-size-select" class="bg-slate-700 text-white text-sm rounded px-2 py-1 outline-none border border-slate-600">
-                            <option value="8">8x8</option>
-                            <option value="9">9x9</option>
-                            <option value="10" selected>10x10</option>
-                        </select>
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size</span>
+                            <select id="board-size-select" class="bg-transparent text-white text-[9px] font-bold outline-none cursor-pointer">
+                                <option value="8">8x8</option>
+                                <option value="9">9x9</option>
+                                <option value="10" selected>10x10</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Controls -->
-                <div class="panel flex flex-col gap-2 flex-grow relative">
-                    <div class="text-xs text-blue-300 font-semibold text-center h-5" id="selected-piece-display">Select a piece</div>
+                <div class="panel relative">
+                    <div id="selected-piece-display" class="text-[8px] text-blue-400 font-bold text-center mb-1 uppercase tracking-tighter">Select Piece</div>
                     
-                    <!-- Standard Play Controls -->
-                    <div id="play-controls" class="flex flex-col gap-2">
-                        <div class="grid grid-cols-2 gap-3">
-                            <button id="inc-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
-                                <span class="text-xl">▲</span>
-                                <span class="text-[10px] leading-tight text-slate-300">Inc (+1)</span>
-                            </button>
-                            <button id="dec-btn" class="btn btn-action flex flex-col items-center justify-center h-16">
-                                <span class="text-xl">▼</span>
-                                <span class="text-[10px] leading-tight text-slate-300">Dec (-1)</span>
-                            </button>
-                        </div>
-
-                        <div class="flex gap-2 mt-2">
-                            <button id="reset-turn-btn" class="btn text-sm px-4 py-3">Reset Turn</button>
-                            <button id="end-turn-btn" class="btn text-sm px-4 py-3">End Turn</button>
-                        </div>
-                    </div>
-
-                    <!-- Replay Controls (Hidden by Default) -->
-                    <div id="replay-controls" class="hidden flex flex-col gap-2">
+                    <div id="play-controls" class="space-y-1.5">
                         <div class="grid grid-cols-2 gap-2">
-                            <button id="replay-back-btn" class="btn bg-slate-600 hover:bg-slate-500 text-white rounded py-3">◄ Back</button>
-                            <button id="replay-forward-btn" class="btn bg-slate-600 hover:bg-slate-500 text-white rounded py-3">Forward ►</button>
+                            <button id="inc-btn" class="btn btn-action py-2 uppercase">▲ <span class="ml-1 text-[8px] opacity-60">INC</span></button>
+                            <button id="dec-btn" class="btn btn-action py-2 uppercase">▼ <span class="ml-1 text-[8px] opacity-60">DEC</span></button>
                         </div>
-                        <button id="what-if-btn" class="btn bg-purple-600 hover:bg-purple-500 text-white rounded py-3 w-full mt-2">What If...</button>
-                        <button id="exit-analysis-btn" class="btn bg-red-600 hover:bg-red-500 text-white rounded py-2 w-full mt-1 text-xs">Exit Analysis</button>
-                    </div>
-
-                    <!-- What If Extras (Appended below Play controls during What If) -->
-                    <div id="what-if-extras" class="hidden grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-600">
-                        <button id="what-if-fresh-btn" class="btn bg-yellow-600 hover:bg-yellow-500 text-white text-xs py-2 rounded">Fresh</button>
-                        <button id="what-if-leave-btn" class="btn bg-slate-600 hover:bg-slate-500 text-white text-xs py-2 rounded">Leave</button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="reset-turn-btn" class="btn bg-slate-800 hover:bg-slate-700 text-white py-1.5 text-[9px] uppercase">RESET</button>
+                            <button id="end-turn-btn" class="btn bg-green-600 hover:bg-green-500 text-white py-1.5 text-[9px] uppercase">END TURN</button>
+                        </div>
                     </div>
                     
-                    <!-- Utility Buttons Grid -->
-                    <div class="grid grid-cols-3 gap-2 mt-2" id="utility-grid">
-                        <button id="rules-btn" class="btn rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2">Rules</button>
-                        <button id="record-btn" class="btn rounded bg-slate-600 hover:bg-slate-500 text-white text-xs py-2">Record</button>
-                        <button id="analysis-btn" class="btn rounded bg-teal-600 hover:bg-teal-500 text-white text-xs py-2">Analysis</button>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-2 mt-1" id="social-grid">
-                        <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" class="btn rounded bg-pink-600 hover:bg-pink-500 text-white text-xs py-2 flex items-center justify-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> Support
-                        </a>
-                        <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" class="btn rounded bg-blue-700 hover:bg-blue-600 text-white text-xs py-2 flex items-center justify-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg> Facebook
-                        </a>
+                    <div class="grid grid-cols-3 gap-1.5 mt-2">
+                        <button id="rules-btn" class="btn btn-utility uppercase">Rules</button>
+                        <button id="record-btn" class="btn btn-utility uppercase">Log</button>
+                        <button id="settings-btn" class="btn btn-utility bg-indigo-800 uppercase">Clock</button>
                     </div>
                 </div>
 
-                <!-- Log -->
                 <div id="game-log" class="log-container"></div>
-                <div class="text-[10px] text-center text-slate-500 mt-1" id="reset-footer">
-                    <span id="reset-btn" class="underline cursor-pointer hover:text-white">Restart Entire Game</span>
+                <div class="mt-1 flex justify-center">
+                    <button id="new-game-btn" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-[9px] font-black text-slate-500 hover:text-white uppercase transition-all">New Game</button>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <!-- Overlays -->
-    <div id="flash-overlay"><div id="flash-text">White's Turn</div></div>
-
-    <!-- Analysis Modal -->
-    <div id="analysis-modal" class="modal hidden">
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-600 shadow-2xl w-full max-w-lg mx-4">
-            <h3 class="text-xl font-bold text-white mb-2">Analysis Mode</h3>
-            <div class="flex justify-between items-center mb-4">
-                <p class="text-xs text-slate-400">Paste a game record here to replay it.</p>
-                <select id="analysis-board-size" class="bg-slate-700 text-white text-sm rounded px-2 py-1 outline-none border border-slate-500 shadow">
-                    <option value="8">8x8 Grid</option>
-                    <option value="9">9x9 Grid</option>
-                    <option value="10">10x10 Grid</option>
-                </select>
+    <!-- Modals -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
+            <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
+            <div class="space-y-4 mb-6 text-left px-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">White (Mins)</span>
+                    <input type="number" id="white-input" value="15" class="w-16 bg-slate-900 text-white border border-slate-700 rounded p-1 text-center font-mono">
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">Black (Mins)</span>
+                    <input type="number" id="black-input" value="15" class="w-16 bg-slate-900 text-white border border-slate-700 rounded p-1 text-center font-mono">
+                </div>
             </div>
-            <textarea id="analysis-text" class="w-full h-48 bg-slate-900 text-slate-300 p-2 rounded text-sm font-mono border border-slate-700 resize-none mb-4" placeholder="1. e2-e4 : a7-a6..."></textarea>
-            <div class="flex justify-end gap-2">
-                <button id="load-analysis-btn" class="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-500 font-bold">Load Game</button>
-                <button id="close-analysis-btn" class="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500 font-bold">Cancel</button>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="no-clock-btn" class="py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">No Clock</button>
+                <button id="enable-clock-btn" class="py-2 bg-indigo-600 text-white rounded text-[10px] font-bold uppercase">Enable Timer</button>
             </div>
+            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold">Cancel</button>
         </div>
     </div>
 
-    <!-- Rules Modal -->
-    <div id="rules-modal" class="modal hidden">
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-600 shadow-2xl w-full max-w-lg mx-4 modal-content-scroll">
-            <h3 class="text-2xl font-bold text-white mb-4 border-b border-slate-600 pb-2">Dice Chess Rules</h3>
-            <div class="text-sm text-slate-300 space-y-3 mb-4">
-                <p><strong>Goal:</strong> Capture the opponent's King Cube.</p>
-                <p><strong>Mobility & Power:</strong> Die face value = <strong>Mobility</strong> (max squares it can move). Lower value = more <strong>Power</strong> (can only capture pieces with an equal or higher face value).</p>
-                <p><strong>Action Points (AP):</strong> You have 6 AP per turn (White gets 3 AP on turn 1).</p>
-                <ul class="list-disc pl-5 mt-1 space-y-1 text-xs">
-                    <li><strong>Move (3 AP):</strong> Move a piece up to its face value.</li>
-                    <li><strong>Capture (5 AP):</strong> Move and capture an eligible enemy piece.</li>
-                    <li><strong>Increment (1 AP):</strong> +1 to face value (more mobility, less power). Max 6.</li>
-                    <li><strong>Decrement (1 AP):</strong> -1 to face value (less mobility, more power). Min 1.</li>
-                </ul>
-                <p><strong>The King Cube:</strong> Blank face. Neutral power (can capture/be captured by anything). Moves 1 square for 3 AP (can move twice per turn, e.g., in an L-shape).</p>
-                <p><strong>Advancement Score (Anti-Stalling):</strong> To prevent stalling, your <em>Advancement Score</em> (pieces closer to the enemy side score more points) MUST be strictly higher at the end of your turn than at the start.</p>
-                <p><strong>Suspension of Advancement:</strong> The Advancement Score rule is <strong>suspended</strong> if you perform a Capture. This allows for tactical retreats and lateral strikes.</p>
-            </div>
-            
-            <h4 class="text-lg font-bold text-white mt-4 border-b border-slate-600 pb-1 mb-2">How to Use the App</h4>
-            <div class="text-sm text-slate-300 space-y-2 mb-6">
-                <ul class="list-disc pl-5 space-y-1 text-xs">
-                    <li><strong>Moving:</strong> Tap a piece to select it, then tap a highlighted square to move or capture.</li>
-                    <li><strong>Inc/Dec:</strong> Use the ▲ and ▼ buttons to modify a selected piece's value.</li>
-                    <li><strong>Auto-End Turn:</strong> If your turn is legally valid and you reach 0 AP, the turn ends automatically.</li>
-                    <li><strong>Analysis Mode:</strong> Use the Analysis button to paste game records and replay/branch them using "What If" logic.</li>
-                </ul>
-            </div>
-            
-            <div class="flex justify-end">
-                <button id="close-rules-btn" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-500">Got It</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Record Modal -->
-    <div id="record-modal" class="modal hidden">
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-600 shadow-2xl w-full max-w-md mx-4">
-            <h3 class="text-xl font-bold text-white mb-2">Game Record</h3>
-            <textarea id="record-text" readonly></textarea>
-            <div class="flex justify-end gap-2">
-                <button id="copy-record-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Copy</button>
-                <button id="close-record-btn" class="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-500">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirm Modal -->
     <div id="confirm-modal" class="modal hidden">
-        <div class="bg-slate-800 p-6 rounded-xl border-2 border-slate-500 text-center shadow-2xl max-w-sm mx-4">
-            <h3 class="text-xl font-bold text-white mb-6" id="confirm-text">Are you sure?</h3>
-            <div class="flex justify-center gap-4">
-                <button id="confirm-btn-no" class="px-6 py-2 bg-slate-600 text-white font-bold rounded hover:bg-slate-500 w-full">Cancel</button>
-                <button id="confirm-btn-yes" class="px-6 py-2 bg-red-600 text-white font-bold rounded hover:bg-red-500 w-full">Yes</button>
+        <div class="bg-slate-800 p-8 rounded-2xl border-2 border-slate-700 w-full max-w-xs mx-4 text-center shadow-2xl">
+            <h3 class="text-white font-black uppercase text-sm mb-6 text-center">Terminate and Start New?</h3>
+            <div class="flex gap-3">
+                <button id="cancel-new-game" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Cancel</button>
+                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Winner Modal -->
-    <div id="winner-modal" class="modal hidden">
-        <div class="bg-slate-800 p-8 rounded-xl border-2 border-yellow-500 text-center shadow-2xl max-w-sm mx-4">
-            <h2 class="text-3xl font-bold text-yellow-400 mb-4">Game Over</h2>
-            <p id="winner-text" class="text-xl text-white mb-6">White Wins!</p>
-            <button onclick="initGame()" class="btn bg-blue-600 hover:bg-blue-500 text-white w-full rounded py-3">Play Again</button>
-            <button onclick="showRecord()" class="btn bg-slate-600 hover:bg-slate-500 text-white w-full rounded py-3 mt-2">View Record</button>
-            <button id="view-board-btn" class="btn bg-indigo-600 hover:bg-indigo-500 text-white w-full rounded py-3 mt-2">View Board</button>
+    <div id="winner-modal" class="modal hidden text-center">
+        <div class="bg-slate-800 p-8 rounded-2xl border-4 border-yellow-500/30 text-center w-full max-w-xs mx-4 shadow-2xl">
+            <h2 class="text-3xl font-black text-yellow-400 mb-2 italic uppercase tracking-tighter">Victory</h2>
+            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase">Neutralized.</p>
+            <div class="space-y-2">
+                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs">New Game</button>
+                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px]">View Board</button>
+                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors">Copy Record</button>
+            </div>
         </div>
+    </div>
+
+    <div id="record-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
+            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter">Notation Log</h3>
+            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3" readonly></textarea>
+            <div class="flex flex-col gap-2">
+                <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase">Copy to Clipboard</button>
+                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="flash-overlay" class="fixed inset-0 pointer-events-none flex justify-center items-center opacity-0 transition-opacity duration-300 z-50">
+        <div id="flash-text" class="text-4xl font-black italic uppercase px-8 py-3 bg-black/90 rounded-lg border-2 border-yellow-400 text-center uppercase">WHITE</div>
     </div>
 
     <script>
-        // --- Sound Engine (Web Audio API) ---
         const SoundEngine = {
             ctx: null,
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-            },
-            play(type) {
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            play(f, d = 0.08, t = 'sine') {
                 if (!this.ctx) return;
-                const t = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                if (type === 'tap') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, t);
-                    gain.gain.setValueAtTime(0.1, t);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-                    osc.start(t);
-                    osc.stop(t + 0.1);
-                } else if (type === 'slide') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(300, t);
-                    osc.frequency.exponentialRampToValueAtTime(600, t + 0.1);
-                    gain.gain.setValueAtTime(0.1, t);
-                    gain.gain.linearRampToValueAtTime(0, t + 0.15);
-                    osc.start(t);
-                    osc.stop(t + 0.15);
-                } else if (type === 'inc') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(400, t);
-                    osc.frequency.setValueAtTime(600, t + 0.05);
-                    osc.frequency.setValueAtTime(800, t + 0.1);
-                    gain.gain.setValueAtTime(0.05, t);
-                    gain.gain.linearRampToValueAtTime(0, t + 0.15);
-                    osc.start(t);
-                    osc.stop(t + 0.15);
-                } else if (type === 'dec') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(800, t);
-                    osc.frequency.setValueAtTime(600, t + 0.05);
-                    osc.frequency.setValueAtTime(400, t + 0.1);
-                    gain.gain.setValueAtTime(0.05, t);
-                    gain.gain.linearRampToValueAtTime(0, t + 0.15);
-                    osc.start(t);
-                    osc.stop(t + 0.15);
-                } else if (type === 'capture') {
-                    const bufferSize = this.ctx.sampleRate * 0.5;
-                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                    const noise = this.ctx.createBufferSource();
-                    noise.buffer = buffer;
-                    const filter = this.ctx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.setValueAtTime(1000, t);
-                    filter.frequency.exponentialRampToValueAtTime(100, t + 0.5);
-                    const noiseGain = this.ctx.createGain();
-                    noiseGain.gain.setValueAtTime(0.3, t);
-                    noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-                    noise.connect(filter);
-                    filter.connect(noiseGain);
-                    noiseGain.connect(this.ctx.destination);
-                    noise.start(t);
-                    
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(100, t);
-                    osc.frequency.exponentialRampToValueAtTime(30, t + 0.5);
-                    gain.gain.setValueAtTime(0.4, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-                    osc.start(t);
-                    osc.stop(t + 0.5);
-                } else if (type === 'error') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(150, t);
-                    gain.gain.setValueAtTime(0.1, t);
-                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-                    osc.start(t); osc.stop(t + 0.2);
-                } else if (type === 'endTurn') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, t); // A4
-                    osc.frequency.setValueAtTime(554.37, t + 0.1); // C#5
-                    gain.gain.setValueAtTime(0, t);
-                    gain.gain.linearRampToValueAtTime(0.1, t + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-                    osc.start(t);
-                    osc.stop(t + 0.4);
-                } else if (type === 'gameover') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, t); // C5
-                    osc.frequency.setValueAtTime(659.25, t + 0.15); // E5
-                    osc.frequency.setValueAtTime(783.99, t + 0.3); // G5
-                    osc.frequency.setValueAtTime(1046.50, t + 0.45); // C6
-                    gain.gain.setValueAtTime(0, t);
-                    gain.gain.linearRampToValueAtTime(0.15, t + 0.1);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
-                    osc.start(t);
-                    osc.stop(t + 1.5);
-                }
+                const o = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+                g.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + d);
+                o.connect(g); g.connect(this.ctx.destination);
+                o.start(); o.stop(this.ctx.currentTime + d);
             }
         };
-
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        // --- Config ---
         let BOARD_SIZE = 10;
-        const COST_MOVE = 3;
-        const COST_CAPTURE = 5;
-        const COST_MOD = 1;
-        const MAX_AP = 6;
-        const STARTING_AP_WHITE = 3;
-        const PIECE_VALUES = { 1: 70, 2: 60, 3: 50, 4: 40, 5: 30, 6: 20, 0: 1000 };
+        const PIECE_VALUES = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, king: 10000000 };
 
-        // --- App State ---
-        let appMode = 'play'; // 'play', 'replay', 'what_if'
-        
-        // Live Game State
-        let board = []; 
-        let turn = 'white'; 
-        let currentAP = STARTING_AP_WHITE;
-        let selectedSquare = null; 
-        let gameOver = false;
-        let isAIEnabled = false;
-        let aiThinking = false;
-        let boardHistory = []; 
-        let moveHistory = []; 
-        let currentTurnActions = []; 
+        let board = [];
+        let turn = 'white';
+        let currentAP = 3;
+        let selectedSquare = null;
+        let moveHistory = [];
+        let currentTurnActions = [];
         let fullMoveCount = 1;
+        let gameOver = false;
+        let aiThinking = false;
 
-        // Turn Validation State
-        let turnStartBoardState = null;
-        let turnStartScore = 0;
-        let captureThisTurn = false;
-        let kingMovedThisTurn = false;
-        let turnStartKingPos = null;
-        let autoTurnTimeout = null;
+        let useClock = false; 
+        let gameActive = true; 
+        let whiteStartDuration = 900, blackStartDuration = 900;
+        let whiteTime = 900, blackTime = 900;
+        let clockInterval = null;
 
-        // Analysis / Replay State
-        let replayStates = [];
-        let replayIndex = 0;
-        let liveGameSnapshot = null;
-        let whatIfAnchorSnapshot = null;
+        let turnStartBoardSnapshot = null, turnStartScore = 0;
+        let capturedThisTurn = false;
 
-        // --- DOM ---
         const boardEl = document.getElementById('board');
-        const turnIndicatorEl = document.getElementById('turn-indicator');
-        const apCounterEl = document.getElementById('ap-counter');
-        const endTurnBtn = document.getElementById('end-turn-btn');
-        const resetTurnBtn = document.getElementById('reset-turn-btn');
-        const advScoreDisplay = document.getElementById('adv-score-display');
-        const selectedPieceDisplay = document.getElementById('selected-piece-display');
-        const incBtn = document.getElementById('inc-btn');
-        const decBtn = document.getElementById('dec-btn');
-        const gameLog = document.getElementById('game-log');
-        const winnerModal = document.getElementById('winner-modal');
-        const winnerText = document.getElementById('winner-text');
-        const resetBtn = document.getElementById('reset-btn');
-        const aiToggle = document.getElementById('ai-toggle');
-        const boardSizeSelect = document.getElementById('board-size-select');
-        const flashOverlay = document.getElementById('flash-overlay');
-        const flashText = document.getElementById('flash-text');
-        const viewBoardBtn = document.getElementById('view-board-btn');
-        
-        const rulesBtn = document.getElementById('rules-btn');
-        const rulesModal = document.getElementById('rules-modal');
-        const closeRulesBtn = document.getElementById('close-rules-btn');
-        const recordBtn = document.getElementById('record-btn');
-        const recordModal = document.getElementById('record-modal');
-        const recordText = document.getElementById('record-text');
-        const closeRecordBtn = document.getElementById('close-record-btn');
-        const copyRecordBtn = document.getElementById('copy-record-btn');
+        const turnEl = document.getElementById('turn-indicator');
+        const apEl = document.getElementById('ap-counter');
+        const scoreEl = document.getElementById('adv-score-display');
+        const logBox = document.getElementById('game-log');
 
-        // Analysis DOM
-        const analysisBtn = document.getElementById('analysis-btn');
-        const analysisModal = document.getElementById('analysis-modal');
-        const closeAnalysisBtn = document.getElementById('close-analysis-btn');
-        const loadAnalysisBtn = document.getElementById('load-analysis-btn');
-        const analysisText = document.getElementById('analysis-text');
-        const analysisBoardSizeSelect = document.getElementById('analysis-board-size');
-
-        const playControls = document.getElementById('play-controls');
-        const replayControls = document.getElementById('replay-controls');
-        const whatIfExtras = document.getElementById('what-if-extras');
-        const utilityGrid = document.getElementById('utility-grid');
-        const socialGrid = document.getElementById('social-grid');
-        const aiToggleWrapper = document.getElementById('ai-toggle-wrapper');
-        const boardSizeWrapper = document.getElementById('board-size-wrapper');
-        const resetFooter = document.getElementById('reset-footer');
-
-        const replayBackBtn = document.getElementById('replay-back-btn');
-        const replayForwardBtn = document.getElementById('replay-forward-btn');
-        const whatIfBtn = document.getElementById('what-if-btn');
-        const exitAnalysisBtn = document.getElementById('exit-analysis-btn');
-        const whatIfFreshBtn = document.getElementById('what-if-fresh-btn');
-        const whatIfLeaveBtn = document.getElementById('what-if-leave-btn');
-
-        // Custom Confirm Logic
-        const confirmModal = document.getElementById('confirm-modal');
-        const confirmText = document.getElementById('confirm-text');
-        const confirmBtnYes = document.getElementById('confirm-btn-yes');
-        const confirmBtnNo = document.getElementById('confirm-btn-no');
-        let onConfirmYes = null;
-        let onConfirmNo = null;
-
-        function askConfirm(msg, yesCb, noCb = null) {
-            confirmText.innerText = msg;
-            onConfirmYes = yesCb;
-            onConfirmNo = noCb;
-            confirmModal.classList.remove('hidden');
-        }
-
-        confirmBtnYes.addEventListener('click', () => {
-            SoundEngine.play('tap');
-            confirmModal.classList.add('hidden');
-            if (onConfirmYes) onConfirmYes();
-        });
-
-        confirmBtnNo.addEventListener('click', () => {
-            SoundEngine.play('tap');
-            confirmModal.classList.add('hidden');
-            if (onConfirmNo) onConfirmNo();
-        });
-
-        // --- State Management Helpers ---
-        function copyBoard(src) { return src.map(row => row.map(p => p ? {...p} : null)); }
-
-        function captureFullState() {
-            return {
-                board: copyBoard(board),
-                turn, currentAP, selectedSquare, gameOver,
-                boardHistory: JSON.parse(JSON.stringify(boardHistory)),
-                moveHistory: JSON.parse(JSON.stringify(moveHistory)),
-                currentTurnActions: JSON.parse(JSON.stringify(currentTurnActions)),
-                fullMoveCount, turnStartBoardState, turnStartScore,
-                captureThisTurn, kingMovedThisTurn, turnStartKingPos
-            };
-        }
-
-        function restoreFullState(state) {
-            board = copyBoard(state.board);
-            turn = state.turn; currentAP = state.currentAP;
-            selectedSquare = state.selectedSquare; gameOver = state.gameOver;
-            boardHistory = JSON.parse(JSON.stringify(state.boardHistory));
-            moveHistory = JSON.parse(JSON.stringify(state.moveHistory));
-            currentTurnActions = JSON.parse(JSON.stringify(state.currentTurnActions));
-            fullMoveCount = state.fullMoveCount; turnStartBoardState = state.turnStartBoardState;
-            turnStartScore = state.turnStartScore; captureThisTurn = state.captureThisTurn;
-            kingMovedThisTurn = state.kingMovedThisTurn; turnStartKingPos = state.turnStartKingPos;
-        }
-
-        // --- Init ---
-        function initGame(forceSize = null) {
-            clearTimeout(autoTurnTimeout);
-            if (forceSize !== null) {
-                boardSizeSelect.value = forceSize.toString();
-            }
-            BOARD_SIZE = parseInt(boardSizeSelect.value);
-            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-            boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
-
-            appMode = 'play';
-            turn = 'white';
-            currentAP = STARTING_AP_WHITE;
-            selectedSquare = null;
-            gameOver = false;
-            aiThinking = false;
-            moveHistory = [];
-            currentTurnActions = [];
-            fullMoveCount = 1;
-            boardHistory = [];
-
+        function initGame(size = 10) {
+            BOARD_SIZE = size;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-
-            const backRanks = {
-                8: [5, 4, 3, 6, 0, 3, 4, 5],
-                9: [5, 4, 3, 6, 0, 2, 3, 4, 5], 
-                10: [5, 4, 3, 2, 6, 0, 2, 3, 4, 5]
-            };
-            const backRank = backRanks[BOARD_SIZE];
-
+            turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; gameOver = false; selectedSquare = null;
+            useClock = false; gameActive = true; 
+            const layout = { 8:[5,4,3,6,0,3,4,5], 9:[5,4,3,6,0,2,3,4,5], 10:[5,4,3,2,6,0,2,3,4,5] }[BOARD_SIZE];
             for (let c = 0; c < BOARD_SIZE; c++) {
-                board[0][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'black' };
+                board[0][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'black' };
                 board[1][c] = { type: 'die', value: 2, owner: 'black' };
+                board[BOARD_SIZE-2][c] = { type: 'die', value: 2, owner: 'white' };
+                board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
             }
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                board[BOARD_SIZE - 2][c] = { type: 'die', value: 2, owner: 'white' };
-                board[BOARD_SIZE - 1][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'white' };
-            }
-
-            winnerModal.classList.add('hidden');
-            recordModal.classList.add('hidden');
-            gameLog.innerHTML = `<div class="text-green-500">Game started (${BOARD_SIZE}x${BOARD_SIZE}).</div><div class="text-yellow-500">White\'s first turn (3 AP).</div>`;
-            
-            captureTurnStartState();
-            updateUI();
+            clearInterval(clockInterval);
+            clockInterval = setInterval(tickClock, 1000);
+            document.getElementById('start-overlay').style.display = 'none';
+            captureTurnState(); render(); updateClockDisplay();
+            log(`v22 Survivalist: Piece preservation priority high.`, "text-blue-400 font-bold uppercase");
         }
 
-        function calculateAdvancementScore(b, player) {
-            let score = 0;
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    const p = b[r][c];
-                    if (p && p.owner === player) {
-                        if (player === 'white') score += (BOARD_SIZE - r); 
-                        if (player === 'black') score += (r + 1); 
-                    }
-                }
-            }
-            return score;
+        function startGame() {
+            gameActive = true;
+            document.getElementById('start-overlay').style.display = 'none';
+            SoundEngine.play(800, 0.2, 'square');
+            log(`Battle Commenced. Chronos active.`, "text-green-400 font-bold uppercase");
         }
 
-        function captureTurnStartState() {
-            turnStartBoardState = JSON.stringify(board);
-            turnStartScore = calculateAdvancementScore(board, turn);
-            captureThisTurn = false;
-            kingMovedThisTurn = false;
-            turnStartKingPos = null;
-            
-            for(let r=0; r<BOARD_SIZE; r++){
-                for(let c=0; c<BOARD_SIZE; c++){
-                    if(board[r][c] && board[r][c].owner === turn && board[r][c].type === 'king') {
-                        turnStartKingPos = {r,c};
-                        break;
-                    }
-                }
-            }
+        function tickClock() {
+            if (gameOver || aiThinking || !gameActive || !useClock) return;
+            if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
+            else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
+            updateClockDisplay();
         }
 
-        function handleResetTurn() {
-            if (aiThinking || (turn === 'black' && isAIEnabled && appMode === 'play') || gameOver) return;
-            SoundEngine.play('tap');
-            board = JSON.parse(turnStartBoardState);
-            currentAP = (fullMoveCount === 1 && turn === 'white') ? STARTING_AP_WHITE : MAX_AP;
-            currentTurnActions = [];
-            selectedSquare = null;
-            captureThisTurn = false;
-            kingMovedThisTurn = false;
-            log("Turn reset.", "text-orange-400");
-            updateUI();
-        }
-
-        // --- Core Logic ---
-        function getPiece(r, c) {
-            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return null;
-            return board[r][c];
-        }
-
-        function checkTrivialKingState(b, pTurn) {
-            if (!kingMovedThisTurn || !turnStartKingPos) return false;
-            const currentKing = b[turnStartKingPos.r][turnStartKingPos.c];
-            if (currentKing && currentKing.type === 'king' && currentKing.owner === pTurn) {
-                return true;
-            }
-            return false;
-        }
-
-        function switchTurn() {
-            if (gameOver || aiThinking) return; 
-            clearTimeout(autoTurnTimeout);
-
-            const isTrivialKingState = checkTrivialKingState(board, turn);
-            if (isTrivialKingState) {
-                SoundEngine.play('error');
-                log(`Invalid Turn: Trivial King move not allowed. Reset your turn.`, "text-red-500");
-                return;
-            }
-
-            const currentScore = calculateAdvancementScore(board, turn);
-            if (!captureThisTurn && currentScore <= turnStartScore) {
-                SoundEngine.play('error');
-                log(`Invalid Turn: Score must exceed ${turnStartScore}`, "text-red-500");
-                return;
-            }
-
-            SoundEngine.play('endTurn');
-            selectedSquare = null;
-
-            const actionsStr = currentTurnActions.join(', ');
-            if (turn === 'white') {
-                moveHistory.push({ n: fullMoveCount, w: actionsStr, b: '' });
+        function updateClockDisplay() {
+            const format = (s) => { const m = Math.floor(s / 60); const r = s % 60; return `${m}:${r < 10 ? '0' : ''}${r}`; };
+            const wtEl = document.getElementById('white-time');
+            const btEl = document.getElementById('black-time');
+            if (!useClock) {
+                wtEl.innerText = "OFF"; btEl.innerText = "OFF";
+                wtEl.classList.add('clock-off'); btEl.classList.add('clock-off');
             } else {
-                if (moveHistory.length > 0) moveHistory[moveHistory.length - 1].b = actionsStr;
-                else moveHistory.push({ n: 0, w: '...', b: actionsStr });
-                fullMoveCount++;
+                wtEl.innerText = format(Math.max(0, whiteTime));
+                btEl.innerText = format(Math.max(0, blackTime));
+                wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off');
             }
-            currentTurnActions = [];
-
-            if (turn === 'black') { 
-                boardHistory.push(JSON.stringify(board));
-                if (boardHistory.length > 6) boardHistory.shift(); 
-            }
-
-            turn = turn === 'white' ? 'black' : 'white';
-            currentAP = MAX_AP;
-            
-            captureTurnStartState();
-
-            if(appMode === 'play' || appMode === 'what_if') {
-                log(`Turn: ${capitalize(turn)} (${currentAP} AP)`);
-                flashTurnMessage();
-            }
-            updateUI();
-
-            if (turn === 'black' && isAIEnabled && !gameOver && appMode === 'play') {
-                runAITurn();
-            }
+            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock) ? 'white' : '#334155';
+            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock) ? '#818cf8' : '#334155';
         }
 
-        function checkAutoTurnEnd() {
-            if (appMode !== 'play' && appMode !== 'what_if') return;
-            if (isAIEnabled && turn === 'black' && appMode === 'play') return;
-            
-            const currentScore = calculateAdvancementScore(board, turn);
-            const isScoreValid = currentScore > turnStartScore;
-            const isTrivialKing = checkTrivialKingState(board, turn);
-            const isValidEndTurn = (isScoreValid || captureThisTurn) && !isTrivialKing;
-
-            clearTimeout(autoTurnTimeout);
-            if (currentAP === 0 && isValidEndTurn && !gameOver && !aiThinking) {
-                autoTurnTimeout = setTimeout(() => { switchTurn(); }, 400);
-            }
+        function captureTurnState() {
+            turnStartBoardSnapshot = JSON.stringify(board);
+            turnStartScore = calcAS(board, turn);
+            capturedThisTurn = false;
         }
 
-        function flashTurnMessage() {
-            flashText.innerText = `${capitalize(turn)}'s Turn`;
-            flashText.style.color = turn === 'white' ? '#f1f5f9' : '#fbbf24'; 
-            flashOverlay.classList.add('active');
-            setTimeout(() => { flashOverlay.classList.remove('active'); }, 800);
-        }
-
-        function getCoord(r, c) { return `${String.fromCharCode(97 + c)}${BOARD_SIZE - r}`; }
-        function recordMove(notation) { currentTurnActions.push(notation); }
-
-        function showRecord() {
-            let output = moveHistory.map(m => {
-                let line = `${m.n}. ${m.w}`;
-                if (m.b) line += ` : ${m.b}`;
-                return line;
-            }).join('\n');
-
-            if (gameOver && currentTurnActions.length > 0) {
-                 const actionsStr = currentTurnActions.join(', ');
-                 if (turn === 'white') output += `\n${fullMoveCount}. ${actionsStr}`;
-                 else if (moveHistory.length > 0) {
-                     const last = moveHistory[moveHistory.length - 1];
-                     if (last && !last.b) {
-                         output = output.substring(0, output.lastIndexOf(last.w) + last.w.length); 
-                         output += ` : ${actionsStr}`;
-                     }
-                 }
-            }
-            recordText.value = output;
-            recordModal.classList.remove('hidden');
-        }
-
-        // --- Analysis & Replay Engine ---
-        function parseNotationCoord(s, bSize) {
-            let c = s.charCodeAt(0) - 97;
-            let r = bSize - parseInt(s.substring(1));
-            return {r, c};
-        }
-
-        function loadAnalysis() {
-            const text = analysisText.value.trim();
-            if (!text) return;
-            
-            SoundEngine.play('tap');
-            analysisModal.classList.add('hidden');
-            
-            let parsedSize = parseInt(analysisBoardSizeSelect.value);
-
-            if (appMode === 'play') {
-                liveGameSnapshot = captureFullState();
-            }
-            appMode = 'replay';
-            BOARD_SIZE = parsedSize;
-            boardSizeSelect.value = parsedSize.toString(); 
-            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-            boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
-
-            let b = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-            const backRanks = {
-                8: [5, 4, 3, 6, 0, 3, 4, 5],
-                9: [5, 4, 3, 6, 0, 2, 3, 4, 5], 
-                10: [5, 4, 3, 2, 6, 0, 2, 3, 4, 5]
-            };
-            const backRank = backRanks[BOARD_SIZE];
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                b[0][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'black' };
-                b[1][c] = { type: 'die', value: 2, owner: 'black' };
-                b[BOARD_SIZE - 2][c] = { type: 'die', value: 2, owner: 'white' };
-                b[BOARD_SIZE - 1][c] = { type: backRank[c] === 0 ? 'king' : 'die', value: backRank[c], owner: 'white' };
-            }
-
-            replayStates = [];
-            let hist = [];
-
-            replayStates.push({
-                board: copyBoard(b),
-                turn: 'white',
-                currentAP: STARTING_AP_WHITE,
-                fullMoveCount: 1,
-                moveHistory: []
-            });
-
-            const lines = text.split('\n');
-            let mCount = 1;
-
-            try {
-                for (let line of lines) {
-                    let match = line.match(/\d+\.\s+([^:]+)(?:\s*:\s*(.*))?/);
-                    if (!match) continue;
-                    
-                    let wStr = match[1].trim();
-                    let bStr = match[2] ? match[2].trim() : '';
-
-                    applyNotationStr(b, wStr, parsedSize);
-                    hist.push({ n: mCount, w: wStr, b: '' });
-                    replayStates.push({
-                        board: copyBoard(b),
-                        turn: 'black',
-                        currentAP: 6,
-                        fullMoveCount: mCount,
-                        moveHistory: JSON.parse(JSON.stringify(hist))
-                    });
-
-                    if (bStr) {
-                        applyNotationStr(b, bStr, parsedSize);
-                        hist[hist.length-1].b = bStr;
-                        replayStates.push({
-                            board: copyBoard(b),
-                            turn: 'white',
-                            currentAP: 6,
-                            fullMoveCount: mCount + 1,
-                            moveHistory: JSON.parse(JSON.stringify(hist))
-                        });
-                    }
-                    mCount++;
-                }
-            } catch(e) {
-                console.error("Parse Error:", e);
-                alert("There was an error parsing the game record. Showing up to point of failure.");
-            }
-
-            replayIndex = 0;
-            loadReplayState(replayIndex);
-        }
-
-        function applyNotationStr(b, str, bSize) {
-            if (!str || str === '...') return;
-            let actions = str.split(',').map(s => s.trim());
-            for (let act of actions) {
-                if (act.endsWith('+')) {
-                    let c = parseNotationCoord(act.replace('+', ''), bSize);
-                    if(b[c.r][c.c]) b[c.r][c.c].value++;
-                } else if (act.endsWith('-')) {
-                    let c = parseNotationCoord(act.replace('-', ''), bSize);
-                    if(b[c.r][c.c]) b[c.r][c.c].value--;
-                } else if (act.includes('x')) {
-                    let p = act.split('x');
-                    let from = parseNotationCoord(p[0], bSize), to = parseNotationCoord(p[1], bSize);
-                    b[to.r][to.c] = b[from.r][from.c];
-                    b[from.r][from.c] = null;
-                } else if (act.includes('-')) {
-                    let p = act.split('-');
-                    let from = parseNotationCoord(p[0], bSize), to = parseNotationCoord(p[1], bSize);
-                    b[to.r][to.c] = b[from.r][from.c];
-                    b[from.r][from.c] = null;
-                }
-            }
-        }
-
-        function loadReplayState(idx) {
-            let rs = replayStates[idx];
-            board = copyBoard(rs.board);
-            turn = rs.turn;
-            currentAP = rs.currentAP;
-            fullMoveCount = rs.fullMoveCount;
-            moveHistory = JSON.parse(JSON.stringify(rs.moveHistory));
-            currentTurnActions = [];
-            selectedSquare = null;
-            gameOver = false;
-            
-            captureTurnStartState(); 
-            
-            gameLog.innerHTML = '';
-            log(`Replay Mode: Step ${idx} / ${replayStates.length - 1}`, "text-teal-400 font-bold");
-            if (moveHistory.length > 0) {
-                let last = moveHistory[moveHistory.length-1];
-                log(`Last played: ${last.b ? last.b : last.w}`);
-            }
-            
-            updateUI();
-        }
-
-        function exitAnalysis() {
-            SoundEngine.play('tap');
-            appMode = 'play';
-            if (liveGameSnapshot) {
-                restoreFullState(liveGameSnapshot);
-                BOARD_SIZE = board.length;
-                boardSizeSelect.value = BOARD_SIZE.toString();
-                boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-                boardEl.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
-                liveGameSnapshot = null;
-            } else {
-                initGame(BOARD_SIZE);
-            }
-            updateUI();
-        }
-
-        function enterWhatIf() {
-            SoundEngine.play('tap');
-            whatIfAnchorSnapshot = captureFullState();
-            appMode = 'what_if';
-            gameLog.innerHTML = '';
-            log("Entered What If Sandbox", "text-purple-400 font-bold");
-            updateUI();
-        }
-
-        function freshWhatIf() {
-            SoundEngine.play('tap');
-            if (whatIfAnchorSnapshot) {
-                restoreFullState(whatIfAnchorSnapshot);
-                gameLog.innerHTML = '';
-                log("What If Sandbox Reset", "text-yellow-400 font-bold");
-                updateUI();
-            }
-        }
-
-        function leaveWhatIf() {
-            SoundEngine.play('tap');
-            if (whatIfAnchorSnapshot) {
-                restoreFullState(whatIfAnchorSnapshot);
-                appMode = 'replay';
-                gameLog.innerHTML = '';
-                log(`Returned to Replay Mode`, "text-teal-400 font-bold");
-                updateUI();
-            }
-        }
-
-        // --- User Interaction ---
-        function selectPiece(r, c) {
-            if (appMode === 'replay') return; 
-            if (gameOver || aiThinking) return; 
-            if (isAIEnabled && turn === 'black' && appMode === 'play') return;
-            
-            const piece = getPiece(r, c);
-            
-            if (!piece || piece.owner !== turn) {
-                if (selectedSquare) {
-                    attemptMove(selectedSquare.r, selectedSquare.c, r, c);
-                } else {
-                    SoundEngine.play('tap');
-                }
-                return;
-            }
-            
-            SoundEngine.play('tap');
-            if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) selectedSquare = null;
-            else selectedSquare = { r, c };
-            updateUI();
-        }
-
-        // --- Mechanics ---
-        function isValidMove(fromR, fromC, toR, toC, checkAP = false) {
-            const piece = getPiece(fromR, fromC);
-            const target = getPiece(toR, toC);
-            if (!piece) return false;
-
-            const dx = toC - fromC;
-            const dy = toR - fromR;
-            const dist = Math.max(Math.abs(dx), Math.abs(dy));
-
-            if (dist === 0) return false;
-
-            const range = piece.type === 'king' ? 1 : piece.value;
-            if (dist > range) return false;
-
-            const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
-            if (!isLine) return false;
-
-            const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
-            const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
-            for (let i = 1; i < dist; i++) {
-                if (getPiece(fromR + stepR * i, fromC + stepC * i)) return false; 
-            }
-
-            if (target) {
-                if (target.owner === piece.owner) return false; 
-                const canCapture = (piece.type === 'king' || target.type === 'king') || (piece.value <= target.value);
-                if (!canCapture) return false;
-                if (checkAP && currentAP < COST_CAPTURE) return false;
-            } else {
-                if (checkAP && currentAP < COST_MOVE) return false;
-            }
-            return true;
-        }
-
-        function attemptMove(fromR, fromC, toR, toC) {
-            if (!isValidMove(fromR, fromC, toR, toC, true)) {
-                if (turn !== 'black' || !isAIEnabled || appMode !== 'play') {
-                    SoundEngine.play('error');
-                    log("Invalid move.", "text-red-400");
-                }
-                return false;
-            }
-            const target = getPiece(toR, toC);
-            const type = target ? 'capture' : 'move';
-            executeAction(type, fromR, fromC, toR, toC, target);
-            return true;
-        }
-
-        function executeAction(type, fromR, fromC, toR, toC, target = null) {
-            const piece = board[fromR][fromC];
-            
-            if (piece.type === 'king') kingMovedThisTurn = true;
-            if (type === 'capture') captureThisTurn = true;
-            
-            const fromStr = getCoord(fromR, fromC);
-            const toStr = getCoord(toR, toC);
-            let notStr = type === 'capture' ? `${fromStr}x${toStr}` : `${fromStr}-${toStr}`;
-            recordMove(notStr);
-
-            board[toR][toC] = piece;
-            board[fromR][fromC] = null;
-            
-            currentAP -= type === 'capture' ? COST_CAPTURE : COST_MOVE;
-
-            if (type === 'capture') {
-                SoundEngine.play('capture');
-                log(`${capitalize(piece.owner)} takes ${target.type === 'king' ? 'King' : target.value} at ${toStr}`);
-                if (target.type === 'king') { endGame(piece.owner); return; }
-            } else {
-                SoundEngine.play('slide');
-                log(`${capitalize(piece.owner)} to ${toStr}`);
-            }
-            
-            selectedSquare = { r: toR, c: toC };
-            updateUI();
-            checkAutoTurnEnd();
-            
-            if (turn === 'black' && isAIEnabled && appMode === 'play') {
-                const sq = document.querySelector(`.square[data-r="${toR}"][data-c="${toC}"]`);
-                if(sq) {
-                    sq.classList.add('ai-highlight');
-                    setTimeout(() => sq.classList.remove('ai-highlight'), 500);
-                }
-            }
-        }
-
-        function handleIncDec(isInc) {
-            if (!selectedSquare || gameOver) return;
-            const p = board[selectedSquare.r][selectedSquare.c];
-            if (!p || p.owner !== turn || p.type === 'king' || currentAP < COST_MOD) return;
-
-            const coord = getCoord(selectedSquare.r, selectedSquare.c);
-
-            if (isInc && p.value < 6) {
-                p.value++;
-                currentAP -= COST_MOD;
-                SoundEngine.play('inc');
-                log(`${capitalize(turn)} inc to ${p.value}`);
-                recordMove(`${coord}+`);
-            } else if (!isInc && p.value > 1) {
-                p.value--;
-                currentAP -= COST_MOD;
-                SoundEngine.play('dec');
-                log(`${capitalize(turn)} dec to ${p.value}`);
-                recordMove(`${coord}-`);
-            } else { 
-                SoundEngine.play('error');
-                return; 
-            }
-            
-            updateUI();
-            checkAutoTurnEnd();
-        }
-
-        function endGame(winner) {
-            gameOver = true;
-            SoundEngine.play('gameover');
-            const actionsStr = currentTurnActions.join(', ');
-            if (turn === 'white') moveHistory.push({ n: fullMoveCount, w: actionsStr, b: '' });
-            else if (moveHistory.length > 0) moveHistory[moveHistory.length - 1].b = actionsStr;
-            
-            winnerText.innerText = `${capitalize(winner)} Wins!`;
-            winnerModal.classList.remove('hidden');
-        }
-
-        // --- AI ENGINE (Combinatorial Beam Search) ---
-        function getPieceValue(p) { return !p ? 0 : (p.type === 'king' ? 1000 : (PIECE_VALUES[p.value] || 0)); }
-
-        function isKingInDanger(simBoard, kingOwner) {
-            let kingPos = null;
-            for(let r=0; r<BOARD_SIZE; r++){
-                for(let c=0; c<BOARD_SIZE; c++){
-                    const p = simBoard[r][c];
-                    if(p && p.type === 'king' && p.owner === kingOwner) { kingPos = {r,c}; break; }
-                }
-            }
-            if(!kingPos) return true; 
-
-            const enemyOwner = kingOwner === 'white' ? 'black' : 'white';
-            for(let r=0; r<BOARD_SIZE; r++){
-                for(let c=0; c<BOARD_SIZE; c++){
-                    const e = simBoard[r][c];
-                    if(e && e.owner === enemyOwner) {
-                        const dx = kingPos.c - c; const dy = kingPos.r - r;
-                        const dist = Math.max(Math.abs(dx), Math.abs(dy));
-                        
-                        let threatens = false;
-                        if (e.type === 'king') {
-                            threatens = dist <= 1;
-                        } else {
-                            if (e.value >= dist) threatens = true;
-                            else if (e.value < 6 && e.value + 1 >= dist) threatens = true;
-                        }
-
-                        if (threatens) {
-                             const isLine = (dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy));
-                             if (isLine) {
-                                 let blocked = false;
-                                 const stepR = dy === 0 ? 0 : dy / Math.abs(dy);
-                                 const stepC = dx === 0 ? 0 : dx / Math.abs(dx);
-                                 for (let i = 1; i < dist; i++) if (simBoard[r + stepR * i][c + stepC * i]) { blocked = true; break; }
-                                 if (!blocked) return true; 
-                             }
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        function getThreatenedMaterial(b, owner) {
-            let enemyOwner = owner === 'white' ? 'black' : 'white';
-            let threatenedPoints = 0;
-            let threatenedPositions = new Set();
-
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    let e = b[r][c];
-                    if (e && e.owner === enemyOwner) {
-                        let maxRange = e.type === 'king' ? 1 : Math.min(6, e.value + 1);
-                        let dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
-                        for (let d of dirs) {
-                            for (let dist = 1; dist <= maxRange; dist++) {
-                                let nr = r + d[0]*dist;
-                                let nc = c + d[1]*dist;
-                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
-
-                                let target = b[nr][nc];
-                                if (target) {
-                                    if (target.owner === owner && target.type !== 'king') {
-                                        let canCap = false;
-                                        if (e.type === 'king') {
-                                            canCap = (dist <= 1);
-                                        } else {
-                                            if (e.value >= dist && e.value <= target.value) canCap = true;
-                                            else if (e.value < 6 && (e.value + 1) >= dist && (e.value + 1) <= target.value) canCap = true;
-                                            else if (e.value > 1 && (e.value - 1) >= dist && (e.value - 1) <= target.value) canCap = true;
-                                        }
-
-                                        if (canCap) {
-                                            let key = `${nr},${nc}`;
-                                            if (!threatenedPositions.has(key)) {
-                                                threatenedPositions.add(key);
-                                                threatenedPoints += getPieceValue(target);
-                                            }
-                                        }
-                                    }
-                                    break; 
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return threatenedPoints;
-        }
-
-        function copyBoard(src) { return src.map(row => row.map(p => p ? {...p} : null)); }
-
-        function getBoardHash(b) {
-            let s = '';
-            for(let r=0; r<BOARD_SIZE; r++) {
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    let p = b[r][c];
-                    s += p ? `${p.owner[0]}${p.type==='king'?'K':p.value}` : '.';
-                }
-            }
+        function calcAS(b, p) {
+            let s = 0;
+            for(let r=0; r<BOARD_SIZE; r++)
+                for(let c=0; c<BOARD_SIZE; c++)
+                    if(b[r][c] && b[r][c].owner === p) s += (p === 'white') ? (BOARD_SIZE - r) : (r + 1);
             return s;
         }
 
-        function getAtomicActions(b, player, ap) {
-            let actions = [];
-            for (let r=0; r<BOARD_SIZE; r++) {
-                for (let c=0; c<BOARD_SIZE; c++) {
-                    let p = b[r][c];
-                    if (p && p.owner === player) {
-                        if (p.type === 'die' && p.value < 6 && ap >= COST_MOD) {
-                            actions.push({ type: 'inc', r, c, cost: COST_MOD });
-                        }
-                        if (p.type === 'die' && p.value > 1 && ap >= COST_MOD) {
-                            actions.push({ type: 'dec', r, c, cost: COST_MOD });
-                        }
-                        
-                        let maxDist = p.type === 'king' ? 1 : p.value;
-                        let dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
-                        for (let d of dirs) {
-                            for (let dist=1; dist<=maxDist; dist++) {
-                                let nr = r + d[0]*dist;
-                                let nc = c + d[1]*dist;
-                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
+        function validateMove(b, fr, fc, tr, tc, checkAP = false) {
+            const p = b[fr][fc]; if(!p) return {valid: false};
+            const dr = Math.abs(tr - fr), dc = Math.abs(tc - fc), dist = Math.max(dr, dc);
+            if(dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return {valid: false};
+            if(dist > (p.type === 'king' ? 1 : p.value)) return {valid: false};
+            const sr = (tr - fr) === 0 ? 0 : (tr - fr) / dist, sc = (tc - fc) === 0 ? 0 : (tc - fc) / dist;
+            for(let i=1; i < dist; i++) if(b[fr + i*sr][fc + i*sc]) return {valid: false};
+            if(b[tr][tc]) {
+                if(b[tr][tc].owner === p.owner) return {valid: false};
+                if(!(p.type === 'king' || b[tr][tc].type === 'king' || p.value <= b[tr][tc].value)) return {valid: false};
+                if(checkAP && currentAP < 5) return {valid: false};
+            } else if(checkAP && currentAP < 3) return {valid: false};
+            return {valid: true};
+        }
 
-                                let target = b[nr][nc];
-                                if (target) {
-                                    if (target.owner !== player) {
-                                        let canCap = (p.type === 'king' || target.type === 'king' || p.value <= target.value);
-                                        if (canCap && ap >= COST_CAPTURE) {
-                                            actions.push({ type: 'cap', r, c, nr, nc, cost: COST_CAPTURE });
-                                        }
-                                    }
-                                    break; 
-                                } else {
-                                    if (ap >= COST_MOVE) {
-                                        actions.push({ type: 'move', r, c, nr, nc, cost: COST_MOVE });
-                                    }
-                                }
+        function tryMove(fr, fc, tr, tc) {
+            const v = validateMove(board, fr, fc, tr, tc, true);
+            if(!v.valid) { SoundEngine.play(150, 0.15, 'sawtooth'); return; }
+            const p = board[fr][fc], t = board[tr][tc];
+            if(t) capturedThisTurn = true;
+            const coord = (r, c) => `${String.fromCharCode(97+c)}${BOARD_SIZE-r}`;
+            currentTurnActions.push(t ? `${coord(fr,fc)}x${coord(tr,tc)}` : `${coord(fr,fc)}-${coord(tr,tc)}`);
+            board[tr][tc] = p; board[fr][fc] = null;
+            currentAP -= t ? 5 : 3;
+            if(currentAP < 1) selectedSquare = null; else selectedSquare = {r: tr, c: tc};
+            if(t && t.type === 'king') endGame(turn, "Checkmate");
+            else { SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); }
+        }
+
+        function selectSquare(r, c) {
+            if(gameOver || aiThinking || !gameActive) return;
+            if(turn === 'black' && document.getElementById('ai-toggle').checked) return;
+            const p = board[r][c];
+            if(p && p.owner === turn && currentAP > 0) { selectedSquare = {r, c}; SoundEngine.play(400); }
+            else if(selectedSquare) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
+            render();
+        }
+
+        function handleMod(inc) {
+            if(!selectedSquare || currentAP < 1 || !gameActive) return;
+            const p = board[selectedSquare.r][selectedSquare.c];
+            if(!p || p.type === 'king' || p.owner !== turn) return;
+            if(inc && p.value < 6) { p.value++; currentAP--; }
+            else if(!inc && p.value > 1) { p.value--; currentAP--; }
+            else return;
+            currentTurnActions.push(`${String.fromCharCode(97+selectedSquare.c)}${BOARD_SIZE-selectedSquare.r}${inc?'+':'-'}`);
+            SoundEngine.play(inc ? 700 : 350);
+            if(currentAP < 1) selectedSquare = null;
+            render(); checkAutoTurnEnd();
+        }
+
+        function checkAutoTurnEnd() {
+            if(currentAP === 0) {
+                const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
+                if(asPass) setTimeout(endTurn, 400);
+            }
+        }
+
+        function endTurn() {
+            if(gameOver || aiThinking || !gameActive) return;
+            const curScore = calcAS(board, turn);
+            const asPass = capturedThisTurn || curScore > turnStartScore;
+            if(!asPass) { log("Turn Illegal: AS must increase.", "text-red-500 font-bold text-center uppercase"); return; }
+            const actStr = currentTurnActions.join(', ');
+            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
+            else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
+            turn = turn === 'white' ? 'black' : 'white';
+            currentAP = 6; currentTurnActions = []; selectedSquare = null; captureTurnState(); flashTurn(); render();
+            if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver) setTimeout(runAI, 100);
+        }
+
+        function flashTurn() {
+            const overlay = document.getElementById('flash-overlay');
+            const txt = document.getElementById('flash-text');
+            txt.innerText = `${turn.toUpperCase()} TURN`;
+            txt.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1';
+            overlay.style.opacity = '1';
+            setTimeout(() => overlay.style.opacity = '0', 500);
+        }
+
+        function endGame(w, reason = "Resignation") {
+            gameOver = true; gameActive = false;
+            document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${reason})`;
+            document.getElementById('winner-modal').classList.remove('hidden');
+        }
+
+        function copyToClipboard(text, btn) {
+            const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select(); document.execCommand("copy"); document.body.removeChild(textArea);
+            if(btn) {
+                const orig = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600");
+                setTimeout(() => { btn.innerText = orig; btn.classList.remove("bg-green-600"); }, 1500);
+            }
+        }
+
+        // --- ULTRA AI ENGINE v22 ---
+        function getThreatZoneDetails(b, owner) {
+            let zoneMap = new Map();
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    if(p && p.owner === owner) {
+                        let par = fullMoveCount > 10 ? 1 : 0;
+                        const range = p.type === 'king' ? 1 : Math.min(6, p.value + par);
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                        for(let d of dirs) {
+                            for(let i=1; i<=range; i++) {
+                                let nr = r+d[0]*i, nc = c+d[1]*i;
+                                if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
+                                let key = `${nr},${nc}`;
+                                zoneMap.set(key, (zoneMap.get(key) || 0) + 1);
+                                if(b[nr][nc]) break;
                             }
                         }
                     }
                 }
             }
-            return actions;
+            return zoneMap;
         }
 
-        function applyAction(state, a) {
-            let nb = copyBoard(state.board);
-            let p = nb[a.r][a.c];
+        function heuristic(node, desperate = false) {
+            const b = node.board; let score = 0;
+            const myP = [], enP = [];
+            for(let r=0; r<BOARD_SIZE; r++)
+                for(let c=0; c<BOARD_SIZE; c++)
+                    if(b[r][c]) (b[r][c].owner === 'black' ? myP : enP).push({r,c,...b[r][c]});
+            const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
+            if(!enK) return 100000000; if(!myK) return -100000000;
+
+            // MATERIAL HEADCOUNT (1,000,000 per die - survival is everything)
+            score += (myP.length - enP.length) * 1000000;
+
+            const enZone = getThreatZoneDetails(b, 'white');
+            const myZone = getThreatZoneDetails(b, 'black');
             
-            let nState = {
-                board: nb,
-                ap: state.ap - a.cost,
-                seq: [...state.seq, a],
-                captured: state.captured || a.type === 'cap',
-                kingMoved: state.kingMoved || (p && p.type === 'king' && (a.type === 'move' || a.type === 'cap')),
-                initialKingPos: state.initialKingPos,
-                turnStartScore: state.turnStartScore,
-                heuristic: 0
-            };
-            
-            if (a.type === 'inc') nb[a.r][a.c].value++;
-            if (a.type === 'dec') nb[a.r][a.c].value--;
-            if (a.type === 'move' || a.type === 'cap') {
-                nb[a.nr][a.nc] = nb[a.r][a.c];
-                nb[a.r][a.c] = null;
-            }
-            return nState;
-        }
-
-        function isValidEndState(state) {
-            let whiteKingAlive = false;
-            for(let r=0; r<BOARD_SIZE; r++){
-                for(let c=0; c<BOARD_SIZE; c++){
-                    let p = state.board[r][c];
-                    if (p && p.owner === 'white' && p.type === 'king') whiteKingAlive = true;
-                }
-            }
-            if (!whiteKingAlive) return true; 
-
-            if (isKingInDanger(state.board, 'black')) return false;
-
-            if (state.kingMoved && state.initialKingPos) {
-                let kp = state.initialKingPos;
-                let p = state.board[kp.r][kp.c];
-                if (p && p.type === 'king' && p.owner === 'black') return false; 
-            }
-
-            let currAdv = calculateAdvancementScore(state.board, 'black');
-            if (!state.captured && currAdv <= state.turnStartScore) return false;
-
-            return true;
-        }
-
-        function calcHeuristic(state) {
-            let b = state.board;
-            let myMat = 0, enMat = 0;
-            let myAdv = calculateAdvancementScore(b, 'black');
-            let enKingPos = null;
-            let myKingPos = null;
-            let myPiecesList = [];
-            let shieldCount = 0;
-
-            for (let r=0; r<BOARD_SIZE; r++) {
-                for (let c=0; c<BOARD_SIZE; c++) {
-                    let p = b[r][c];
-                    if (p) {
-                        if (p.owner === 'black') {
-                            myMat += getPieceValue(p);
-                            let mid = BOARD_SIZE / 2;
-                            if (r >= mid - 1 && r <= mid && c >= mid - 1 && c <= mid) myMat += 2; // Center control
-                            if (p.type === 'king') myKingPos = {r,c};
-                            else myPiecesList.push({r,c, val: p.value});
-                        } else {
-                            enMat += getPieceValue(p);
-                            if (p.type === 'king') enKingPos = {r,c};
-                        }
+            myP.forEach(p => { 
+                if(enZone.has(`${p.r},${p.c}`)) {
+                    if(p.type === 'king') score -= 50000000; 
+                    else { 
+                        // RECIPROCITY CHECK: If hanging and no battery support, massive penalty
+                        let support = myZone.get(`${p.r},${p.c}`) || 0;
+                        if (support <= 1) score -= 1500000; 
+                        else score -= 300000; // Safer if defended
                     }
                 }
+            });
+
+            // PREDATOR LOGIC
+            if (myP.length + enP.length < 12) {
+                const dist = Math.abs(myK.r - enK.r) + Math.abs(myK.c - enK.c);
+                score -= dist * 2000;
             }
 
-            let myThreatenedMat = getThreatenedMaterial(b, 'black');
-            let enThreatenedMat = getThreatenedMaterial(b, 'white');
+            score += calcAS(b, 'black') * 150; // Increased weight to find legal moves
+            if(myK.r > 1) score -= (myK.r * 15000); 
 
-            let score = (myMat - enMat) * 100;
-            score += myAdv * 10;
-            score -= myThreatenedMat * 120; 
-            score += enThreatenedMat * 10; 
-
-            // --- NEW: Royal Guard & Threat Projection ---
-            if (myKingPos) {
-                for (let p of myPiecesList) {
-                    let dist = Math.max(Math.abs(p.r - myKingPos.r), Math.abs(p.c - myKingPos.c));
-                    if (dist >= 1 && dist <= 2) shieldCount++;
-                }
-                // Reward having 1 to 3 guards. Prevents the naked king.
-                score += Math.min(shieldCount, 3) * 1500; 
-                if (shieldCount === 0) score -= 8000; 
-            }
-
-            let numHighMobility = 0;
-            for (let p of myPiecesList) {
-                if (p.val >= 4) numHighMobility++;
-            }
-            // Offset the "material" points lost by not decrementing. 
-            // Keeps 2-3 pieces highly mobile to respond to double checks.
-            score += Math.min(numHighMobility, 3) * 1500; 
-            if (numHighMobility === 0 && myPiecesList.length >= 4) {
-                score -= 5000; 
-            }
-            // --------------------------------------------
-
-            if (enKingPos) {
-                if (isKingInDanger(b, 'black')) score -= 500000;
-                if (isKingInDanger(b, 'white')) score += 2000; 
-            } else {
-                score += 10000000; 
-            }
-            
-            let hash = getBoardHash(b);
-            if (boardHistory.includes(hash)) score -= 80000; 
-
-            if (state.captured || myAdv > state.turnStartScore) {
-                score += 30000;
-            }
-
-            if (isValidEndState(state)) score += 50000; 
-            if (state.seq) score -= state.seq.length * 10; 
-
+            if(desperate && node.captured) score += 20000000;
             return score;
         }
 
-        async function runAITurn() {
-            if (appMode !== 'play') return;
-            aiThinking = true;
-            updateUI(); 
-            await new Promise(r => setTimeout(r, 600)); 
+        async function runAI() {
+            const totalPieces = board.flat().filter(x => x).length;
+            const isPredator = totalPieces < 12;
+            aiThinking = true; 
+            turnEl.classList.add(isPredator ? 'predator-thinking' : 'ai-thinking'); 
+            if (isPredator) turnEl.innerText = "PREDATOR ACTIVE";
+            render();
+            
+            const startThinking = Date.now();
+            let targetThinkTime = 0; 
+            if (useClock) {
+                const whiteUsed = whiteStartDuration - whiteTime;
+                const whiteAvg = fullMoveCount > 0 ? whiteUsed / fullMoveCount : 8;
+                targetThinkTime = Math.min(whiteAvg * 0.8, 15) * 1000;
+            }
 
-            let bestFinalState = null;
-            let bestFinalScore = -Infinity;
+            let currentWidth = 100;
+            let bestTurn = null;
 
-            let initialState = {
-                board: copyBoard(board),
-                ap: currentAP,
-                seq: [],
-                captured: false,
-                kingMoved: false,
-                initialKingPos: turnStartKingPos,
-                turnStartScore: turnStartScore,
-                heuristic: 0
-            };
+            while (true) {
+                let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
+                let result = await performSearchAsync(root, currentWidth, false);
+                if (result) bestTurn = result;
+                const elapsed = Date.now() - startThinking;
+                if (!useClock || elapsed >= targetThinkTime || currentWidth >= 2000) break;
+                currentWidth *= 2; 
+                log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
+            }
 
-            let queue = [initialState];
-            let BEAM_WIDTH = 150; 
+            if(!bestTurn) {
+                log("AI STRESSED: Deep Scan initiated...", "text-orange-500 font-bold text-center uppercase");
+                let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
+                bestTurn = await performSearchAsync(root, 1500, true);
+            }
 
-            for (let d = 0; d < 6; d++) {
-                let nextQueue = [];
-                for (let state of queue) {
-                    
-                    if (isValidEndState(state)) {
-                        let h = calcHeuristic(state);
-                        if (h > bestFinalScore) {
-                            bestFinalScore = h;
-                            bestFinalState = state;
+            if(bestTurn) {
+                for(let a of bestTurn.actions) {
+                    if(gameOver) break;
+                    if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
+                    else tryMove(a.fr, a.fc, a.tr, a.tc);
+                    render(); await new Promise(r => setTimeout(r, 400));
+                }
+                aiThinking = false; turnEl.classList.remove('ai-thinking'); turnEl.classList.remove('predator-thinking'); if(turn === 'black') endTurn();
+            } else {
+                log("ULTRA AI: Resigning.", "text-red-500 font-black text-center uppercase");
+                aiThinking = false; turnEl.classList.remove('ai-thinking'); turnEl.classList.remove('predator-thinking'); endGame('white', "Zugzwang");
+            }
+            render();
+        }
+
+        async function performSearchAsync(root, width, desperate) {
+            let beam = [root];
+            for(let step=0; step<5; step++) {
+                let next = [];
+                for(let node of beam) {
+                    if(node.ap === 0) { next.push(node); continue; }
+                    const myP = [];
+                    for(let r=0; r<BOARD_SIZE; r++)
+                        for(let c=0; c<BOARD_SIZE; c++)
+                            if(node.board[r][c]?.owner === 'black') myP.push({r,c,...node.board[r][c]});
+                    for(let p of myP) {
+                        const asPass = node.captured || calcAS(node.board, 'black') > node.startScore;
+                        if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3)) {
+                            if(p.value < 6) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value++; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
+                            if(p.value > 1) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value--; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
+                        }
+                        const range = p.type === 'king' ? 1 : p.value;
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                        for(let d of dirs) {
+                            for(let i=1; i<=range; i++) {
+                                let tr = p.r+d[0]*i, tc = p.c+d[1]*i;
+                                if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
+                                let v = validateMove(node.board, p.r, p.c, tr, tc, false);
+                                if(!v.valid) { if(node.board[tr][tc]) break; continue; }
+                                const cost = node.board[tr][tc] ? 5 : 3;
+                                if(node.ap >= cost) {
+                                    let nb = JSON.parse(JSON.stringify(node.board));
+                                    const targetPiece = nb[tr][tc];
+                                    nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
+                                    next.push({ ...node, board: nb, ap: node.ap-cost, captured: node.captured || !!targetPiece, actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
+                                }
+                                if(node.board[tr][tc]) break;
+                            }
                         }
                     }
-
-                    if (state.ap === 0) continue;
-
-                    let actions = getAtomicActions(state.board, 'black', state.ap);
-                    for (let a of actions) {
-                        let nextState = applyAction(state, a);
-                        nextState.heuristic = calcHeuristic(nextState);
-                        nextQueue.push(nextState);
-                    }
                 }
-
-                if (nextQueue.length === 0) break;
-
-                nextQueue.sort((a, b) => b.heuristic - a.heuristic);
-                
-                let unique = [];
-                let seen = new Set();
-                for(let ns of nextQueue) {
-                    let hash = getBoardHash(ns.board) + "_" + ns.ap;
-                    if(!seen.has(hash)) {
-                        seen.add(hash);
-                        unique.push(ns);
-                        if(unique.length >= BEAM_WIDTH) break; 
-                    }
-                }
-                queue = unique;
+                if(next.length === 0) break;
+                next.forEach(n => n.h = heuristic(n, desperate));
+                next.sort((a,b) => b.h - a.h);
+                beam = next.slice(0, width); 
+                await new Promise(r => setTimeout(r, 5));
             }
-
-            for (let state of queue) {
-                if (isValidEndState(state)) {
-                    let h = calcHeuristic(state);
-                    if (h > bestFinalScore) {
-                        bestFinalScore = h;
-                        bestFinalState = state;
-                    }
-                }
-            }
-
-            if (!bestFinalState || bestFinalState.seq.length === 0) {
-                log("Checkmate! AI cannot escape and satisfy the Advancement Score. Resigning.", "text-red-500 font-bold");
-                aiThinking = false;
-                endGame('white');
-                return;
-            }
-
-            for (let act of bestFinalState.seq) {
-                if (gameOver) break;
-
-                if (act.type === 'inc' || act.type === 'dec') {
-                    selectedSquare = {r: act.r, c: act.c};
-                    handleIncDec(act.type === 'inc');
-                } else {
-                    selectedSquare = {r: act.r, c: act.c};
-                    executeAction(act.type === 'cap' ? 'capture' : 'move', act.r, act.c, act.nr, act.nc, board[act.nr][act.nc]);
-                }
-                await new Promise(r => setTimeout(r, 600));
-            }
-
-            aiThinking = false;
-            if (!gameOver && turn === 'black' && appMode === 'play') {
-                switchTurn();
-            } else {
-                updateUI(); 
-            }
+            const legal = beam.filter(n => (n.captured || calcAS(n.board, 'black') > n.startScore));
+            return legal.length > 0 ? legal[0] : null;
         }
 
-        // --- UI Rendering ---
-        function updateUI() {
-            renderBoard();
-            updateSidebar();
-        }
-
-        function renderBoard() {
-            boardEl.innerHTML = '';
-            let validMoves = [], validCaptures = [];
-
-            if (selectedSquare && !gameOver && (!isAIEnabled || turn === 'white' || appMode === 'what_if') && !aiThinking && appMode !== 'replay') {
-                 for(let r=0; r<BOARD_SIZE; r++){
-                     for(let c=0; c<BOARD_SIZE; c++){
-                         if(r===selectedSquare.r && c===selectedSquare.c) continue;
-                         if(isValidMove(selectedSquare.r, selectedSquare.c, r, c, true)) {
-                             if(board[r][c]) validCaptures.push(`${r},${c}`);
-                             else validMoves.push(`${r},${c}`);
-                         }
-                     }
-                 }
+        function render() {
+            boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            let targets = [];
+            if(selectedSquare && currentAP > 0 && gameActive) {
+                for(let r=0; r<BOARD_SIZE; r++)
+                    for(let c=0; c<BOARD_SIZE; c++)
+                        if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
             }
-
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    const square = document.createElement('div');
-                    
-                    let isDark = false;
-                    if (BOARD_SIZE === 9) {
-                        isDark = (r + c) % 2 === 0;
-                    } else {
-                        isDark = (r + c) % 2 !== 0;
-                    }
-                    square.className = `square ${isDark ? 'dark' : 'light'}`;
-                    
-                    square.dataset.r = r; square.dataset.c = c;
-                    
-                    if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) square.classList.add('selected');
-                    if (validMoves.includes(`${r},${c}`)) square.classList.add('valid-move');
-                    if (validCaptures.includes(`${r},${c}`)) square.classList.add('valid-capture');
-
-                    square.onclick = () => selectPiece(r, c);
-
-                    const piece = board[r][c];
-                    if (piece) {
-                        const die = document.createElement('div');
-                        die.className = `die ${piece.owner}`;
-                        
-                        if (piece.type === 'king') {
-                            const k = document.createElement('div');
-                            k.className = 'king-symbol'; k.innerText = '♔'; die.appendChild(k);
-                        } else {
-                            const face = document.createElement('div');
-                            face.className = 'die-face';
-                            let dots = [];
-                            if (piece.value === 1) dots = [4];
-                            if (piece.value === 2) dots = [2, 6];
-                            if (piece.value === 3) dots = [2, 4, 6];
-                            if (piece.value === 4) dots = [0, 2, 6, 8];
-                            if (piece.value === 5) dots = [0, 2, 4, 6, 8];
-                            if (piece.value === 6) dots = [0, 2, 3, 5, 6, 8];
-
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const sq = document.createElement('div');
+                    sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
+                    if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
+                    if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
+                    sq.onclick = () => selectSquare(r, c);
+                    const p = board[r][c];
+                    if(p) {
+                        const die = document.createElement('div'); die.className = `die ${p.owner}`;
+                        if(p.type === 'king') { const k = document.createElement('div'); k.className = 'king-symbol'; k.innerText = '♔'; die.appendChild(k); }
+                        else {
+                            const face = document.createElement('div'); face.className = 'die-face';
+                            const pips = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[p.value];
                             for(let i=0; i<9; i++) {
-                                const cell = document.createElement('div');
-                                cell.className = 'pip-container';
-                                if (dots.includes(i)) {
-                                    const pip = document.createElement('div');
-                                    pip.className = 'pip'; cell.appendChild(pip);
-                                }
-                                face.appendChild(cell);
+                                const pc = document.createElement('div'); pc.className = 'pip-container';
+                                if(pips.includes(i)) { const dot = document.createElement('div'); dot.className = 'pip'; pc.appendChild(dot); }
+                                face.appendChild(pc);
                             }
                             die.appendChild(face);
                         }
-                        square.appendChild(die);
+                        sq.appendChild(die);
                     }
-                    boardEl.appendChild(square);
+                    boardEl.appendChild(sq);
                 }
             }
+            if (!aiThinking) turnEl.innerText = `${turn.toUpperCase()} TURN`;
+            apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
+            const etb = document.getElementById('end-turn-btn');
+            const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
+            if (currentAP === 0 && !asPass && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
         }
 
-        function updateSidebar() {
-            turnIndicatorEl.innerText = turn;
-            turnIndicatorEl.className = `text-xl font-bold capitalize ${turn === 'white' ? 'text-white' : 'text-slate-400'}`;
-            apCounterEl.innerText = currentAP;
-            
-            const isLocked = aiThinking || appMode === 'replay';
-            
-            const isTrivialKingState = checkTrivialKingState(board, turn);
-            const currentScore = calculateAdvancementScore(board, turn);
-            const isScoreValid = currentScore > turnStartScore;
-            const isValidEndTurn = (isScoreValid || captureThisTurn) && !isTrivialKingState;
-            
-            if (isTrivialKingState) {
-                advScoreDisplay.innerHTML = `<span class="text-xs text-red-400 font-bold block mt-1">✗ Illegal King Move</span>`;
-            } else if (captureThisTurn) {
-                advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-blue-400 ml-1 block">✓ Suspended (Capture)</span>`;
-            } else if (isScoreValid) {
-                advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-green-400 ml-1 block">✓ Valid (Need >${turnStartScore})</span>`;
-            } else {
-                advScoreDisplay.innerHTML = `${currentScore} <span class="text-xs text-red-400 ml-1 block">✗ Need >${turnStartScore}</span>`;
-            }
+        function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
+        function getMoveHistoryStr() { return moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); }
 
-            // UI Mode Toggling
-            if (appMode === 'play') {
-                playControls.classList.remove('hidden');
-                replayControls.classList.add('hidden');
-                whatIfExtras.classList.add('hidden');
-                utilityGrid.classList.remove('hidden');
-                socialGrid.classList.remove('hidden');
-                aiToggleWrapper.classList.remove('hidden');
-                boardSizeWrapper.classList.remove('hidden');
-                resetFooter.classList.remove('hidden');
-            } else if (appMode === 'replay') {
-                playControls.classList.add('hidden');
-                replayControls.classList.remove('hidden');
-                whatIfExtras.classList.add('hidden');
-                utilityGrid.classList.add('hidden');
-                socialGrid.classList.add('hidden');
-                aiToggleWrapper.classList.add('hidden');
-                boardSizeWrapper.classList.add('hidden');
-                resetFooter.classList.add('hidden');
-                
-                replayBackBtn.disabled = replayIndex === 0;
-                replayForwardBtn.disabled = replayIndex === replayStates.length - 1;
-            } else if (appMode === 'what_if') {
-                playControls.classList.remove('hidden');
-                replayControls.classList.add('hidden');
-                whatIfExtras.classList.remove('hidden');
-                utilityGrid.classList.add('hidden');
-                socialGrid.classList.add('hidden');
-                aiToggleWrapper.classList.add('hidden');
-                boardSizeWrapper.classList.add('hidden');
-                resetFooter.classList.add('hidden');
-            }
-
-            const maxApForTurn = (fullMoveCount === 1 && turn === 'white') ? STARTING_AP_WHITE : MAX_AP;
-            const apSpent = currentAP < maxApForTurn;
-            const btnBase = "btn text-sm px-4 py-3 w-full ";
-
-            if (isLocked || gameOver || !apSpent) {
-                resetTurnBtn.className = btnBase + "bg-slate-700 text-slate-500 cursor-not-allowed rounded-full";
-                resetTurnBtn.disabled = true;
-            } else {
-                resetTurnBtn.className = btnBase + "bg-blue-600 hover:bg-blue-500 text-white rounded-full";
-                resetTurnBtn.disabled = false;
-            }
-
-            if (isLocked || gameOver) {
-                endTurnBtn.className = btnBase + "bg-slate-700 text-slate-500 cursor-not-allowed rounded";
-                endTurnBtn.innerText = "End Turn";
-                endTurnBtn.disabled = true;
-            } else if (isValidEndTurn) {
-                endTurnBtn.className = btnBase + "bg-green-600 hover:bg-green-500 text-white rounded";
-                endTurnBtn.innerText = "End Turn";
-                endTurnBtn.disabled = false; 
-            } else {
-                if (currentAP === 0 || isTrivialKingState) {
-                    endTurnBtn.className = btnBase + "bg-red-600 text-white cursor-not-allowed rounded flash-red";
-                    endTurnBtn.innerText = "Invalid Turn";
-                    endTurnBtn.disabled = true;
-                } else {
-                    endTurnBtn.className = btnBase + "bg-slate-700 text-slate-400 cursor-not-allowed rounded";
-                    endTurnBtn.innerText = "End Turn";
-                    endTurnBtn.disabled = true;
-                }
-            }
-
-            const hasSelection = selectedSquare && board[selectedSquare.r][selectedSquare.c];
-            if (hasSelection && board[selectedSquare.r][selectedSquare.c].owner === turn && (!isAIEnabled || turn === 'white' || appMode === 'what_if') && !isLocked) {
-                const p = board[selectedSquare.r][selectedSquare.c];
-                selectedPieceDisplay.innerText = p.type === 'king' ? "Selected: King" : `Selected: Value ${p.value}`;
-                incBtn.disabled = p.type === 'king' || p.value >= 6 || currentAP < COST_MOD;
-                decBtn.disabled = p.type === 'king' || p.value <= 1 || currentAP < COST_MOD;
-                if (p.type === 'king') { incBtn.disabled = true; decBtn.disabled = true; }
-            } else {
-                selectedPieceDisplay.innerText = isLocked ? "Replay / AI Mode" : "Select a piece";
-                incBtn.disabled = true; decBtn.disabled = true;
-            }
-        }
-
-        function log(msg, colorClass = '') {
-            const entry = document.createElement('div');
-            entry.textContent = `> ${msg}`;
-            if (colorClass) entry.className = colorClass;
-            gameLog.appendChild(entry);
-            gameLog.scrollTop = gameLog.scrollHeight;
-        }
-
-        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-        // --- Event Listeners ---
-        endTurnBtn.addEventListener('click', () => { SoundEngine.play('tap'); switchTurn(); });
-        resetTurnBtn.addEventListener('click', handleResetTurn);
-        incBtn.addEventListener('click', () => handleIncDec(true));
-        decBtn.addEventListener('click', () => handleIncDec(false));
-        resetBtn.addEventListener('click', () => { 
-            SoundEngine.play('tap');
-            askConfirm('Restart completely?', () => initGame()); 
-        });
-        
-        boardSizeSelect.addEventListener('change', (e) => {
-            SoundEngine.play('tap');
-            const newSize = parseInt(e.target.value);
-            setTimeout(() => {
-                askConfirm(`Change board size to ${newSize}x${newSize} and restart game?`, 
-                    () => { initGame(newSize); }, 
-                    () => { boardSizeSelect.value = BOARD_SIZE.toString(); }
-                );
-            }, 10);
-        });
-
-        aiToggle.addEventListener('change', (e) => {
-            SoundEngine.play('tap');
-            isAIEnabled = e.target.checked;
-            if(turn === 'black' && isAIEnabled && appMode === 'play') runAITurn();
-        });
-        
-        rulesBtn.addEventListener('click', () => { SoundEngine.play('tap'); rulesModal.classList.remove('hidden'); });
-        closeRulesBtn.addEventListener('click', () => { SoundEngine.play('tap'); rulesModal.classList.add('hidden'); });
-
-        recordBtn.addEventListener('click', () => { SoundEngine.play('tap'); showRecord(); });
-        closeRecordBtn.addEventListener('click', () => { SoundEngine.play('tap'); recordModal.classList.add('hidden'); });
-        copyRecordBtn.addEventListener('click', () => {
-            SoundEngine.play('tap');
-            recordText.select();
-            document.execCommand('copy');
-            copyRecordBtn.innerText = 'Copied!';
-            setTimeout(() => copyRecordBtn.innerText = 'Copy', 1500);
-        });
-
-        viewBoardBtn.addEventListener('click', () => {
-            SoundEngine.play('tap');
-            winnerModal.classList.add('hidden');
-        });
-
-        // Analysis Listeners
-        analysisBtn.addEventListener('click', () => { 
-            SoundEngine.play('tap'); 
-            // Default the modal's dropdown to whatever the current live board is
-            analysisBoardSizeSelect.value = BOARD_SIZE.toString();
-            analysisModal.classList.remove('hidden'); 
-        });
-        closeAnalysisBtn.addEventListener('click', () => { SoundEngine.play('tap'); analysisModal.classList.add('hidden'); });
-        loadAnalysisBtn.addEventListener('click', loadAnalysis);
-        
-        replayBackBtn.addEventListener('click', () => {
-            SoundEngine.play('tap');
-            if (replayIndex > 0) {
-                replayIndex--;
-                loadReplayState(replayIndex);
-            }
-        });
-
-        replayForwardBtn.addEventListener('click', () => {
-            SoundEngine.play('tap');
-            if (replayIndex < replayStates.length - 1) {
-                replayIndex++;
-                loadReplayState(replayIndex);
-            }
-        });
-
-        exitAnalysisBtn.addEventListener('click', exitAnalysis);
-        whatIfBtn.addEventListener('click', enterWhatIf);
-        whatIfFreshBtn.addEventListener('click', freshWhatIf);
-        whatIfLeaveBtn.addEventListener('click', leaveWhatIf);
+        document.getElementById('inc-btn').onclick = () => handleMod(true);
+        document.getElementById('dec-btn').onclick = () => handleMod(false);
+        document.getElementById('end-turn-btn').onclick = endTurn;
+        document.getElementById('reset-turn-btn').onclick = () => { if(turnStartBoardSnapshot) { board = JSON.parse(turnStartBoardSnapshot); currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6; currentTurnActions = []; selectedSquare = null; render(); } };
+        document.getElementById('rules-btn').onclick = () => log("Significant Event: Capture resets AS rule.", "text-blue-300 font-bold uppercase");
+        document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
+        document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
+        document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
+        document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
+        document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
+        document.getElementById('no-clock-btn').onclick = () => { useClock = false; gameActive = true; document.getElementById('start-overlay').style.display = 'none'; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); log("Chronos Disabled.", "font-bold uppercase"); };
+        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteStartDuration = parseInt(document.getElementById('white-input').value) * 60; blackStartDuration = parseInt(document.getElementById('black-input').value) * 60; whiteTime = whiteStartDuration; blackTime = blackStartDuration; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Chronos Ready.", "font-bold uppercase text-indigo-400"); };
+        document.getElementById('start-game-btn').onclick = startGame;
+        document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
+        document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
+        document.getElementById('new-campaign-btn').onclick = () => location.reload();
+        document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
+        document.getElementById('cancel-new-game').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
+        document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
 
         initGame();
-
     </script>
 </body>
 </html>
