@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v30 - Tony Berard</title>
+    <title>Dice Chess Ultra v31 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -222,7 +222,7 @@
 
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v30 Control</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v31 Archivist</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -271,11 +271,11 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 px-2">
-                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2 overflow-visible">
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI</span>
                             <input type="checkbox" id="ai-toggle" class="w-3 h-3 rounded bg-slate-900 border-slate-600 text-blue-600 cursor-pointer" checked>
                         </div>
-                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2 overflow-visible">
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
                                 <option value="8">8x8 Grid</option>
@@ -300,7 +300,6 @@
                         </div>
                     </div>
 
-                    <!-- Replay Engine -->
                     <div id="replay-controls" class="hidden space-y-1.5">
                         <div class="grid grid-cols-2 gap-2">
                             <button id="replay-back-btn" class="btn bg-slate-600 hover:bg-slate-500 py-1.5 text-[9px] uppercase">◄ PREV</button>
@@ -351,10 +350,10 @@
 
     <div id="confirm-modal" class="modal hidden">
         <div class="bg-slate-800 p-8 rounded-2xl border-2 border-slate-700 w-full max-w-xs mx-4 text-center shadow-2xl">
-            <h3 class="text-white font-black uppercase text-sm mb-6 text-center text-center">Reset Battlefield?</h3>
+            <h3 class="text-white font-black uppercase text-sm mb-6 text-center text-center text-center">Terminate Session?</h3>
             <div class="flex gap-3">
                 <button id="cancel-new-game" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Cancel</button>
-                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Confirm</button>
+                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center text-center">Confirm</button>
             </div>
         </div>
     </div>
@@ -362,22 +361,27 @@
     <div id="winner-modal" class="modal hidden text-center">
         <div class="bg-slate-800 p-8 rounded-2xl border-4 border-yellow-500/30 text-center w-full max-w-xs mx-4 shadow-2xl">
             <h2 class="text-3xl font-black text-yellow-400 mb-2 italic uppercase tracking-tighter text-center">Victory</h2>
-            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center text-center">Game Over.</p>
+            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center text-center text-center">Game Over.</p>
             <div class="space-y-2">
-                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs text-center">New Game</button>
-                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] text-center">View Board</button>
-                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors text-center">Copy Record</button>
+                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs text-center text-center">New Game</button>
+                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] text-center text-center">View Board</button>
+                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors text-center text-center">Copy Record</button>
             </div>
         </div>
     </div>
 
+    <!-- Re-engineered Log Modal (Import Screen) -->
     <div id="record-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
-            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center text-center">Notation Log</h3>
-            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3" readonly></textarea>
+            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center text-center text-center">Game Record / Import</h3>
+            <p class="text-[8px] text-slate-500 uppercase mb-2">Paste a standard log below to analyze</p>
+            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
             <div class="flex flex-col gap-2">
-                <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Copy to Clipboard</button>
-                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center text-center">Close</button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="import-record-btn" class="w-full py-2 bg-purple-600 text-white rounded text-[10px] font-bold uppercase">Import & Analyze</button>
+                    <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center text-center">Copy Log</button>
+                </div>
+                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center text-center text-center">Close</button>
             </div>
         </div>
     </div>
@@ -455,15 +459,101 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v30 Direct Control. Grid: ${BOARD_SIZE}x${BOARD_SIZE}`, "text-blue-400 font-black uppercase");
+            log(`v31 Synchronized. Importer Active.`, "text-blue-400 font-black uppercase");
         }
 
+        // Snapshots for Analysis Engine
         function saveSnapshot() {
             historySnapshots.push({
                 board: JSON.parse(JSON.stringify(board)),
                 turn, ap: currentAP, fullMoveCount,
                 history: JSON.parse(JSON.stringify(moveHistory))
             });
+        }
+
+        // --- IMPORT LOGIC ---
+        function importGame(text) {
+            try {
+                // Clear current game first
+                const turns = text.trim().split('\n');
+                if (turns.length === 0) return;
+
+                // Detect grid size from coordinates (e.g., 'i', 'j' implies 10x10)
+                let size = 8;
+                if (text.includes('i') || text.includes('j')) size = 10;
+                else if (text.includes('i')) size = 9;
+                
+                initGame(size);
+                
+                for (const line of turns) {
+                    const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/);
+                    if (!match) continue;
+
+                    const whiteMoves = match[1].split(',').map(s => s.trim());
+                    const blackMoves = match[2].split(',').map(s => s.trim());
+
+                    // Process White
+                    processActions(whiteMoves, 'white');
+                    saveSnapshot();
+                    
+                    // Process Black
+                    if (blackMoves[0] !== "") {
+                        processActions(blackMoves, 'black');
+                        saveSnapshot();
+                    }
+                }
+                
+                analysisIndex = historySnapshots.length - 1;
+                log("Import Successful. Accessing History.");
+                document.getElementById('record-modal').classList.add('hidden');
+                render();
+            } catch (e) {
+                log("Error: Invalid Game Notation.", "text-red-500");
+                console.error(e);
+            }
+        }
+
+        function processActions(actions, player) {
+            turn = player;
+            currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
+            currentTurnActions = [];
+            captureTurnState();
+
+            for (const action of actions) {
+                if (!action) continue;
+                // Parse coordinates
+                const parseCoord = (s) => {
+                    const c = s.charCodeAt(0) - 97;
+                    const r = BOARD_SIZE - parseInt(s.substring(1));
+                    return {r, c};
+                };
+
+                if (action.includes('-') || action.includes('x')) {
+                    const parts = action.split(/[-x]/);
+                    const from = parseCoord(parts[0]);
+                    const to = parseCoord(parts[1]);
+                    const cost = board[to.r][to.c] ? 5 : 3;
+                    if (board[to.r][to.c]) capturedThisTurn = true;
+                    board[to.r][to.c] = board[from.r][from.c];
+                    board[from.r][from.c] = null;
+                    currentAP -= cost;
+                } else if (action.includes('+') || action.includes('-')) {
+                    const coord = parseCoord(action.substring(0, action.length - 1));
+                    const inc = action.endsWith('+');
+                    if (inc) board[coord.r][coord.c].value++;
+                    else board[coord.r][coord.c].value--;
+                    currentAP -= 1;
+                }
+                currentTurnActions.push(action);
+            }
+
+            // Sync move history record
+            const actStr = currentTurnActions.join(', ');
+            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
+            else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
+            
+            // Toggle turn
+            turn = (turn === 'white') ? 'black' : 'white';
         }
 
         function startGame() {
@@ -543,7 +633,6 @@
             if(gameOver || aiThinking || !gameActive) return;
             if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1) return;
             const p = board[r][c];
-            // In Replay Mode, we only allow selection for THREATS vision
             if (analysisIndex !== -1) {
                 if (showThreatVision) { selectedSquare = {r,c}; render(); }
                 return;
@@ -617,7 +706,7 @@
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
             analysisIndex = -1; captureTurnState();
-            log("What-If Timeline set.", "text-purple-400 font-black uppercase");
+            log("Branch Created.", "text-purple-400 font-black uppercase");
             render();
         }
 
@@ -644,7 +733,7 @@
             }
         }
 
-        // --- ULTRA AI ENGINE v30 ---
+        // --- ULTRA AI ENGINE v31 ---
         function getThreatZoneDetails(b, owner, buffer = 0) {
             let zoneMap = new Map();
             for(let r=0; r<BOARD_SIZE; r++) {
@@ -726,12 +815,12 @@
                 const elapsed = Date.now() - startThinking;
                 if (elapsed >= targetThinkTime || currentWidth >= 3500) break;
                 currentWidth += 600; 
-                log(`DELIBERATING: Beam ${currentWidth}...`, "text-slate-500 italic uppercase");
+                log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
                 await new Promise(r => setTimeout(r, 10)); 
             }
 
             if(!bestTurn) {
-                log("AI: Recognizing Checkmate/Zugzwang.", "text-red-500 font-bold uppercase text-center");
+                log("AI: Resigning.", "text-red-500 font-bold uppercase text-center");
                 aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking');
                 endGame('white', "Zugzwang"); return;
             }
@@ -903,9 +992,10 @@
             render(); 
         };
 
-        document.getElementById('rules-btn').onclick = () => log("RULES: Trades prioritized. King Foresight Active.", "text-blue-300 font-bold uppercase text-center");
+        document.getElementById('rules-btn').onclick = () => log("RULES: Only captures suspend AS. King Foresight Active.", "text-blue-300 font-bold uppercase text-center");
         document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
-        document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
+        document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
+        document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value);
         document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
         document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
@@ -918,11 +1008,7 @@
         document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
         document.getElementById('cancel-new-game').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
         document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
-        
-        document.getElementById('board-size-select').onchange = (e) => { 
-            BOARD_SIZE = parseInt(e.target.value); 
-            initGame(BOARD_SIZE); 
-        };
+        document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE); };
 
         initGame();
     </script>
