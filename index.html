@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v22 - Tony Berard</title>
+    <title>Dice Chess Ultra v29 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -146,6 +146,9 @@
             border-radius: 50%;
         }
         .square.valid-capture { background-color: #ef4444 !important; }
+        
+        .square.threat-current { background-color: rgba(239, 68, 68, 0.4) !important; }
+        .square.threat-projected { background-color: rgba(245, 158, 11, 0.3) !important; }
 
         .die {
             width: 86%;
@@ -200,13 +203,28 @@
             border: 4px solid rgba(255,255,255,0.2);
             letter-spacing: 0.1em;
         }
+
+        /* Dropdown overflow and visibility fix */
+        .select-container { position: relative; z-index: 20; }
+        select {
+            background-color: #020617 !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 800;
+            appearance: auto; /* Using auto for better OS integration of options */
+            cursor: pointer;
+            outline: none;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v22 Survivalist</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v29 Integrity</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -217,8 +235,8 @@
             <div id="board-wrapper">
                 <div id="board" class="board-container"></div>
                 <div id="start-overlay">
-                    <button id="start-game-btn" class="start-btn">START GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Timers will engage on press</p>
+                    <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Timers initialized</p>
                 </div>
             </div>
 
@@ -238,15 +256,15 @@
                 <div class="panel text-center">
                     <div class="flex justify-between items-center mb-1">
                         <div class="flex-1">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Status</div>
-                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center">WHITE TURN</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Status</div>
+                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase">WHITE TURN</div>
                         </div>
                         <div class="flex-1 px-3 border-l border-r border-slate-700">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Adv. Score</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Adv. Score</div>
                             <div id="adv-score-display" class="text-xs font-bold text-white text-center">0</div>
                         </div>
                         <div class="flex-1">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">AP Left</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">AP Left</div>
                             <div class="flex items-baseline justify-center gap-0.5">
                                 <span id="ap-counter" class="text-lg font-black text-yellow-400">3</span>
                                 <span class="text-[8px] text-slate-500">/ 6</span>
@@ -256,22 +274,22 @@
 
                     <div class="grid grid-cols-2 gap-2 px-2">
                         <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI Sparring</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI</span>
                             <input type="checkbox" id="ai-toggle" class="w-3 h-3 rounded bg-slate-900 border-slate-600 text-blue-600 cursor-pointer" checked>
                         </div>
-                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size</span>
-                            <select id="board-size-select" class="bg-transparent text-white text-[9px] font-bold outline-none cursor-pointer">
-                                <option value="8">8x8</option>
-                                <option value="9">9x9</option>
-                                <option value="10" selected>10x10</option>
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2 select-container">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
+                            <select id="board-size-select">
+                                <option value="8">8x8 Grid</option>
+                                <option value="9">9x9 Grid</option>
+                                <option value="10" selected>10x10 Grid</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
                 <div class="panel relative">
-                    <div id="selected-piece-display" class="text-[8px] text-blue-400 font-bold text-center mb-1 uppercase tracking-tighter">Select Piece</div>
+                    <div id="selected-piece-display" class="text-[8px] text-blue-400 font-bold text-center mb-1 uppercase tracking-tighter">Live Session</div>
                     
                     <div id="play-controls" class="space-y-1.5">
                         <div class="grid grid-cols-2 gap-2">
@@ -283,11 +301,23 @@
                             <button id="end-turn-btn" class="btn bg-green-600 hover:bg-green-500 text-white py-1.5 text-[9px] uppercase">END TURN</button>
                         </div>
                     </div>
+
+                    <!-- Analysis Controls -->
+                    <div id="replay-controls" class="hidden space-y-1.5">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="replay-back-btn" class="btn bg-slate-600 hover:bg-slate-500 py-1.5 text-[9px] uppercase">◄ PREV</button>
+                            <button id="replay-forward-btn" class="btn bg-slate-600 hover:bg-slate-500 py-1.5 text-[9px] uppercase">NEXT ►</button>
+                        </div>
+                        <button id="what-if-btn" class="btn bg-purple-600 hover:bg-purple-500 py-1.5 text-white w-full text-[9px] uppercase font-black">WHAT IF...</button>
+                        <button id="exit-analysis-btn" class="btn bg-red-600 hover:bg-red-500 py-1 text-white text-[8px] w-full mt-1 uppercase tracking-widest">EXIT ANALYSIS</button>
+                    </div>
                     
-                    <div class="grid grid-cols-3 gap-1.5 mt-2">
-                        <button id="rules-btn" class="btn btn-utility uppercase">Rules</button>
-                        <button id="record-btn" class="btn btn-utility uppercase">Log</button>
-                        <button id="settings-btn" class="btn btn-utility bg-indigo-800 uppercase">Clock</button>
+                    <div class="grid grid-cols-5 gap-1 mt-2">
+                        <button id="rules-btn" class="btn btn-utility uppercase text-[7px] bg-slate-800">Rules</button>
+                        <button id="threats-btn" class="btn btn-utility uppercase text-[7px] bg-red-900/40">Sights</button>
+                        <button id="record-btn" class="btn btn-utility uppercase text-[7px] bg-slate-800">Log</button>
+                        <button id="analysis-btn" class="btn btn-utility uppercase text-[7px] bg-purple-900/40">History</button>
+                        <button id="settings-btn" class="btn btn-utility uppercase text-[7px] bg-indigo-800">Clock</button>
                     </div>
                 </div>
 
@@ -317,24 +347,24 @@
                 <button id="no-clock-btn" class="py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">No Clock</button>
                 <button id="enable-clock-btn" class="py-2 bg-indigo-600 text-white rounded text-[10px] font-bold uppercase">Enable Timer</button>
             </div>
-            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold">Cancel</button>
+            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold text-center">Cancel</button>
         </div>
     </div>
 
     <div id="confirm-modal" class="modal hidden">
         <div class="bg-slate-800 p-8 rounded-2xl border-2 border-slate-700 w-full max-w-xs mx-4 text-center shadow-2xl">
-            <h3 class="text-white font-black uppercase text-sm mb-6 text-center">Terminate and Start New?</h3>
+            <h3 class="text-white font-black uppercase text-sm mb-6 text-center">Terminate Session?</h3>
             <div class="flex gap-3">
                 <button id="cancel-new-game" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Cancel</button>
-                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase">Confirm</button>
+                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Confirm</button>
             </div>
         </div>
     </div>
 
     <div id="winner-modal" class="modal hidden text-center">
         <div class="bg-slate-800 p-8 rounded-2xl border-4 border-yellow-500/30 text-center w-full max-w-xs mx-4 shadow-2xl">
-            <h2 class="text-3xl font-black text-yellow-400 mb-2 italic uppercase tracking-tighter">Victory</h2>
-            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase">Neutralized.</p>
+            <h2 class="text-3xl font-black text-yellow-400 mb-2 italic uppercase tracking-tighter text-center">Victory</h2>
+            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center">Neutralized.</p>
             <div class="space-y-2">
                 <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs">New Game</button>
                 <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px]">View Board</button>
@@ -345,7 +375,7 @@
 
     <div id="record-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
-            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter">Notation Log</h3>
+            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center">Notation Log</h3>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3" readonly></textarea>
             <div class="flex flex-col gap-2">
                 <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase">Copy to Clipboard</button>
@@ -388,6 +418,10 @@
         let gameOver = false;
         let aiThinking = false;
 
+        let analysisIndex = -1; 
+        let historySnapshots = []; 
+        let showThreatVision = false;
+
         let useClock = false; 
         let gameActive = true; 
         let whiteStartDuration = 900, blackStartDuration = 900;
@@ -405,9 +439,12 @@
 
         function initGame(size = 10) {
             BOARD_SIZE = size;
+            document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; gameOver = false; selectedSquare = null;
             useClock = false; gameActive = true; 
+            analysisIndex = -1; historySnapshots = [];
+
             const layout = { 8:[5,4,3,6,0,3,4,5], 9:[5,4,3,6,0,2,3,4,5], 10:[5,4,3,2,6,0,2,3,4,5] }[BOARD_SIZE];
             for (let c = 0; c < BOARD_SIZE; c++) {
                 board[0][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'black' };
@@ -415,22 +452,31 @@
                 board[BOARD_SIZE-2][c] = { type: 'die', value: 2, owner: 'white' };
                 board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
             }
+            
             clearInterval(clockInterval);
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
-            captureTurnState(); render(); updateClockDisplay();
-            log(`v22 Survivalist: Piece preservation priority high.`, "text-blue-400 font-bold uppercase");
+            captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
+            log(`v29 Synchronized. Grid: ${BOARD_SIZE}x${BOARD_SIZE}`, "text-blue-400 font-black uppercase");
+        }
+
+        function saveSnapshot() {
+            historySnapshots.push({
+                board: JSON.parse(JSON.stringify(board)),
+                turn, ap: currentAP, fullMoveCount,
+                history: JSON.parse(JSON.stringify(moveHistory))
+            });
         }
 
         function startGame() {
             gameActive = true;
             document.getElementById('start-overlay').style.display = 'none';
             SoundEngine.play(800, 0.2, 'square');
-            log(`Battle Commenced. Chronos active.`, "text-green-400 font-bold uppercase");
+            log(`Clocks Active.`, "text-green-400 font-bold uppercase");
         }
 
         function tickClock() {
-            if (gameOver || aiThinking || !gameActive || !useClock) return;
+            if (gameOver || aiThinking || !gameActive || !useClock || analysisIndex !== -1) return;
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
@@ -448,8 +494,8 @@
                 btEl.innerText = format(Math.max(0, blackTime));
                 wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off');
             }
-            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock) ? 'white' : '#334155';
-            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock) ? '#818cf8' : '#334155';
+            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1) ? 'white' : '#334155';
+            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1) ? '#818cf8' : '#334155';
         }
 
         function captureTurnState() {
@@ -497,15 +543,16 @@
 
         function selectSquare(r, c) {
             if(gameOver || aiThinking || !gameActive) return;
-            if(turn === 'black' && document.getElementById('ai-toggle').checked) return;
+            if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1) return;
             const p = board[r][c];
-            if(p && p.owner === turn && currentAP > 0) { selectedSquare = {r, c}; SoundEngine.play(400); }
-            else if(selectedSquare) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
+            if(p && p.owner === turn && currentAP > 0 && analysisIndex === -1) { selectedSquare = {r, c}; SoundEngine.play(400); }
+            else if(selectedSquare && analysisIndex === -1) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
+            else if (showThreatVision) { selectedSquare = {r,c}; } 
             render();
         }
 
         function handleMod(inc) {
-            if(!selectedSquare || currentAP < 1 || !gameActive) return;
+            if(!selectedSquare || currentAP < 1 || !gameActive || analysisIndex !== -1) return;
             const p = board[selectedSquare.r][selectedSquare.c];
             if(!p || p.type === 'king' || p.owner !== turn) return;
             if(inc && p.value < 6) { p.value++; currentAP--; }
@@ -525,16 +572,51 @@
         }
 
         function endTurn() {
-            if(gameOver || aiThinking || !gameActive) return;
+            if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
             const curScore = calcAS(board, turn);
             const asPass = capturedThisTurn || curScore > turnStartScore;
-            if(!asPass) { log("Turn Illegal: AS must increase.", "text-red-500 font-bold text-center uppercase"); return; }
+            if(!asPass) { log("Illegal Turn: AS rule failed.", "text-red-500 font-bold uppercase text-center"); return; }
+            
             const actStr = currentTurnActions.join(', ');
             if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
             else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
+            
             turn = turn === 'white' ? 'black' : 'white';
-            currentAP = 6; currentTurnActions = []; selectedSquare = null; captureTurnState(); flashTurn(); render();
+            currentAP = 6; currentTurnActions = []; selectedSquare = null;
+            captureTurnState(); saveSnapshot(); flashTurn(); render();
             if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver) setTimeout(runAI, 100);
+        }
+
+        function stepBack() {
+            if (analysisIndex === -1) analysisIndex = historySnapshots.length - 2;
+            else analysisIndex--;
+            if (analysisIndex < 0) analysisIndex = 0;
+            applySnapshot(analysisIndex);
+        }
+
+        function stepForward() {
+            if (analysisIndex === -1) return;
+            analysisIndex++;
+            if (analysisIndex >= historySnapshots.length - 1) {
+                analysisIndex = -1; applySnapshot(historySnapshots.length - 1);
+            } else applySnapshot(analysisIndex);
+        }
+
+        function applySnapshot(idx) {
+            const snap = historySnapshots[idx];
+            board = JSON.parse(JSON.stringify(snap.board));
+            turn = snap.turn; currentAP = snap.ap; fullMoveCount = snap.fullMoveCount;
+            moveHistory = JSON.parse(JSON.stringify(snap.history));
+            render();
+        }
+
+        function whatIf() {
+            if (analysisIndex === -1) return;
+            historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
+            moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
+            analysisIndex = -1; captureTurnState();
+            log("Branch Created.", "text-purple-400 font-black uppercase text-center");
+            render();
         }
 
         function flashTurn() {
@@ -560,18 +642,17 @@
             }
         }
 
-        // --- ULTRA AI ENGINE v22 ---
-        function getThreatZoneDetails(b, owner) {
+        // --- ULTRA AI ENGINE v29 ---
+        function getThreatZoneDetails(b, owner, buffer = 0) {
             let zoneMap = new Map();
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
                     const p = b[r][c];
                     if(p && p.owner === owner) {
-                        let par = fullMoveCount > 10 ? 1 : 0;
-                        const range = p.type === 'king' ? 1 : Math.min(6, p.value + par);
+                        let mobility = p.type === 'king' ? 1 : Math.min(6, p.value + buffer);
                         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
                         for(let d of dirs) {
-                            for(let i=1; i<=range; i++) {
+                            for(let i=1; i<=mobility; i++) {
                                 let nr = r+d[0]*i, nc = c+d[1]*i;
                                 if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
                                 let key = `${nr},${nc}`;
@@ -594,33 +675,26 @@
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             if(!enK) return 100000000; if(!myK) return -100000000;
 
-            // MATERIAL HEADCOUNT (1,000,000 per die - survival is everything)
             score += (myP.length - enP.length) * 1000000;
+            const enProjectedZone = getThreatZoneDetails(b, 'white', 1);
+            if(enProjectedZone.has(`${myK.r},${myK.c}`)) score -= 80000000;
 
-            const enZone = getThreatZoneDetails(b, 'white');
-            const myZone = getThreatZoneDetails(b, 'black');
-            
+            const enZone = getThreatZoneDetails(b, 'white', 0);
+            const myZone = getThreatZoneDetails(b, 'black', 0);
             myP.forEach(p => { 
                 if(enZone.has(`${p.r},${p.c}`)) {
-                    if(p.type === 'king') score -= 50000000; 
-                    else { 
-                        // RECIPROCITY CHECK: If hanging and no battery support, massive penalty
-                        let support = myZone.get(`${p.r},${p.c}`) || 0;
-                        if (support <= 1) score -= 1500000; 
-                        else score -= 300000; // Safer if defended
-                    }
+                    let support = myZone.get(`${p.r},${p.c}`) || 0;
+                    score -= (support <= 1) ? 2000000 : 300000; 
                 }
+                if (p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) score += 2000;
             });
 
-            // PREDATOR LOGIC
             if (myP.length + enP.length < 12) {
                 const dist = Math.abs(myK.r - enK.r) + Math.abs(myK.c - enK.c);
-                score -= dist * 2000;
+                score -= dist * 3500;
             }
-
-            score += calcAS(b, 'black') * 150; // Increased weight to find legal moves
+            score += calcAS(b, 'black') * 150;
             if(myK.r > 1) score -= (myK.r * 15000); 
-
             if(desperate && node.captured) score += 20000000;
             return score;
         }
@@ -634,14 +708,13 @@
             render();
             
             const startThinking = Date.now();
-            let targetThinkTime = 0; 
+            let targetThinkTime = 1000; 
             if (useClock) {
-                const whiteUsed = whiteStartDuration - whiteTime;
-                const whiteAvg = fullMoveCount > 0 ? whiteUsed / fullMoveCount : 8;
-                targetThinkTime = Math.min(whiteAvg * 0.8, 15) * 1000;
+                const timeDiff = blackTime - whiteTime;
+                targetThinkTime = (timeDiff > 60) ? 9000 : 3000;
             }
 
-            let currentWidth = 100;
+            let currentWidth = 150;
             let bestTurn = null;
 
             while (true) {
@@ -649,29 +722,25 @@
                 let result = await performSearchAsync(root, currentWidth, false);
                 if (result) bestTurn = result;
                 const elapsed = Date.now() - startThinking;
-                if (!useClock || elapsed >= targetThinkTime || currentWidth >= 2000) break;
-                currentWidth *= 2; 
+                if (elapsed >= targetThinkTime || currentWidth >= 3000) break;
+                currentWidth += 500; 
                 log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
+                await new Promise(r => setTimeout(r, 10)); 
             }
 
             if(!bestTurn) {
-                log("AI STRESSED: Deep Scan initiated...", "text-orange-500 font-bold text-center uppercase");
-                let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
-                bestTurn = await performSearchAsync(root, 1500, true);
+                log("AI: Resigning.", "text-red-500 font-bold uppercase text-center");
+                aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking');
+                endGame('white', "Zugzwang"); return;
             }
 
-            if(bestTurn) {
-                for(let a of bestTurn.actions) {
-                    if(gameOver) break;
-                    if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
-                    else tryMove(a.fr, a.fc, a.tr, a.tc);
-                    render(); await new Promise(r => setTimeout(r, 400));
-                }
-                aiThinking = false; turnEl.classList.remove('ai-thinking'); turnEl.classList.remove('predator-thinking'); if(turn === 'black') endTurn();
-            } else {
-                log("ULTRA AI: Resigning.", "text-red-500 font-black text-center uppercase");
-                aiThinking = false; turnEl.classList.remove('ai-thinking'); turnEl.classList.remove('predator-thinking'); endGame('white', "Zugzwang");
+            for(let a of bestTurn.actions) {
+                if(gameOver) break;
+                if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
+                else tryMove(a.fr, a.fc, a.tr, a.tc);
+                render(); await new Promise(r => setTimeout(r, 400));
             }
+            aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking'); if(turn === 'black') endTurn();
             render();
         }
 
@@ -702,9 +771,8 @@
                                 const cost = node.board[tr][tc] ? 5 : 3;
                                 if(node.ap >= cost) {
                                     let nb = JSON.parse(JSON.stringify(node.board));
-                                    const targetPiece = nb[tr][tc];
                                     nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
-                                    next.push({ ...node, board: nb, ap: node.ap-cost, captured: node.captured || !!targetPiece, actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
+                                    next.push({ ...node, board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
                                 }
                                 if(node.board[tr][tc]) break;
                             }
@@ -715,26 +783,68 @@
                 next.forEach(n => n.h = heuristic(n, desperate));
                 next.sort((a,b) => b.h - a.h);
                 beam = next.slice(0, width); 
-                await new Promise(r => setTimeout(r, 5));
+                await new Promise(r => setTimeout(r, 1));
             }
-            const legal = beam.filter(n => (n.captured || calcAS(n.board, 'black') > n.startScore));
+            const legal = beam.filter(n => {
+                const asPass = n.captured || calcAS(n.board, 'black') > n.startScore;
+                if(!asPass) return false;
+                let k = null;
+                for(let r=0; r<BOARD_SIZE; r++)
+                    for(let c=0; c<BOARD_SIZE; c++)
+                        if(n.board[r][c]?.type === 'king' && n.board[r][c]?.owner === 'black') k = {r,c};
+                if(!k) return false;
+                const threats = getThreatZoneDetails(n.board, 'white', 0);
+                return !threats.has(`${k.r},${k.c}`);
+            });
             return legal.length > 0 ? legal[0] : null;
         }
 
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             let targets = [];
-            if(selectedSquare && currentAP > 0 && gameActive) {
+            let currentInfluence = new Set();
+            let projectedInfluence = new Set();
+
+            if(selectedSquare && showThreatVision) {
+                const p = board[selectedSquare.r][selectedSquare.c];
+                if(p) {
+                    const mobility = p.type === 'king' ? 1 : p.value;
+                    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                    dirs.forEach(d => {
+                        for(let i=1; i<=mobility; i++) {
+                            let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
+                            if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
+                            currentInfluence.add(`${nr},${nc}`);
+                            if(board[nr][nc]) break;
+                        }
+                        if(p.type !== 'king' && p.value < 6) {
+                            for(let i=1; i<=mobility+1; i++) {
+                                let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
+                                if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
+                                projectedInfluence.add(`${nr},${nc}`);
+                                if(board[nr][nc]) break;
+                            }
+                        }
+                    });
+                }
+            }
+
+            if(selectedSquare && currentAP > 0 && gameActive && analysisIndex === -1 && !showThreatVision) {
                 for(let r=0; r<BOARD_SIZE; r++)
                     for(let c=0; c<BOARD_SIZE; c++)
                         if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
             }
+
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
                     const sq = document.createElement('div');
                     sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
                     if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
                     if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
+                    if(showThreatVision) {
+                        if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current');
+                        else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected');
+                    }
                     sq.onclick = () => selectSquare(r, c);
                     const p = board[r][c];
                     if(p) {
@@ -757,6 +867,9 @@
             }
             if (!aiThinking) turnEl.innerText = `${turn.toUpperCase()} TURN`;
             apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
+            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
+            if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `Replay Step ${analysisIndex}`; spd.classList.replace('text-blue-400', 'text-yellow-400'); }
+            else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "Selection Active" : "Live Session"; spd.classList.replace('text-yellow-400', 'text-blue-400'); }
             const etb = document.getElementById('end-turn-btn');
             const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
             if (currentAP === 0 && !asPass && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
@@ -769,14 +882,20 @@
         document.getElementById('dec-btn').onclick = () => handleMod(false);
         document.getElementById('end-turn-btn').onclick = endTurn;
         document.getElementById('reset-turn-btn').onclick = () => { if(turnStartBoardSnapshot) { board = JSON.parse(turnStartBoardSnapshot); currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6; currentTurnActions = []; selectedSquare = null; render(); } };
-        document.getElementById('rules-btn').onclick = () => log("Significant Event: Capture resets AS rule.", "text-blue-300 font-bold uppercase");
+        document.getElementById('replay-back-btn').onclick = stepBack;
+        document.getElementById('replay-forward-btn').onclick = stepForward;
+        document.getElementById('what-if-btn').onclick = whatIf;
+        document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
+        document.getElementById('analysis-btn').onclick = () => { if(historySnapshots.length > 1) { stepBack(); log("Timeline Accessed."); } };
+        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
+        document.getElementById('rules-btn').onclick = () => log("RULES: Mobility vs Power. Capture suspend AS.", "text-blue-300 font-bold uppercase text-center");
         document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
         document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
         document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
-        document.getElementById('no-clock-btn').onclick = () => { useClock = false; gameActive = true; document.getElementById('start-overlay').style.display = 'none'; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); log("Chronos Disabled.", "font-bold uppercase"); };
-        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteStartDuration = parseInt(document.getElementById('white-input').value) * 60; blackStartDuration = parseInt(document.getElementById('black-input').value) * 60; whiteTime = whiteStartDuration; blackTime = blackStartDuration; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Chronos Ready.", "font-bold uppercase text-indigo-400"); };
+        document.getElementById('no-clock-btn').onclick = () => { useClock = false; gameActive = true; document.getElementById('start-overlay').style.display = 'none'; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); log("Chronos Off."); };
+        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteStartDuration = parseInt(document.getElementById('white-input').value) * 60; blackStartDuration = parseInt(document.getElementById('black-input').value) * 60; whiteTime = whiteStartDuration; blackTime = blackStartDuration; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Chronos Ready."); };
         document.getElementById('start-game-btn').onclick = startGame;
         document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
@@ -784,6 +903,7 @@
         document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
         document.getElementById('cancel-new-game').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
         document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
+        document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE); };
 
         initGame();
     </script>
