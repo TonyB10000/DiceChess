@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v29 - Tony Berard</title>
+    <title>Dice Chess Ultra v30 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -147,8 +147,8 @@
         }
         .square.valid-capture { background-color: #ef4444 !important; }
         
-        .square.threat-current { background-color: rgba(239, 68, 68, 0.4) !important; }
-        .square.threat-projected { background-color: rgba(245, 158, 11, 0.3) !important; }
+        .square.threat-current { background-color: rgba(239, 68, 68, 0.5) !important; }
+        .square.threat-projected { background-color: rgba(245, 158, 11, 0.4) !important; }
 
         .die {
             width: 86%;
@@ -204,8 +204,6 @@
             letter-spacing: 0.1em;
         }
 
-        /* Dropdown overflow and visibility fix */
-        .select-container { position: relative; z-index: 20; }
         select {
             background-color: #020617 !important;
             color: #f1f5f9 !important;
@@ -214,7 +212,7 @@
             padding: 2px 8px;
             font-size: 10px;
             font-weight: 800;
-            appearance: auto; /* Using auto for better OS integration of options */
+            appearance: auto; 
             cursor: pointer;
             outline: none;
         }
@@ -224,7 +222,7 @@
 
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v29 Integrity</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v30 Control</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -244,27 +242,27 @@
                 
                 <div class="flex gap-2">
                     <div id="white-clock-panel" class="flex-1 panel flex flex-col items-center border-b-4 border-slate-700 transition-all">
-                        <div class="text-[8px] text-slate-400 uppercase font-black">White Time</div>
-                        <div id="white-time" class="clock text-2xl font-bold clock-off uppercase">OFF</div>
+                        <div class="text-[8px] text-slate-400 uppercase font-black text-center">White Time</div>
+                        <div id="white-time" class="clock text-2xl font-bold clock-off uppercase text-center">OFF</div>
                     </div>
                     <div id="black-clock-panel" class="flex-1 panel flex flex-col items-center border-b-4 border-slate-700 transition-all">
-                        <div class="text-[8px] text-slate-400 uppercase font-black">Black Time</div>
-                        <div id="black-time" class="clock text-2xl font-bold clock-off uppercase">OFF</div>
+                        <div class="text-[8px] text-slate-400 uppercase font-black text-center">Black Time</div>
+                        <div id="black-time" class="clock text-2xl font-bold clock-off uppercase text-center">OFF</div>
                     </div>
                 </div>
 
                 <div class="panel text-center">
                     <div class="flex justify-between items-center mb-1">
                         <div class="flex-1">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Status</div>
-                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase">WHITE TURN</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center text-center">Status</div>
+                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center text-center">WHITE TURN</div>
                         </div>
                         <div class="flex-1 px-3 border-l border-r border-slate-700">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Adv. Score</div>
-                            <div id="adv-score-display" class="text-xs font-bold text-white text-center">0</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center text-center">Adv. Score</div>
+                            <div id="adv-score-display" class="text-xs font-bold text-white text-center text-center">0</div>
                         </div>
                         <div class="flex-1">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">AP Left</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center text-center">AP Left</div>
                             <div class="flex items-baseline justify-center gap-0.5">
                                 <span id="ap-counter" class="text-lg font-black text-yellow-400">3</span>
                                 <span class="text-[8px] text-slate-500">/ 6</span>
@@ -273,11 +271,11 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 px-2">
-                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2 overflow-visible">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI</span>
                             <input type="checkbox" id="ai-toggle" class="w-3 h-3 rounded bg-slate-900 border-slate-600 text-blue-600 cursor-pointer" checked>
                         </div>
-                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2 select-container">
+                        <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2 overflow-visible">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
                                 <option value="8">8x8 Grid</option>
@@ -302,7 +300,7 @@
                         </div>
                     </div>
 
-                    <!-- Analysis Controls -->
+                    <!-- Replay Engine -->
                     <div id="replay-controls" class="hidden space-y-1.5">
                         <div class="grid grid-cols-2 gap-2">
                             <button id="replay-back-btn" class="btn bg-slate-600 hover:bg-slate-500 py-1.5 text-[9px] uppercase">◄ PREV</button>
@@ -314,10 +312,10 @@
                     
                     <div class="grid grid-cols-5 gap-1 mt-2">
                         <button id="rules-btn" class="btn btn-utility uppercase text-[7px] bg-slate-800">Rules</button>
-                        <button id="threats-btn" class="btn btn-utility uppercase text-[7px] bg-red-900/40">Sights</button>
-                        <button id="record-btn" class="btn btn-utility uppercase text-[7px] bg-slate-800">Log</button>
-                        <button id="analysis-btn" class="btn btn-utility uppercase text-[7px] bg-purple-900/40">History</button>
-                        <button id="settings-btn" class="btn btn-utility uppercase text-[7px] bg-indigo-800">Clock</button>
+                        <button id="threats-btn" class="btn btn-utility uppercase text-[7px] bg-red-900/40">Threats</button>
+                        <button id="record-btn" class="btn btn-utility uppercase text-[7px] bg-slate-800 text-center">Log</button>
+                        <button id="analysis-btn" class="btn btn-utility uppercase text-[7px] bg-purple-900/40 text-center">Analysis</button>
+                        <button id="settings-btn" class="btn btn-utility uppercase text-[7px] bg-indigo-800 text-center">Clock</button>
                     </div>
                 </div>
 
@@ -332,7 +330,7 @@
     <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
-            <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
+            <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter text-center">Chronos Engine</h3>
             <div class="space-y-4 mb-6 text-left px-4">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-slate-400 font-bold uppercase">White (Mins)</span>
@@ -344,16 +342,16 @@
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <button id="no-clock-btn" class="py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">No Clock</button>
-                <button id="enable-clock-btn" class="py-2 bg-indigo-600 text-white rounded text-[10px] font-bold uppercase">Enable Timer</button>
+                <button id="no-clock-btn" class="py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center">No Clock</button>
+                <button id="enable-clock-btn" class="py-2 bg-indigo-600 text-white rounded text-[10px] font-bold uppercase text-center">Enable Timer</button>
             </div>
-            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold text-center">Cancel</button>
+            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold text-center text-center">Cancel</button>
         </div>
     </div>
 
     <div id="confirm-modal" class="modal hidden">
         <div class="bg-slate-800 p-8 rounded-2xl border-2 border-slate-700 w-full max-w-xs mx-4 text-center shadow-2xl">
-            <h3 class="text-white font-black uppercase text-sm mb-6 text-center">Terminate Session?</h3>
+            <h3 class="text-white font-black uppercase text-sm mb-6 text-center text-center">Reset Battlefield?</h3>
             <div class="flex gap-3">
                 <button id="cancel-new-game" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Cancel</button>
                 <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Confirm</button>
@@ -364,22 +362,22 @@
     <div id="winner-modal" class="modal hidden text-center">
         <div class="bg-slate-800 p-8 rounded-2xl border-4 border-yellow-500/30 text-center w-full max-w-xs mx-4 shadow-2xl">
             <h2 class="text-3xl font-black text-yellow-400 mb-2 italic uppercase tracking-tighter text-center">Victory</h2>
-            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center">Neutralized.</p>
+            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center text-center">Game Over.</p>
             <div class="space-y-2">
-                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs">New Game</button>
-                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px]">View Board</button>
-                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors">Copy Record</button>
+                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs text-center">New Game</button>
+                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] text-center">View Board</button>
+                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors text-center">Copy Record</button>
             </div>
         </div>
     </div>
 
     <div id="record-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
-            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center">Notation Log</h3>
+            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center text-center">Notation Log</h3>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3" readonly></textarea>
             <div class="flex flex-col gap-2">
-                <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase">Copy to Clipboard</button>
-                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center">Close</button>
+                <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Copy to Clipboard</button>
+                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center text-center">Close</button>
             </div>
         </div>
     </div>
@@ -457,7 +455,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v29 Synchronized. Grid: ${BOARD_SIZE}x${BOARD_SIZE}`, "text-blue-400 font-black uppercase");
+            log(`v30 Direct Control. Grid: ${BOARD_SIZE}x${BOARD_SIZE}`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() {
@@ -472,7 +470,7 @@
             gameActive = true;
             document.getElementById('start-overlay').style.display = 'none';
             SoundEngine.play(800, 0.2, 'square');
-            log(`Clocks Active.`, "text-green-400 font-bold uppercase");
+            log(`Battle Commenced.`, "text-green-400 font-bold uppercase");
         }
 
         function tickClock() {
@@ -545,9 +543,13 @@
             if(gameOver || aiThinking || !gameActive) return;
             if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1) return;
             const p = board[r][c];
-            if(p && p.owner === turn && currentAP > 0 && analysisIndex === -1) { selectedSquare = {r, c}; SoundEngine.play(400); }
-            else if(selectedSquare && analysisIndex === -1) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
-            else if (showThreatVision) { selectedSquare = {r,c}; } 
+            // In Replay Mode, we only allow selection for THREATS vision
+            if (analysisIndex !== -1) {
+                if (showThreatVision) { selectedSquare = {r,c}; render(); }
+                return;
+            }
+            if(p && p.owner === turn && currentAP > 0) { selectedSquare = {r, c}; SoundEngine.play(400); }
+            else if(selectedSquare) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
             render();
         }
 
@@ -575,7 +577,7 @@
             if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
             const curScore = calcAS(board, turn);
             const asPass = capturedThisTurn || curScore > turnStartScore;
-            if(!asPass) { log("Illegal Turn: AS rule failed.", "text-red-500 font-bold uppercase text-center"); return; }
+            if(!asPass) { log("Illegal Turn: AS rule failure.", "text-red-500 font-bold uppercase"); return; }
             
             const actStr = currentTurnActions.join(', ');
             if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
@@ -615,7 +617,7 @@
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
             analysisIndex = -1; captureTurnState();
-            log("Branch Created.", "text-purple-400 font-black uppercase text-center");
+            log("What-If Timeline set.", "text-purple-400 font-black uppercase");
             render();
         }
 
@@ -642,7 +644,7 @@
             }
         }
 
-        // --- ULTRA AI ENGINE v29 ---
+        // --- ULTRA AI ENGINE v30 ---
         function getThreatZoneDetails(b, owner, buffer = 0) {
             let zoneMap = new Map();
             for(let r=0; r<BOARD_SIZE; r++) {
@@ -722,14 +724,14 @@
                 let result = await performSearchAsync(root, currentWidth, false);
                 if (result) bestTurn = result;
                 const elapsed = Date.now() - startThinking;
-                if (elapsed >= targetThinkTime || currentWidth >= 3000) break;
-                currentWidth += 500; 
-                log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
+                if (elapsed >= targetThinkTime || currentWidth >= 3500) break;
+                currentWidth += 600; 
+                log(`DELIBERATING: Beam ${currentWidth}...`, "text-slate-500 italic uppercase");
                 await new Promise(r => setTimeout(r, 10)); 
             }
 
             if(!bestTurn) {
-                log("AI: Resigning.", "text-red-500 font-bold uppercase text-center");
+                log("AI: Recognizing Checkmate/Zugzwang.", "text-red-500 font-bold uppercase text-center");
                 aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking');
                 endGame('white', "Zugzwang"); return;
             }
@@ -868,8 +870,8 @@
             if (!aiThinking) turnEl.innerText = `${turn.toUpperCase()} TURN`;
             apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
             const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
-            if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `Replay Step ${analysisIndex}`; spd.classList.replace('text-blue-400', 'text-yellow-400'); }
-            else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "Selection Active" : "Live Session"; spd.classList.replace('text-yellow-400', 'text-blue-400'); }
+            if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `REPLAY STEP ${analysisIndex}`; spd.classList.replace('text-blue-400', 'text-yellow-400'); }
+            else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION"; spd.classList.replace('text-yellow-400', 'text-blue-400'); }
             const etb = document.getElementById('end-turn-btn');
             const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
             if (currentAP === 0 && !asPass && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
@@ -886,16 +888,29 @@
         document.getElementById('replay-forward-btn').onclick = stepForward;
         document.getElementById('what-if-btn').onclick = whatIf;
         document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
-        document.getElementById('analysis-btn').onclick = () => { if(historySnapshots.length > 1) { stepBack(); log("Timeline Accessed."); } };
-        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
-        document.getElementById('rules-btn').onclick = () => log("RULES: Mobility vs Power. Capture suspend AS.", "text-blue-300 font-bold uppercase text-center");
+        
+        document.getElementById('analysis-btn').onclick = () => { 
+            analysisIndex = historySnapshots.length - 1; 
+            log("Analysis Mode Enabled."); 
+            render(); 
+        };
+        
+        document.getElementById('threats-btn').onclick = () => { 
+            showThreatVision = !showThreatVision; 
+            document.getElementById('threats-btn').classList.toggle('bg-red-600'); 
+            if(showThreatVision) log("Threat Vision: ON. Select piece to view range.");
+            else log("Threat Vision: OFF.");
+            render(); 
+        };
+
+        document.getElementById('rules-btn').onclick = () => log("RULES: Trades prioritized. King Foresight Active.", "text-blue-300 font-bold uppercase text-center");
         document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
         document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
         document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
         document.getElementById('no-clock-btn').onclick = () => { useClock = false; gameActive = true; document.getElementById('start-overlay').style.display = 'none'; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); log("Chronos Off."); };
-        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteStartDuration = parseInt(document.getElementById('white-input').value) * 60; blackStartDuration = parseInt(document.getElementById('black-input').value) * 60; whiteTime = whiteStartDuration; blackTime = blackStartDuration; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Chronos Ready."); };
+        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteStartDuration = parseInt(document.getElementById('white-input').value) * 60; blackStartDuration = parseInt(document.getElementById('black-input').value) * 60; whiteTime = whiteStartDuration; blackTime = blackStartDuration; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Chronos Initialized."); };
         document.getElementById('start-game-btn').onclick = startGame;
         document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
@@ -903,7 +918,11 @@
         document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
         document.getElementById('cancel-new-game').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
         document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
-        document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE); };
+        
+        document.getElementById('board-size-select').onchange = (e) => { 
+            BOARD_SIZE = parseInt(e.target.value); 
+            initGame(BOARD_SIZE); 
+        };
 
         initGame();
     </script>
