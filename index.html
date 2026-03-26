@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v31 - Tony Berard</title>
+    <title>Dice Chess Ultra vAlpha - Deep Think</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -193,9 +193,9 @@
         .log-container { height: 70px; overflow-y: auto; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; background: #020617; border-radius: 0.5rem; padding: 0.4rem; color: #94a3b8; border: 1px solid #1e293b; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); }
 
-        .ai-thinking { animation: pulse-blue 1.5s infinite; }
+        .deep-think { animation: pulse-indigo 1.2s infinite; }
         .predator-thinking { animation: pulse-red 0.8s infinite; }
-        @keyframes pulse-blue { 0%, 100% { color: #818cf8; text-shadow: 0 0 5px #4f46e5; } 50% { color: #f1f5f9; text-shadow: none; } }
+        @keyframes pulse-indigo { 0%, 100% { color: #818cf8; text-shadow: 0 0 10px #4f46e5; } 50% { color: #f1f5f9; text-shadow: none; } }
         @keyframes pulse-red { 0%, 100% { color: #f87171; text-shadow: 0 0 5px #ef4444; } 50% { color: #f1f5f9; text-shadow: none; } }
 
         .start-btn {
@@ -216,13 +216,23 @@
             cursor: pointer;
             outline: none;
         }
+
+        .social-link {
+            @apply flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-slate-400 transition-all hover:scale-110;
+        }
+        .social-link:hover {
+            @apply border-slate-500 text-white;
+        }
+        .link-fb:hover { @apply bg-blue-600; }
+        .link-stripe:hover { @apply bg-emerald-600; }
+        .link-yt:hover { @apply bg-red-600; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v31 Archivist</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-[0_0_10px_rgba(79,70,229,0.5)]">Ultra AI vAlpha Deep Think</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -254,15 +264,15 @@
                 <div class="panel text-center">
                     <div class="flex justify-between items-center mb-1">
                         <div class="flex-1">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center text-center">Status</div>
-                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center text-center">WHITE TURN</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Status</div>
+                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center">WHITE TURN</div>
                         </div>
                         <div class="flex-1 px-3 border-l border-r border-slate-700">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center text-center">Adv. Score</div>
-                            <div id="adv-score-display" class="text-xs font-bold text-white text-center text-center">0</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Adv. Score</div>
+                            <div id="adv-score-display" class="text-xs font-bold text-white text-center">0</div>
                         </div>
                         <div class="flex-1">
-                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center text-center">AP Left</div>
+                            <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">AP Left</div>
                             <div class="flex items-baseline justify-center gap-0.5">
                                 <span id="ap-counter" class="text-lg font-black text-yellow-400">3</span>
                                 <span class="text-[8px] text-slate-500">/ 6</span>
@@ -319,6 +329,20 @@
                 </div>
 
                 <div id="game-log" class="log-container"></div>
+                
+                <!-- Social Media Row -->
+                <div class="mt-2 flex justify-center gap-4">
+                    <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" class="social-link link-fb" title="Facebook Group">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>
+                    </a>
+                    <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" class="social-link link-stripe" title="Support Development">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                    </a>
+                    <a href="https://www.youtube.com/@TranscendentThinking1" target="_blank" class="social-link link-yt" title="YouTube Channel">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                </div>
+
                 <div class="mt-1 flex justify-center">
                     <button id="new-game-btn" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-[9px] font-black text-slate-500 hover:text-white uppercase transition-all">New Game</button>
                 </div>
@@ -326,7 +350,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter text-center">Chronos Engine</h3>
@@ -344,16 +367,16 @@
                 <button id="no-clock-btn" class="py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center">No Clock</button>
                 <button id="enable-clock-btn" class="py-2 bg-indigo-600 text-white rounded text-[10px] font-bold uppercase text-center">Enable Timer</button>
             </div>
-            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold text-center text-center">Cancel</button>
+            <button id="cancel-settings-btn" class="w-full mt-3 py-2 text-[10px] text-slate-500 uppercase font-bold text-center">Cancel</button>
         </div>
     </div>
 
     <div id="confirm-modal" class="modal hidden">
         <div class="bg-slate-800 p-8 rounded-2xl border-2 border-slate-700 w-full max-w-xs mx-4 text-center shadow-2xl">
-            <h3 class="text-white font-black uppercase text-sm mb-6 text-center text-center text-center">Terminate Session?</h3>
+            <h3 class="text-white font-black uppercase text-sm mb-6 text-center">Terminate Session?</h3>
             <div class="flex gap-3">
                 <button id="cancel-new-game" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Cancel</button>
-                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center text-center">Confirm</button>
+                <button id="confirm-new-game" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Confirm</button>
             </div>
         </div>
     </div>
@@ -361,27 +384,26 @@
     <div id="winner-modal" class="modal hidden text-center">
         <div class="bg-slate-800 p-8 rounded-2xl border-4 border-yellow-500/30 text-center w-full max-w-xs mx-4 shadow-2xl">
             <h2 class="text-3xl font-black text-yellow-400 mb-2 italic uppercase tracking-tighter text-center">Victory</h2>
-            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center text-center text-center">Game Over.</p>
+            <p id="winner-text" class="text-sm text-white font-bold mb-6 uppercase text-center">Game Over.</p>
             <div class="space-y-2">
-                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs text-center text-center">New Game</button>
-                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] text-center text-center">View Board</button>
-                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors text-center text-center">Copy Record</button>
+                <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs text-center">New Game</button>
+                <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] text-center">View Board</button>
+                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors text-center">Copy Record</button>
             </div>
         </div>
     </div>
 
-    <!-- Re-engineered Log Modal (Import Screen) -->
     <div id="record-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
-            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center text-center text-center">Game Record / Import</h3>
+            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center">Game Record / Import</h3>
             <p class="text-[8px] text-slate-500 uppercase mb-2">Paste a standard log below to analyze</p>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
             <div class="flex flex-col gap-2">
                 <div class="grid grid-cols-2 gap-2">
                     <button id="import-record-btn" class="w-full py-2 bg-purple-600 text-white rounded text-[10px] font-bold uppercase">Import & Analyze</button>
-                    <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center text-center">Copy Log</button>
+                    <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase text-center">Copy Log</button>
                 </div>
-                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center text-center text-center">Close</button>
+                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase text-center">Close</button>
             </div>
         </div>
     </div>
@@ -391,6 +413,7 @@
     </div>
 
     <script>
+        // --- ASSET ENGINE ---
         const SoundEngine = {
             ctx: null,
             init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
@@ -407,6 +430,7 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
+        // --- GAME CORE ---
         let BOARD_SIZE = 10;
         const PIECE_VALUES = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, king: 10000000 };
 
@@ -459,10 +483,9 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v31 Synchronized. Importer Active.`, "text-blue-400 font-black uppercase");
+            log(`vAlpha Synchronized. Material Equality Active.`, "text-indigo-400 font-black uppercase tracking-widest text-[9px]");
         }
 
-        // Snapshots for Analysis Engine
         function saveSnapshot() {
             historySnapshots.push({
                 board: JSON.parse(JSON.stringify(board)),
@@ -471,17 +494,15 @@
             });
         }
 
-        // --- IMPORT LOGIC ---
         function importGame(text) {
             try {
-                // Clear current game first
                 const turns = text.trim().split('\n');
                 if (turns.length === 0) return;
 
-                // Detect grid size from coordinates (e.g., 'i', 'j' implies 10x10)
+                // Detect board size from ranks and letters
                 let size = 8;
-                if (text.includes('i') || text.includes('j')) size = 10;
-                else if (text.includes('i')) size = 9;
+                if (text.includes('j') || text.match(/[a-j](?:9|10)/)) size = 10;
+                else if (text.includes('i') || text.match(/[a-i]9/)) size = 9;
                 
                 initGame(size);
                 
@@ -492,67 +513,74 @@
                     const whiteMoves = match[1].split(',').map(s => s.trim());
                     const blackMoves = match[2].split(',').map(s => s.trim());
 
-                    // Process White
                     processActions(whiteMoves, 'white');
                     saveSnapshot();
                     
-                    // Process Black
                     if (blackMoves[0] !== "") {
                         processActions(blackMoves, 'black');
                         saveSnapshot();
                     }
                 }
                 
-                analysisIndex = historySnapshots.length - 1;
-                log("Import Successful. Accessing History.");
+                // Set index to 0 so game starts at opening position for analysis
+                analysisIndex = 0;
+                applySnapshot(0);
+                
+                log("Import Successful. Started at Opening Position.");
                 document.getElementById('record-modal').classList.add('hidden');
-                render();
             } catch (e) {
                 log("Error: Invalid Game Notation.", "text-red-500");
                 console.error(e);
             }
         }
 
+        /**
+         * Parses coordinate logs and handles game-state updates from imported notation.
+         */
         function processActions(actions, player) {
             turn = player;
             currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
             currentTurnActions = [];
             captureTurnState();
 
+            const parseCoord = (s) => {
+                if (!s || s.length < 2) return {r: NaN, c: NaN};
+                const c = s.charCodeAt(0) - 97;
+                const r = BOARD_SIZE - parseInt(s.substring(1));
+                return {r, c};
+            };
+
             for (const action of actions) {
                 if (!action) continue;
-                // Parse coordinates
-                const parseCoord = (s) => {
-                    const c = s.charCodeAt(0) - 97;
-                    const r = BOARD_SIZE - parseInt(s.substring(1));
-                    return {r, c};
-                };
 
-                if (action.includes('-') || action.includes('x')) {
+                if (action.endsWith('+') || action.endsWith('-')) {
+                    const coord = parseCoord(action.substring(0, action.length - 1));
+                    const inc = action.endsWith('+');
+                    if (!isNaN(coord.r) && board[coord.r] && board[coord.r][coord.c]) {
+                        if (inc) board[coord.r][coord.c].value++;
+                        else board[coord.r][coord.c].value--;
+                        currentAP -= 1;
+                    }
+                } else if (action.includes('-') || action.includes('x')) {
                     const parts = action.split(/[-x]/);
                     const from = parseCoord(parts[0]);
                     const to = parseCoord(parts[1]);
-                    const cost = board[to.r][to.c] ? 5 : 3;
-                    if (board[to.r][to.c]) capturedThisTurn = true;
-                    board[to.r][to.c] = board[from.r][from.c];
-                    board[from.r][from.c] = null;
-                    currentAP -= cost;
-                } else if (action.includes('+') || action.includes('-')) {
-                    const coord = parseCoord(action.substring(0, action.length - 1));
-                    const inc = action.endsWith('+');
-                    if (inc) board[coord.r][coord.c].value++;
-                    else board[coord.r][coord.c].value--;
-                    currentAP -= 1;
+                    
+                    if (!isNaN(from.r) && !isNaN(to.r) && board[to.r]) {
+                        const cost = board[to.r][to.c] ? 5 : 3;
+                        if (board[to.r][to.c]) capturedThisTurn = true;
+                        board[to.r][to.c] = board[from.r][from.c];
+                        board[from.r][from.c] = null;
+                        currentAP -= cost;
+                    }
                 }
                 currentTurnActions.push(action);
             }
 
-            // Sync move history record
             const actStr = currentTurnActions.join(', ');
             if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
             else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
             
-            // Toggle turn
             turn = (turn === 'white') ? 'black' : 'white';
         }
 
@@ -616,7 +644,7 @@
         }
 
         function tryMove(fr, fc, tr, tc) {
-            const v = validateMove(board, fr, fc, tr, tc, true);
+            const v = validateMove(board, fr, fc, tr, tc, checkAP=true);
             if(!v.valid) { SoundEngine.play(150, 0.15, 'sawtooth'); return; }
             const p = board[fr][fc], t = board[tr][tc];
             if(t) capturedThisTurn = true;
@@ -656,6 +684,7 @@
         }
 
         function checkAutoTurnEnd() {
+            if(aiThinking) return; 
             if(currentAP === 0) {
                 const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
                 if(asPass) setTimeout(endTurn, 400);
@@ -706,7 +735,7 @@
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
             analysisIndex = -1; captureTurnState();
-            log("Branch Created.", "text-purple-400 font-black uppercase");
+            log("Branch Created.", "text-indigo-400 font-black uppercase");
             render();
         }
 
@@ -733,163 +762,365 @@
             }
         }
 
-        // --- ULTRA AI ENGINE v31 ---
-        function getThreatZoneDetails(b, owner, buffer = 0) {
-            let zoneMap = new Map();
-            for(let r=0; r<BOARD_SIZE; r++) {
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    const p = b[r][c];
-                    if(p && p.owner === owner) {
-                        let mobility = p.type === 'king' ? 1 : Math.min(6, p.value + buffer);
-                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                        for(let d of dirs) {
-                            for(let i=1; i<=mobility; i++) {
-                                let nr = r+d[0]*i, nc = c+d[1]*i;
-                                if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
-                                let key = `${nr},${nc}`;
-                                zoneMap.set(key, (zoneMap.get(key) || 0) + 1);
-                                if(b[nr][nc]) break;
+        // --- ULTRA AI ENGINE VALPHA (Deep Think) ---
+        
+        const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+        
+        function hashBoardString(arr) {
+            let s = "";
+            let len = arr.length;
+            for(let i=0; i<len; i++) {
+                if (arr[i] !== 0) s += i + ":" + arr[i] + ",";
+            }
+            return s;
+        }
+
+        function getAS(boardArr, playerSign) {
+            let s = 0;
+            let len = BOARD_SIZE * BOARD_SIZE;
+            for(let i=0; i<len; i++) {
+                let p = boardArr[i];
+                if(p !== 0 && Math.sign(p) === playerSign) {
+                    let r = Math.floor(i / BOARD_SIZE);
+                    s += (playerSign === 1) ? (BOARD_SIZE - r) : (r + 1);
+                }
+            }
+            return s;
+        }
+
+        function isKingInThreat(boardArr, kingSign) {
+            let kIdx = -1;
+            let SQUARES = BOARD_SIZE * BOARD_SIZE;
+            for(let i=0; i<SQUARES; i++) {
+                if(boardArr[i] === kingSign * 7) { kIdx = i; break; }
+            }
+            if (kIdx === -1) return true;
+            
+            let kR = Math.floor(kIdx/BOARD_SIZE);
+            let kC = kIdx%BOARD_SIZE;
+            
+            for(let i=0; i<SQUARES; i++) {
+                let p = boardArr[i];
+                if (p !== 0 && Math.sign(p) !== kingSign) {
+                    let val = Math.abs(p);
+                    let eR = Math.floor(i/BOARD_SIZE);
+                    let eC = i%BOARD_SIZE;
+                    
+                    let dR = Math.abs(eR - kR);
+                    let dC = Math.abs(eC - kC);
+                    let dist = Math.max(dR, dC);
+                    
+                    let maxMobility = (val === 7) ? 1 : Math.min(6, val + 1); 
+                    if (dist <= maxMobility && (dR === 0 || dC === 0 || dR === dC)) {
+                        let blocked = false;
+                        let sR = eR === kR ? 0 : (kR - eR)/dist;
+                        let sC = eC === kC ? 0 : (kC - eC)/dist;
+                        for(let step=1; step<dist; step++) {
+                            if (boardArr[(eR + step*sR)*BOARD_SIZE + (eC + step*sC)] !== 0) {
+                                blocked = true; break;
+                            }
+                        }
+                        if (!blocked) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function evaluatePosition(boardArr, maxSign) {
+            let myPieces = 0, enPieces = 0;
+            let myAS = 0, enAS = 0;
+            let myK = -1, enK = -1;
+            let SQUARES = BOARD_SIZE * BOARD_SIZE;
+            
+            for(let i=0; i<SQUARES; i++) {
+                let p = boardArr[i];
+                if (p !== 0) {
+                    let val = Math.abs(p);
+                    let r = Math.floor(i/BOARD_SIZE);
+                    let c = i%BOARD_SIZE;
+                    let pSign = Math.sign(p);
+                    
+                    if (pSign === maxSign) {
+                        if (val === 7) { myK = i; }
+                        else { 
+                            myPieces++; 
+                            myAS += (maxSign === 1) ? (BOARD_SIZE - r) : (r + 1);
+                        }
+                    } else {
+                        if (val === 7) { enK = i; }
+                        else { 
+                            enPieces++; 
+                            enAS += (maxSign === 1) ? (r + 1) : (BOARD_SIZE - r);
+                        }
+                    }
+                }
+            }
+            
+            if (myK === -1) return -100000000;
+            if (enK === -1) return 100000000;
+            
+            let score = (myPieces - enPieces) * 20000;
+            score += (myAS - enAS) * 100;
+            
+            for(let i=0; i<SQUARES; i++) {
+                let p = boardArr[i];
+                if (p !== 0 && Math.abs(p) !== 7) {
+                    let val = Math.abs(p);
+                    let r = Math.floor(i/BOARD_SIZE), c = i%BOARD_SIZE;
+                    let bias = (6 - val); 
+                    if (r>=3 && r<=BOARD_SIZE-4 && c>=3 && c<=BOARD_SIZE-4) bias += 5; 
+                    
+                    if (Math.sign(p) === maxSign) score += bias;
+                    else score -= bias;
+                }
+            }
+
+            if (isKingInThreat(boardArr, maxSign)) score -= 50000;
+            if (isKingInThreat(boardArr, -maxSign)) score += 30000;
+            
+            return score;
+        }
+
+        function generateMacro(baseArr, sign, startAP, startTime, timeLimit) {
+            let arr = new Int8Array(baseArr);
+            let unique = new Map();
+            let startAS = getAS(arr, sign);
+            let currentActions = [];
+            let rootHash = hashBoardString(arr);
+            let SQUARES = BOARD_SIZE * BOARD_SIZE;
+            let visitedStates = new Map();
+            
+            function dfs(ap, captured) {
+                if (Date.now() - startTime > timeLimit) return;
+                let h = hashBoardString(arr);
+                let stateKey = h + (captured ? '1' : '0');
+                
+                let prevAP = visitedStates.get(stateKey);
+                if (prevAP !== undefined && prevAP >= ap) return;
+                visitedStates.set(stateKey, ap);
+                
+                let asPass = captured || (getAS(arr, sign) > startAS);
+                
+                if (asPass && h !== rootHash) {
+                    if (!unique.has(h)) unique.set(h, { board: new Int8Array(arr), actions: [...currentActions] });
+                    else if (currentActions.length < unique.get(h).actions.length) unique.get(h).actions = [...currentActions];
+                }
+                
+                if (ap === 0) return;
+                
+                for(let i=0; i<SQUARES; i++) {
+                    let p = arr[i];
+                    if (p !== 0 && Math.sign(p) === sign) {
+                        let val = Math.abs(p);
+                        let r = Math.floor(i/BOARD_SIZE);
+                        let c = i%BOARD_SIZE;
+                        
+                        if (val !== 7 && ap >= 1) {
+                            if (val < 6) {
+                                arr[i] = sign * (val + 1);
+                                currentActions.push({t:'inc', r, c});
+                                dfs(ap-1, captured);
+                                currentActions.pop();
+                                arr[i] = p;
+                            }
+                            if (val > 1) {
+                                arr[i] = sign * (val - 1);
+                                currentActions.push({t:'dec', r, c});
+                                dfs(ap-1, captured);
+                                currentActions.pop();
+                                arr[i] = p;
+                            }
+                        }
+                        
+                        let mobility = (val === 7) ? 1 : val;
+                        for(let d=0; d<8; d++) {
+                            for(let dist=1; dist<=mobility; dist++) {
+                                let nr = r + DIRS[d][0]*dist;
+                                let nc = c + DIRS[d][1]*dist;
+                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
+                                
+                                let targetIdx = nr*BOARD_SIZE + nc;
+                                let target = arr[targetIdx];
+                                
+                                let blocked = false;
+                                for(let step=1; step<dist; step++) {
+                                    if (arr[(r + DIRS[d][0]*step)*BOARD_SIZE + (c + DIRS[d][1]*step)] !== 0) {
+                                        blocked = true; break;
+                                    }
+                                }
+                                if (blocked) break;
+                                
+                                if (target !== 0) {
+                                    if (Math.sign(target) === sign) break;
+                                    let tVal = Math.abs(target);
+                                    if (val === 7 || tVal === 7 || val <= tVal) {
+                                        if (ap >= 5) {
+                                            arr[targetIdx] = arr[i];
+                                            arr[i] = 0;
+                                            currentActions.push({t:'move', fr:r, fc:c, tr:nr, tc:nc});
+                                            dfs(ap-5, true);
+                                            currentActions.pop();
+                                            arr[i] = arr[targetIdx];
+                                            arr[targetIdx] = target;
+                                        }
+                                    }
+                                    break;
+                                } else {
+                                    if (ap >= 3) {
+                                        arr[targetIdx] = arr[i];
+                                        arr[i] = 0;
+                                        currentActions.push({t:'move', fr:r, fc:c, tr:nr, tc:nc});
+                                        dfs(ap-3, captured);
+                                        currentActions.pop();
+                                        arr[i] = arr[targetIdx];
+                                        arr[targetIdx] = 0;
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-            return zoneMap;
+            
+            dfs(startAP, false);
+            return Array.from(unique.values());
         }
 
-        function heuristic(node, desperate = false) {
-            const b = node.board; let score = 0;
-            const myP = [], enP = [];
-            for(let r=0; r<BOARD_SIZE; r++)
-                for(let c=0; c<BOARD_SIZE; c++)
-                    if(b[r][c]) (b[r][c].owner === 'black' ? myP : enP).push({r,c,...b[r][c]});
-            const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
-            if(!enK) return 100000000; if(!myK) return -100000000;
-
-            score += (myP.length - enP.length) * 1000000;
-            const enProjectedZone = getThreatZoneDetails(b, 'white', 1);
-            if(enProjectedZone.has(`${myK.r},${myK.c}`)) score -= 80000000;
-
-            const enZone = getThreatZoneDetails(b, 'white', 0);
-            const myZone = getThreatZoneDetails(b, 'black', 0);
-            myP.forEach(p => { 
-                if(enZone.has(`${p.r},${p.c}`)) {
-                    let support = myZone.get(`${p.r},${p.c}`) || 0;
-                    score -= (support <= 1) ? 2000000 : 300000; 
+        async function searchRoot(boardArr, rootSign, startAP, timeLimit) {
+            let startTime = Date.now();
+            let macroMoves = generateMacro(boardArr, rootSign, startAP, startTime, timeLimit);
+            
+            for(let m of macroMoves) m.score = evaluatePosition(m.board, rootSign);
+            macroMoves.sort((a,b) => b.score - a.score);
+            
+            if (macroMoves.length === 0) return null;
+            
+            let bestMacro = macroMoves[0];
+            let tt = new Map();
+            let nodesEval = 0;
+            
+            async function alphaBeta(arr, depth, alpha, beta, isMax, playerSign) {
+                if (Date.now() - startTime > timeLimit) return 0;
+                if (++nodesEval % 100 === 0) await new Promise(r => setTimeout(r, 0));
+                
+                let hash = hashBoardString(arr) + depth + isMax;
+                if (tt.has(hash)) return tt.get(hash);
+                
+                if (depth === 0) {
+                    let s = evaluatePosition(arr, rootSign);
+                    tt.set(hash, s);
+                    return s;
                 }
-                if (p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) score += 2000;
-            });
-
-            if (myP.length + enP.length < 12) {
-                const dist = Math.abs(myK.r - enK.r) + Math.abs(myK.c - enK.c);
-                score -= dist * 3500;
+                
+                let moves = generateMacro(arr, playerSign, 6, startTime, timeLimit);
+                if (moves.length === 0) return isMax ? -9999999 : 9999999;
+                
+                for(let m of moves) m.score = evaluatePosition(m.board, rootSign);
+                moves.sort((a,b) => isMax ? b.score - a.score : a.score - b.score);
+                let prunedMoves = moves.slice(0, depth === 1 ? 15 : 5);
+                
+                if (isMax) {
+                    let maxEval = -Infinity;
+                    for(let m of prunedMoves) {
+                        let ev = await alphaBeta(m.board, depth - 1, alpha, beta, false, -playerSign);
+                        maxEval = Math.max(maxEval, ev);
+                        alpha = Math.max(alpha, ev);
+                        if (beta <= alpha) break;
+                    }
+                    tt.set(hash, maxEval);
+                    return maxEval;
+                } else {
+                    let minEval = Infinity;
+                    for(let m of prunedMoves) {
+                        let ev = await alphaBeta(m.board, depth - 1, alpha, beta, true, -playerSign);
+                        minEval = Math.min(minEval, ev);
+                        beta = Math.min(beta, ev);
+                        if (beta <= alpha) break;
+                    }
+                    tt.set(hash, minEval);
+                    return minEval;
+                }
             }
-            score += calcAS(b, 'black') * 150;
-            if(myK.r > 1) score -= (myK.r * 15000); 
-            if(desperate && node.captured) score += 20000000;
-            return score;
+            
+            for(let depth = 1; depth <= 3; depth++) {
+                let maxEval = -Infinity;
+                let currentBest = macroMoves[0];
+                
+                let prunedRootMoves = macroMoves.slice(0, 30);
+                for(let m of prunedRootMoves) {
+                    if (Date.now() - startTime > timeLimit) break;
+                    let ev = await alphaBeta(m.board, depth - 1, -Infinity, Infinity, false, -rootSign);
+                    if (ev > maxEval) {
+                        maxEval = ev;
+                        currentBest = m;
+                    }
+                }
+                if (Date.now() - startTime > timeLimit && depth > 1) break; 
+                bestMacro = currentBest;
+                log(`Depth ${depth} optimized. Eval: ${(maxEval/1000).toFixed(1)}`, "text-slate-500 italic text-[9px] uppercase");
+                if (maxEval > 5000000) break; 
+            }
+            
+            return bestMacro;
         }
 
         async function runAI() {
             const totalPieces = board.flat().filter(x => x).length;
             const isPredator = totalPieces < 12;
             aiThinking = true; 
-            turnEl.classList.add(isPredator ? 'predator-thinking' : 'ai-thinking'); 
+            turnEl.classList.add(isPredator ? 'predator-thinking' : 'deep-think'); 
             if (isPredator) turnEl.innerText = "PREDATOR ACTIVE";
             render();
             
-            const startThinking = Date.now();
-            let targetThinkTime = 1000; 
-            if (useClock) {
-                const timeDiff = blackTime - whiteTime;
-                targetThinkTime = (timeDiff > 60) ? 9000 : 3000;
+            await new Promise(r => setTimeout(r, 50)); 
+            
+            let SQUARES = BOARD_SIZE * BOARD_SIZE;
+            let startBoardArr = new Int8Array(SQUARES);
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    let p = board[r][c];
+                    if(p) {
+                        let val = p.type === 'king' ? 7 : p.value;
+                        startBoardArr[r*BOARD_SIZE + c] = p.owner === 'white' ? val : -val;
+                    }
+                }
             }
-
-            let currentWidth = 150;
-            let bestTurn = null;
-
-            while (true) {
-                let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
-                let result = await performSearchAsync(root, currentWidth, false);
-                if (result) bestTurn = result;
-                const elapsed = Date.now() - startThinking;
-                if (elapsed >= targetThinkTime || currentWidth >= 3500) break;
-                currentWidth += 600; 
-                log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
-                await new Promise(r => setTimeout(r, 10)); 
-            }
-
-            if(!bestTurn) {
+            
+            let sign = turn === 'white' ? 1 : -1;
+            let startAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6;
+            let timeLimit = useClock ? ((blackTime - whiteTime > 60) ? 6000 : 2500) : 3500;
+            
+            log(`VALPHA CORE: Syncing Material Parity...`, "text-indigo-400 font-black uppercase");
+            
+            let bestMacro = await searchRoot(startBoardArr, sign, startAP, timeLimit);
+            
+            if(!bestMacro || bestMacro.actions.length === 0) {
                 log("AI: Resigning.", "text-red-500 font-bold uppercase text-center");
-                aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking');
-                endGame('white', "Zugzwang"); return;
+                aiThinking = false; turnEl.classList.remove('deep-think', 'predator-thinking');
+                endGame(turn === 'white' ? 'black' : 'white', "Zugzwang"); return;
             }
 
-            for(let a of bestTurn.actions) {
+            for(let a of bestMacro.actions) {
                 if(gameOver) break;
-                if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
-                else tryMove(a.fr, a.fc, a.tr, a.tc);
-                render(); await new Promise(r => setTimeout(r, 400));
+                if(a.t === 'inc' || a.t === 'dec') { 
+                    selectedSquare = {r: a.r, c: a.c}; 
+                    handleMod(a.t === 'inc'); 
+                } else {
+                    tryMove(a.fr, a.fc, a.tr, a.tc);
+                }
+                render(); 
+                await new Promise(r => setTimeout(r, 350));
             }
-            aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking'); if(turn === 'black') endTurn();
+            
+            aiThinking = false; 
+            turnEl.classList.remove('deep-think', 'predator-thinking'); 
+            
+            if(turn === (sign === 1 ? 'white' : 'black') && !gameOver) endTurn();
             render();
         }
 
-        async function performSearchAsync(root, width, desperate) {
-            let beam = [root];
-            for(let step=0; step<5; step++) {
-                let next = [];
-                for(let node of beam) {
-                    if(node.ap === 0) { next.push(node); continue; }
-                    const myP = [];
-                    for(let r=0; r<BOARD_SIZE; r++)
-                        for(let c=0; c<BOARD_SIZE; c++)
-                            if(node.board[r][c]?.owner === 'black') myP.push({r,c,...node.board[r][c]});
-                    for(let p of myP) {
-                        const asPass = node.captured || calcAS(node.board, 'black') > node.startScore;
-                        if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3)) {
-                            if(p.value < 6) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value++; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
-                            if(p.value > 1) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value--; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
-                        }
-                        const range = p.type === 'king' ? 1 : p.value;
-                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                        for(let d of dirs) {
-                            for(let i=1; i<=range; i++) {
-                                let tr = p.r+d[0]*i, tc = p.c+d[1]*i;
-                                if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
-                                let v = validateMove(node.board, p.r, p.c, tr, tc, false);
-                                if(!v.valid) { if(node.board[tr][tc]) break; continue; }
-                                const cost = node.board[tr][tc] ? 5 : 3;
-                                if(node.ap >= cost) {
-                                    let nb = JSON.parse(JSON.stringify(node.board));
-                                    nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
-                                    next.push({ ...node, board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
-                                }
-                                if(node.board[tr][tc]) break;
-                            }
-                        }
-                    }
-                }
-                if(next.length === 0) break;
-                next.forEach(n => n.h = heuristic(n, desperate));
-                next.sort((a,b) => b.h - a.h);
-                beam = next.slice(0, width); 
-                await new Promise(r => setTimeout(r, 1));
-            }
-            const legal = beam.filter(n => {
-                const asPass = n.captured || calcAS(n.board, 'black') > n.startScore;
-                if(!asPass) return false;
-                let k = null;
-                for(let r=0; r<BOARD_SIZE; r++)
-                    for(let c=0; c<BOARD_SIZE; c++)
-                        if(n.board[r][c]?.type === 'king' && n.board[r][c]?.owner === 'black') k = {r,c};
-                if(!k) return false;
-                const threats = getThreatZoneDetails(n.board, 'white', 0);
-                return !threats.has(`${k.r},${k.c}`);
-            });
-            return legal.length > 0 ? legal[0] : null;
-        }
-
+        // --- UI BINDINGS ---
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             let targets = [];
@@ -978,21 +1209,9 @@
         document.getElementById('what-if-btn').onclick = whatIf;
         document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
         
-        document.getElementById('analysis-btn').onclick = () => { 
-            analysisIndex = historySnapshots.length - 1; 
-            log("Analysis Mode Enabled."); 
-            render(); 
-        };
-        
-        document.getElementById('threats-btn').onclick = () => { 
-            showThreatVision = !showThreatVision; 
-            document.getElementById('threats-btn').classList.toggle('bg-red-600'); 
-            if(showThreatVision) log("Threat Vision: ON. Select piece to view range.");
-            else log("Threat Vision: OFF.");
-            render(); 
-        };
-
-        document.getElementById('rules-btn').onclick = () => log("RULES: Only captures suspend AS. King Foresight Active.", "text-blue-300 font-bold uppercase text-center");
+        document.getElementById('analysis-btn').onclick = () => { analysisIndex = historySnapshots.length - 1; log("Analysis Mode Enabled."); render(); };
+        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); if(showThreatVision) log("Threat Vision: ON. Select piece to view range."); else log("Threat Vision: OFF."); render(); };
+        document.getElementById('rules-btn').onclick = () => log("RULES: Only captures suspend AS. Headcount is King.", "text-blue-300 font-bold uppercase text-center");
         document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
         document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
         document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value);
