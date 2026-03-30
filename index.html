@@ -330,7 +330,6 @@
 
                 <div id="game-log" class="log-container"></div>
                 
-                <!-- Social Media Row -->
                 <div class="mt-2 flex justify-center gap-4">
                     <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" class="social-link link-fb" title="Facebook Group">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>
@@ -396,8 +395,7 @@
     <div id="record-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter text-center">Game Record / Import</h3>
-            <p class="text-[8px] text-slate-500 uppercase mb-2">Paste a standard log below to analyze</p>
-            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
+            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7..."></textarea>
             <div class="flex flex-col gap-2">
                 <div class="grid grid-cols-2 gap-2">
                     <button id="import-record-btn" class="w-full py-2 bg-purple-600 text-white rounded text-[10px] font-bold uppercase">Import & Analyze</button>
@@ -479,11 +477,11 @@
                 board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
             }
             
-            clearInterval(clockInterval);
+            if (clockInterval) clearInterval(clockInterval);
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`vAlpha Synchronized. Material Equality Active.`, "text-indigo-400 font-black uppercase tracking-widest text-[9px]");
+            log(`vAlpha Synchronized. Logic Optimized.`, "text-indigo-400 font-black uppercase tracking-widest text-[9px]");
         }
 
         function saveSnapshot() {
@@ -498,35 +496,25 @@
             try {
                 const turns = text.trim().split('\n');
                 if (turns.length === 0) return;
-
-                // Detect board size from ranks and letters
                 let size = 8;
                 if (text.includes('j') || text.match(/[a-j](?:9|10)/)) size = 10;
                 else if (text.includes('i') || text.match(/[a-i]9/)) size = 9;
-                
                 initGame(size);
-                
                 for (const line of turns) {
                     const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/);
                     if (!match) continue;
-
                     const whiteMoves = match[1].split(',').map(s => s.trim());
                     const blackMoves = match[2].split(',').map(s => s.trim());
-
                     processActions(whiteMoves, 'white');
                     saveSnapshot();
-                    
                     if (blackMoves[0] !== "") {
                         processActions(blackMoves, 'black');
                         saveSnapshot();
                     }
                 }
-                
-                // Set index to 0 so game starts at opening position for analysis
                 analysisIndex = 0;
                 applySnapshot(0);
-                
-                log("Import Successful. Started at Opening Position.");
+                log("Import Successful.");
                 document.getElementById('record-modal').classList.add('hidden');
             } catch (e) {
                 log("Error: Invalid Game Notation.", "text-red-500");
@@ -534,25 +522,19 @@
             }
         }
 
-        /**
-         * Parses coordinate logs and handles game-state updates from imported notation.
-         */
         function processActions(actions, player) {
             turn = player;
             currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
             currentTurnActions = [];
             captureTurnState();
-
             const parseCoord = (s) => {
                 if (!s || s.length < 2) return {r: NaN, c: NaN};
                 const c = s.charCodeAt(0) - 97;
                 const r = BOARD_SIZE - parseInt(s.substring(1));
                 return {r, c};
             };
-
             for (const action of actions) {
                 if (!action) continue;
-
                 if (action.endsWith('+') || action.endsWith('-')) {
                     const coord = parseCoord(action.substring(0, action.length - 1));
                     const inc = action.endsWith('+');
@@ -565,7 +547,6 @@
                     const parts = action.split(/[-x]/);
                     const from = parseCoord(parts[0]);
                     const to = parseCoord(parts[1]);
-                    
                     if (!isNaN(from.r) && !isNaN(to.r) && board[to.r]) {
                         const cost = board[to.r][to.c] ? 5 : 3;
                         if (board[to.r][to.c]) capturedThisTurn = true;
@@ -576,17 +557,24 @@
                 }
                 currentTurnActions.push(action);
             }
+            commitHistory();
+            turn = (turn === 'white') ? 'black' : 'white';
+        }
 
+        function commitHistory() {
             const actStr = currentTurnActions.join(', ');
             if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
-            else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
-            
-            turn = (turn === 'white') ? 'black' : 'white';
+            else { 
+                if(moveHistory.length > 0) moveHistory[moveHistory.length-1].b = actStr; 
+                else moveHistory.push({ n: fullMoveCount, w: '...', b: actStr });
+                fullMoveCount++; 
+            }
         }
 
         function startGame() {
             gameActive = true;
             document.getElementById('start-overlay').style.display = 'none';
+            SoundEngine.init();
             SoundEngine.play(800, 0.2, 'square');
             log(`Battle Commenced.`, "text-green-400 font-bold uppercase");
         }
@@ -652,9 +640,14 @@
             currentTurnActions.push(t ? `${coord(fr,fc)}x${coord(tr,tc)}` : `${coord(fr,fc)}-${coord(tr,tc)}`);
             board[tr][tc] = p; board[fr][fc] = null;
             currentAP -= t ? 5 : 3;
-            if(currentAP < 1) selectedSquare = null; else selectedSquare = {r: tr, c: tc};
-            if(t && t.type === 'king') endGame(turn, "Checkmate");
-            else { SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); }
+            
+            if(t && t.type === 'king') {
+                commitHistory();
+                endGame(turn, "Checkmate");
+            } else {
+                if(currentAP < 1) selectedSquare = null; else selectedSquare = {r: tr, c: tc};
+                SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); 
+            }
         }
 
         function selectSquare(r, c) {
@@ -691,17 +684,28 @@
             }
         }
 
+        function isCheckmate(currentBoard, playerTurn) {
+            let sign = playerTurn === 'white' ? 1 : -1;
+            let startAP = (fullMoveCount === 1 && playerTurn === 'white') ? 3 : 6;
+            let SQUARES = BOARD_SIZE * BOARD_SIZE;
+            let arr = new Int8Array(SQUARES);
+            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) {
+                let piece = currentBoard[r][c];
+                if(piece) arr[r*BOARD_SIZE + c] = piece.owner === 'white' ? (piece.type === 'king' ? 7 : piece.value) : -(piece.type === 'king' ? 7 : piece.value);
+            }
+            let possibleTurns = generateMacro(arr, sign, startAP, Date.now(), 2000);
+            let safeTurns = possibleTurns.filter(turnSnapshot => !isKingInThreat(turnSnapshot.board, sign));
+            return safeTurns.length === 0;
+        }
+
         function endTurn() {
             if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
             const curScore = calcAS(board, turn);
             const asPass = capturedThisTurn || curScore > turnStartScore;
             if(!asPass) { log("Illegal Turn: AS rule failure.", "text-red-500 font-bold uppercase"); return; }
-            
-            const actStr = currentTurnActions.join(', ');
-            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
-            else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
-            
+            if (currentTurnActions.length > 0) commitHistory();
             turn = turn === 'white' ? 'black' : 'white';
+            if (isCheckmate(board, turn)) { endGame(turn === 'white' ? 'black' : 'white', "Checkmate"); return; }
             currentAP = 6; currentTurnActions = []; selectedSquare = null;
             captureTurnState(); saveSnapshot(); flashTurn(); render();
             if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver) setTimeout(runAI, 100);
@@ -735,7 +739,7 @@
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
             analysisIndex = -1; captureTurnState();
-            log("Branch Created.", "text-indigo-400 font-black uppercase");
+            log("Branch Created.");
             render();
         }
 
@@ -762,377 +766,249 @@
             }
         }
 
-        // --- ULTRA AI ENGINE VALPHA (Deep Think) ---
-        
+        // --- ULTRA AI ENGINE VALPHA (Quantum Protector / Apex Aware / Greed Optimized) ---
         const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-        
         function hashBoardString(arr) {
             let s = "";
-            let len = arr.length;
-            for(let i=0; i<len; i++) {
-                if (arr[i] !== 0) s += i + ":" + arr[i] + ",";
-            }
+            for(let i=0; i<arr.length; i++) if (arr[i] !== 0) s += i + ":" + arr[i] + ",";
+            return s;
+        }
+        function getAS(boardArr, playerSign) {
+            let s = 0;
+            for(let i=0; i<boardArr.length; i++) if(boardArr[i] !== 0 && Math.sign(boardArr[i]) === playerSign) s += (playerSign === 1) ? (BOARD_SIZE - Math.floor(i / BOARD_SIZE)) : (Math.floor(i / BOARD_SIZE) + 1);
             return s;
         }
 
-        function getAS(boardArr, playerSign) {
-            let s = 0;
-            let len = BOARD_SIZE * BOARD_SIZE;
-            for(let i=0; i<len; i++) {
+        function getSquareThreatProfile(boardArr, targetIdx, attackerSign) {
+            let tR = Math.floor(targetIdx / BOARD_SIZE), tC = targetIdx % BOARD_SIZE;
+            let targetVal = Math.abs(boardArr[targetIdx]);
+            let attackers = [];
+            for(let i=0; i<boardArr.length; i++) {
                 let p = boardArr[i];
-                if(p !== 0 && Math.sign(p) === playerSign) {
-                    let r = Math.floor(i / BOARD_SIZE);
-                    s += (playerSign === 1) ? (BOARD_SIZE - r) : (r + 1);
+                if (p !== 0 && Math.sign(p) === attackerSign) {
+                    let val = Math.abs(p), eR = Math.floor(i / BOARD_SIZE), eC = i % BOARD_SIZE, dR = Math.abs(eR - tR), dC = Math.abs(eC - tC), dist = Math.max(dR, dC);
+                    if (!(dR === 0 || dC === 0 || dR === dC)) continue;
+                    let blocked = false, sR = eR === tR ? 0 : (tR - eR)/dist, sC = eC === tC ? 0 : (tC - eC)/dist;
+                    for(let step=1; step<dist; step++) if (boardArr[(eR + step*sR)*BOARD_SIZE + (eC + step*sC)] !== 0) { blocked = true; break; }
+                    if (blocked) continue;
+                    if (dist <= (val === 7 ? 1 : val) && (val === 7 || targetVal === 0 || targetVal === 7 || val <= targetVal)) attackers.push({ idx: i, val, type: 'immediate' });
+                    if (val < 6 && val !== 7 && dist <= val + 1 && (targetVal === 0 || targetVal === 7 || val + 1 <= targetVal)) attackers.push({ idx: i, val: val + 1, type: 'quantum' });
+                    if (val > 1 && val !== 7 && dist <= val - 1 && (targetVal === 0 || targetVal === 7 || val - 1 <= targetVal)) attackers.push({ idx: i, val: val - 1, type: 'quantum' });
                 }
             }
-            return s;
+            return attackers;
         }
 
         function isKingInThreat(boardArr, kingSign) {
             let kIdx = -1;
-            let SQUARES = BOARD_SIZE * BOARD_SIZE;
-            for(let i=0; i<SQUARES; i++) {
-                if(boardArr[i] === kingSign * 7) { kIdx = i; break; }
-            }
+            for(let i=0; i<boardArr.length; i++) if(boardArr[i] === kingSign * 7) { kIdx = i; break; }
             if (kIdx === -1) return true;
-            
-            let kR = Math.floor(kIdx/BOARD_SIZE);
-            let kC = kIdx%BOARD_SIZE;
-            
-            for(let i=0; i<SQUARES; i++) {
-                let p = boardArr[i];
-                if (p !== 0 && Math.sign(p) !== kingSign) {
-                    let val = Math.abs(p);
-                    let eR = Math.floor(i/BOARD_SIZE);
-                    let eC = i%BOARD_SIZE;
-                    
-                    let dR = Math.abs(eR - kR);
-                    let dC = Math.abs(eC - kC);
-                    let dist = Math.max(dR, dC);
-                    
-                    let maxMobility = (val === 7) ? 1 : Math.min(6, val + 1); 
-                    if (dist <= maxMobility && (dR === 0 || dC === 0 || dR === dC)) {
-                        let blocked = false;
-                        let sR = eR === kR ? 0 : (kR - eR)/dist;
-                        let sC = eC === kC ? 0 : (kC - eC)/dist;
-                        for(let step=1; step<dist; step++) {
-                            if (boardArr[(eR + step*sR)*BOARD_SIZE + (eC + step*sC)] !== 0) {
-                                blocked = true; break;
-                            }
-                        }
-                        if (!blocked) return true;
-                    }
-                }
-            }
-            return false;
+            return getSquareThreatProfile(boardArr, kIdx, -kingSign).length > 0;
         }
 
         function evaluatePosition(boardArr, maxSign) {
-            let myPieces = 0, enPieces = 0;
-            let myAS = 0, enAS = 0;
-            let myK = -1, enK = -1;
-            let SQUARES = BOARD_SIZE * BOARD_SIZE;
-            
+            let myMaterialCount = 0, enMaterialCount = 0, myMaterialScore = 0, enMaterialScore = 0, myAS = 0, enAS = 0, myK = -1, enK = -1, safetyPenalty = 0, phalanxBonus = 0;
+            const SQUARES = BOARD_SIZE * BOARD_SIZE;
+            const valueBonus = [0, 10, 15, 20, 18, 8, 4];
+
             for(let i=0; i<SQUARES; i++) {
                 let p = boardArr[i];
-                if (p !== 0) {
-                    let val = Math.abs(p);
-                    let r = Math.floor(i/BOARD_SIZE);
-                    let c = i%BOARD_SIZE;
-                    let pSign = Math.sign(p);
-                    
-                    if (pSign === maxSign) {
-                        if (val === 7) { myK = i; }
-                        else { 
-                            myPieces++; 
-                            myAS += (maxSign === 1) ? (BOARD_SIZE - r) : (r + 1);
-                        }
-                    } else {
-                        if (val === 7) { enK = i; }
-                        else { 
-                            enPieces++; 
-                            enAS += (maxSign === 1) ? (r + 1) : (BOARD_SIZE - r);
-                        }
-                    }
-                }
-            }
-            
-            if (myK === -1) return -100000000;
-            if (enK === -1) return 100000000;
-            
-            let score = (myPieces - enPieces) * 20000;
-            score += (myAS - enAS) * 100;
-            
-            for(let i=0; i<SQUARES; i++) {
-                let p = boardArr[i];
-                if (p !== 0 && Math.abs(p) !== 7) {
-                    let val = Math.abs(p);
-                    let r = Math.floor(i/BOARD_SIZE), c = i%BOARD_SIZE;
-                    let bias = (6 - val); 
-                    if (r>=3 && r<=BOARD_SIZE-4 && c>=3 && c<=BOARD_SIZE-4) bias += 5; 
-                    
-                    if (Math.sign(p) === maxSign) score += bias;
-                    else score -= bias;
-                }
-            }
-
-            if (isKingInThreat(boardArr, maxSign)) score -= 50000;
-            if (isKingInThreat(boardArr, -maxSign)) score += 30000;
-            
-            return score;
-        }
-
-        function generateMacro(baseArr, sign, startAP, startTime, timeLimit) {
-            let arr = new Int8Array(baseArr);
-            let unique = new Map();
-            let startAS = getAS(arr, sign);
-            let currentActions = [];
-            let rootHash = hashBoardString(arr);
-            let SQUARES = BOARD_SIZE * BOARD_SIZE;
-            let visitedStates = new Map();
-            
-            function dfs(ap, captured) {
-                if (Date.now() - startTime > timeLimit) return;
-                let h = hashBoardString(arr);
-                let stateKey = h + (captured ? '1' : '0');
-                
-                let prevAP = visitedStates.get(stateKey);
-                if (prevAP !== undefined && prevAP >= ap) return;
-                visitedStates.set(stateKey, ap);
-                
-                let asPass = captured || (getAS(arr, sign) > startAS);
-                
-                if (asPass && h !== rootHash) {
-                    if (!unique.has(h)) unique.set(h, { board: new Int8Array(arr), actions: [...currentActions] });
-                    else if (currentActions.length < unique.get(h).actions.length) unique.get(h).actions = [...currentActions];
-                }
-                
-                if (ap === 0) return;
-                
-                for(let i=0; i<SQUARES; i++) {
-                    let p = arr[i];
-                    if (p !== 0 && Math.sign(p) === sign) {
-                        let val = Math.abs(p);
-                        let r = Math.floor(i/BOARD_SIZE);
-                        let c = i%BOARD_SIZE;
+                if (p === 0) continue;
+                let val = Math.abs(p), r = Math.floor(i/BOARD_SIZE), c = i%BOARD_SIZE, pSign = Math.sign(p);
+                if (pSign === maxSign) {
+                    if (val === 7) myK = i; else { 
+                        myMaterialCount++; myMaterialScore += 1000000; 
+                        myAS += (maxSign === 1) ? (BOARD_SIZE - r) : (r + 1);
+                        let threats = getSquareThreatProfile(boardArr, i, -maxSign);
                         
-                        if (val !== 7 && ap >= 1) {
-                            if (val < 6) {
-                                arr[i] = sign * (val + 1);
-                                currentActions.push({t:'inc', r, c});
-                                dfs(ap-1, captured);
-                                currentActions.pop();
-                                arr[i] = p;
-                            }
-                            if (val > 1) {
-                                arr[i] = sign * (val - 1);
-                                currentActions.push({t:'dec', r, c});
-                                dfs(ap-1, captured);
-                                currentActions.pop();
-                                arr[i] = p;
-                            }
-                        }
-                        
-                        let mobility = (val === 7) ? 1 : val;
+                        // APEX PREDATOR DEAD-ZONE (Stand-off logic)
+                        let apexThreatNearby = threats.some(t => t.val <= 2);
+                        if (apexThreatNearby) {
+                            myMaterialScore += (6 - val) * 50; 
+                            if (threats.some(t => t.type === 'immediate')) safetyPenalty += 60000000;
+                        } else myMaterialScore += valueBonus[val];
+
+                        // PHALANX
                         for(let d=0; d<8; d++) {
-                            for(let dist=1; dist<=mobility; dist++) {
-                                let nr = r + DIRS[d][0]*dist;
-                                let nc = c + DIRS[d][1]*dist;
-                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
-                                
-                                let targetIdx = nr*BOARD_SIZE + nc;
-                                let target = arr[targetIdx];
-                                
-                                let blocked = false;
-                                for(let step=1; step<dist; step++) {
-                                    if (arr[(r + DIRS[d][0]*step)*BOARD_SIZE + (c + DIRS[d][1]*step)] !== 0) {
-                                        blocked = true; break;
-                                    }
-                                }
-                                if (blocked) break;
-                                
-                                if (target !== 0) {
-                                    if (Math.sign(target) === sign) break;
-                                    let tVal = Math.abs(target);
-                                    if (val === 7 || tVal === 7 || val <= tVal) {
-                                        if (ap >= 5) {
-                                            arr[targetIdx] = arr[i];
-                                            arr[i] = 0;
-                                            currentActions.push({t:'move', fr:r, fc:c, tr:nr, tc:nc});
-                                            dfs(ap-5, true);
-                                            currentActions.pop();
-                                            arr[i] = arr[targetIdx];
-                                            arr[targetIdx] = target;
-                                        }
-                                    }
-                                    break;
-                                } else {
-                                    if (ap >= 3) {
-                                        arr[targetIdx] = arr[i];
-                                        arr[i] = 0;
-                                        currentActions.push({t:'move', fr:r, fc:c, tr:nr, tc:nc});
-                                        dfs(ap-3, captured);
-                                        currentActions.pop();
-                                        arr[i] = arr[targetIdx];
-                                        arr[targetIdx] = 0;
-                                    }
-                                }
+                            let adjR = r + DIRS[d][0], adjC = c + DIRS[d][1];
+                            if(adjR >=0 && adjR < BOARD_SIZE && adjC >=0 && adjC < BOARD_SIZE) {
+                                let neighbor = boardArr[adjR * BOARD_SIZE + adjC];
+                                if (neighbor !== 0 && Math.sign(neighbor) === maxSign) phalanxBonus += 1500;
                             }
+                        }
+
+                        if (threats.length > 0) {
+                            let defenders = getSquareThreatProfile(boardArr, i, maxSign);
+                            let defensibleCount = 0;
+                            threats.forEach(enemy => { if (defenders.some(def => def.val <= enemy.val || def.val === 7)) defensibleCount++; });
+                            if (defensibleCount < threats.length) {
+                                safetyPenalty += (threats.some(t => t.type === 'immediate') ? 80000000 : 40000000);
+                            } else safetyPenalty += 500000;
+                        }
+                    }
+                } else {
+                    if (val === 7) enK = i; else { 
+                        enMaterialCount++; enMaterialScore += 1000000; 
+                        enAS += (maxSign === 1) ? (r + 1) : (BOARD_SIZE - r);
+                        enMaterialScore += valueBonus[val];
+                        // OPPORTUNISTIC GREED: Bonus for enemy pieces we can capture for free
+                        let attackers = getSquareThreatProfile(boardArr, i, maxSign);
+                        if (attackers.some(t => t.type === 'immediate')) {
+                             // Verify if this is a "Free" capture (Defenders vs Attackers)
+                             let enemyDefenders = getSquareThreatProfile(boardArr, i, -maxSign);
+                             if (attackers.length > enemyDefenders.length) safetyPenalty -= 10000000; // Greed Bonus
                         }
                     }
                 }
             }
-            
-            dfs(startAP, false);
-            return Array.from(unique.values());
+            if (myK === -1) return -10000000000; if (enK === -1) return 10000000000;
+            if (enMaterialCount - myMaterialCount > 0) safetyPenalty *= 4;
+            let score = (myMaterialScore - enMaterialScore) + phalanxBonus;
+            let asWeight = (myMaterialCount < 18) ? 0.5 : 10;
+            score += (myAS - enAS) * asWeight; 
+            score -= safetyPenalty;
+            if (isKingInThreat(boardArr, maxSign)) score -= 500000000;
+            if (getSquareThreatProfile(boardArr, enK, maxSign).some(t => t.type === 'immediate')) score += 2000000;
+            return score;
         }
 
         async function searchRoot(boardArr, rootSign, startAP, timeLimit) {
             let startTime = Date.now();
             let macroMoves = generateMacro(boardArr, rootSign, startAP, startTime, timeLimit);
-            
             for(let m of macroMoves) m.score = evaluatePosition(m.board, rootSign);
             macroMoves.sort((a,b) => b.score - a.score);
-            
             if (macroMoves.length === 0) return null;
-            
-            let bestMacro = macroMoves[0];
-            let tt = new Map();
-            let nodesEval = 0;
-            
-            async function alphaBeta(arr, depth, alpha, beta, isMax, playerSign) {
+            let bestMacro = macroMoves[0], nodesEval = 0;
+            async function alphaBeta(arr, depth, alpha, b_val, isMax, playerSign) {
                 if (Date.now() - startTime > timeLimit) return 0;
-                if (++nodesEval % 100 === 0) await new Promise(r => setTimeout(r, 0));
-                
-                let hash = hashBoardString(arr) + depth + isMax;
-                if (tt.has(hash)) return tt.get(hash);
-                
-                if (depth === 0) {
-                    let s = evaluatePosition(arr, rootSign);
-                    tt.set(hash, s);
-                    return s;
-                }
-                
+                if (++nodesEval % 200 === 0) await new Promise(r => setTimeout(r, 0));
+                if (depth === 0) return evaluatePosition(arr, rootSign);
                 let moves = generateMacro(arr, playerSign, 6, startTime, timeLimit);
-                if (moves.length === 0) return isMax ? -9999999 : 9999999;
-                
+                if (moves.length === 0) return isMax ? -1000000000 : 1000000000;
                 for(let m of moves) m.score = evaluatePosition(m.board, rootSign);
                 moves.sort((a,b) => isMax ? b.score - a.score : a.score - b.score);
-                let prunedMoves = moves.slice(0, depth === 1 ? 15 : 5);
-                
+                let prunedMoves = moves.slice(0, depth === 1 ? 35 : 6);
                 if (isMax) {
                     let maxEval = -Infinity;
                     for(let m of prunedMoves) {
-                        let ev = await alphaBeta(m.board, depth - 1, alpha, beta, false, -playerSign);
-                        maxEval = Math.max(maxEval, ev);
-                        alpha = Math.max(alpha, ev);
-                        if (beta <= alpha) break;
+                        let ev = await alphaBeta(m.board, depth - 1, alpha, b_val, false, -playerSign);
+                        maxEval = Math.max(maxEval, ev); alpha = Math.max(alpha, ev);
+                        if (b_val <= alpha) break;
                     }
-                    tt.set(hash, maxEval);
                     return maxEval;
                 } else {
                     let minEval = Infinity;
                     for(let m of prunedMoves) {
-                        let ev = await alphaBeta(m.board, depth - 1, alpha, beta, true, -playerSign);
-                        minEval = Math.min(minEval, ev);
-                        beta = Math.min(beta, ev);
-                        if (beta <= alpha) break;
+                        let ev = await alphaBeta(m.board, depth - 1, alpha, b_val, true, -playerSign);
+                        minEval = Math.min(minEval, ev); b_val = Math.min(b_val, ev);
+                        if (b_val <= alpha) break;
                     }
-                    tt.set(hash, minEval);
                     return minEval;
                 }
             }
-            
             for(let depth = 1; depth <= 3; depth++) {
-                let maxEval = -Infinity;
-                let currentBest = macroMoves[0];
-                
-                let prunedRootMoves = macroMoves.slice(0, 30);
-                for(let m of prunedRootMoves) {
+                let maxEval = -Infinity, currentBest = macroMoves[0];
+                for(let m of macroMoves.slice(0, 60)) {
                     if (Date.now() - startTime > timeLimit) break;
                     let ev = await alphaBeta(m.board, depth - 1, -Infinity, Infinity, false, -rootSign);
-                    if (ev > maxEval) {
-                        maxEval = ev;
-                        currentBest = m;
-                    }
+                    if (ev > maxEval) { maxEval = ev; currentBest = m; }
                 }
-                if (Date.now() - startTime > timeLimit && depth > 1) break; 
+                if (Date.now() - startTime > timeLimit && depth > 1) break;
                 bestMacro = currentBest;
-                log(`Depth ${depth} optimized. Eval: ${(maxEval/1000).toFixed(1)}`, "text-slate-500 italic text-[9px] uppercase");
-                if (maxEval > 5000000) break; 
+                log(`Analysis: ${(maxEval/1000000).toFixed(1)}M`, "text-slate-500 italic text-[9px] uppercase");
             }
-            
             return bestMacro;
         }
 
         async function runAI() {
             const totalPieces = board.flat().filter(x => x).length;
-            const isPredator = totalPieces < 12;
             aiThinking = true; 
-            turnEl.classList.add(isPredator ? 'predator-thinking' : 'deep-think'); 
-            if (isPredator) turnEl.innerText = "PREDATOR ACTIVE";
+            turnEl.classList.add(totalPieces < 12 ? 'predator-thinking' : 'deep-think'); 
+            if (totalPieces < 12) turnEl.innerText = "PREDATOR ACTIVE";
             render();
-            
             await new Promise(r => setTimeout(r, 50)); 
-            
-            let SQUARES = BOARD_SIZE * BOARD_SIZE;
-            let startBoardArr = new Int8Array(SQUARES);
-            for(let r=0; r<BOARD_SIZE; r++) {
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    let p = board[r][c];
-                    if(p) {
-                        let val = p.type === 'king' ? 7 : p.value;
-                        startBoardArr[r*BOARD_SIZE + c] = p.owner === 'white' ? val : -val;
-                    }
-                }
+            let SQUARES = BOARD_SIZE * BOARD_SIZE, startBoardArr = new Int8Array(SQUARES);
+            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) {
+                let p = board[r][c];
+                if(p) startBoardArr[r*BOARD_SIZE + c] = p.owner === 'white' ? (p.type === 'king' ? 7 : p.value) : -(p.type === 'king' ? 7 : p.value);
             }
-            
-            let sign = turn === 'white' ? 1 : -1;
-            let startAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6;
-            let timeLimit = useClock ? ((blackTime - whiteTime > 60) ? 6000 : 2500) : 3500;
-            
-            log(`VALPHA CORE: Syncing Material Parity...`, "text-indigo-400 font-black uppercase");
-            
-            let bestMacro = await searchRoot(startBoardArr, sign, startAP, timeLimit);
-            
-            if(!bestMacro || bestMacro.actions.length === 0) {
-                log("AI: Resigning.", "text-red-500 font-bold uppercase text-center");
-                aiThinking = false; turnEl.classList.remove('deep-think', 'predator-thinking');
-                endGame(turn === 'white' ? 'black' : 'white', "Zugzwang"); return;
-            }
-
+            let bestMacro = await searchRoot(startBoardArr, turn === 'white' ? 1 : -1, (fullMoveCount === 1 && turn === 'white') ? 3 : 6, 9500);
+            if(!bestMacro || bestMacro.actions.length === 0) { aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Resignation"); return; }
             for(let a of bestMacro.actions) {
                 if(gameOver) break;
-                if(a.t === 'inc' || a.t === 'dec') { 
-                    selectedSquare = {r: a.r, c: a.c}; 
-                    handleMod(a.t === 'inc'); 
-                } else {
-                    tryMove(a.fr, a.fc, a.tr, a.tc);
-                }
-                render(); 
-                await new Promise(r => setTimeout(r, 350));
+                if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
+                else { tryMove(a.fr, a.fc, a.tr, a.tc); }
+                render(); await new Promise(r => setTimeout(r, 350));
             }
-            
-            aiThinking = false; 
-            turnEl.classList.remove('deep-think', 'predator-thinking'); 
-            
-            if(turn === (sign === 1 ? 'white' : 'black') && !gameOver) endTurn();
+            aiThinking = false; turnEl.classList.remove('deep-think', 'predator-thinking');
+            if(!gameOver) endTurn();
             render();
         }
 
-        // --- UI BINDINGS ---
+        function generateMacro(baseArr, sign, startAP, startTime, timeLimit) {
+            let arr = new Int8Array(baseArr), unique = new Map(), startAS = getAS(arr, sign), currentActions = [], rootHash = hashBoardString(arr), SQUARES = BOARD_SIZE * BOARD_SIZE, visitedStates = new Map();
+            function dfs(ap, captured) {
+                if (Date.now() - startTime > timeLimit) return;
+                let h = hashBoardString(arr);
+                let stateKey = h + (captured ? '1' : '0');
+                let prevAP = visitedStates.get(stateKey);
+                if (prevAP !== undefined && prevAP >= ap) return;
+                visitedStates.set(stateKey, ap);
+                if ((captured || getAS(arr, sign) > startAS) && h !== rootHash) {
+                    if (!unique.has(h) || currentActions.length < unique.get(h).actions.length) unique.set(h, { board: new Int8Array(arr), actions: [...currentActions] });
+                }
+                if (ap === 0) return;
+                for(let i=0; i<SQUARES; i++) {
+                    let p = arr[i];
+                    if (p !== 0 && Math.sign(p) === sign) {
+                        let val = Math.abs(p), r = Math.floor(i/BOARD_SIZE), c = i%BOARD_SIZE;
+                        if (val !== 7 && ap >= 1) {
+                            if (val < 6) { arr[i] = sign * (val + 1); currentActions.push({t:'inc', r, c}); dfs(ap-1, captured); currentActions.pop(); arr[i] = p; }
+                            if (val > 1) { arr[i] = sign * (val - 1); currentActions.push({t:'dec', r, c}); dfs(ap-1, captured); currentActions.pop(); arr[i] = p; }
+                        }
+                        let mobility = (val === 7) ? 1 : val;
+                        for(let d=0; d<8; d++) {
+                            for(let dist=1; dist<=mobility; dist++) {
+                                let nr = r + DIRS[d][0]*dist, nc = c + DIRS[d][1]*dist;
+                                if (nr<0 || nr>=BOARD_SIZE || nc<0 || nr>=BOARD_SIZE) break;
+                                let targetIdx = nr*BOARD_SIZE + nc, target = arr[targetIdx], blocked = false;
+                                for(let step=1; step<dist; step++) {
+                                     let checkPos = (r + DIRS[d][0]*step)*BOARD_SIZE + (c + DIRS[d][1]*step);
+                                     if (arr[checkPos] !== 0) { blocked = true; break; }
+                                }
+                                if (blocked) break;
+                                if (target !== 0) {
+                                    if (Math.sign(target) === sign) break;
+                                    if ((val === 7 || Math.abs(target) === 7 || val <= Math.abs(target)) && ap >= 5) {
+                                        let oldTarget = arr[targetIdx]; arr[targetIdx] = arr[i]; arr[i] = 0; 
+                                        currentActions.push({t:'move', fr:r, fc:c, tr:nr, tc:nc}); 
+                                        dfs(ap-5, true); 
+                                        currentActions.pop(); arr[i] = arr[targetIdx]; arr[targetIdx] = oldTarget;
+                                    }
+                                    break;
+                                } else if (ap >= 3) {
+                                    arr[targetIdx] = arr[i]; arr[i] = 0; 
+                                    currentActions.push({t:'move', fr:r, fc:c, tr:nr, tc:nc}); 
+                                    dfs(ap-3, captured); 
+                                    currentActions.pop(); arr[i] = arr[targetIdx]; arr[targetIdx] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            dfs(startAP, false);
+            return Array.from(unique.values());
+        }
+
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-            let targets = [];
-            let currentInfluence = new Set();
-            let projectedInfluence = new Set();
-
+            let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
             if(selectedSquare && showThreatVision) {
                 const p = board[selectedSquare.r][selectedSquare.c];
                 if(p) {
                     const mobility = p.type === 'king' ? 1 : p.value;
-                    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                    dirs.forEach(d => {
+                    DIRS.forEach(d => {
                         for(let i=1; i<=mobility; i++) {
                             let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
                             if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
@@ -1150,13 +1026,9 @@
                     });
                 }
             }
-
             if(selectedSquare && currentAP > 0 && gameActive && analysisIndex === -1 && !showThreatVision) {
-                for(let r=0; r<BOARD_SIZE; r++)
-                    for(let c=0; c<BOARD_SIZE; c++)
-                        if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
+                for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
             }
-
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
                     const sq = document.createElement('div');
@@ -1189,9 +1061,16 @@
             }
             if (!aiThinking) turnEl.innerText = `${turn.toUpperCase()} TURN`;
             apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
-            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
-            if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `REPLAY STEP ${analysisIndex}`; spd.classList.replace('text-blue-400', 'text-yellow-400'); }
-            else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION"; spd.classList.replace('text-yellow-400', 'text-blue-400'); }
+            const spd = document.getElementById('selected-piece-display');
+            if (analysisIndex !== -1) { 
+                document.getElementById('play-controls').classList.add('hidden'); 
+                document.getElementById('replay-controls').classList.remove('hidden'); 
+                spd.innerText = `STEP ${analysisIndex}`; 
+            } else { 
+                document.getElementById('play-controls').classList.remove('hidden'); 
+                document.getElementById('replay-controls').classList.add('hidden'); 
+                spd.innerText = selectedSquare ? "SELECTION" : "LIVE SESSION"; 
+            }
             const etb = document.getElementById('end-turn-btn');
             const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
             if (currentAP === 0 && !asPass && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
@@ -1208,18 +1087,17 @@
         document.getElementById('replay-forward-btn').onclick = stepForward;
         document.getElementById('what-if-btn').onclick = whatIf;
         document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
-        
-        document.getElementById('analysis-btn').onclick = () => { analysisIndex = historySnapshots.length - 1; log("Analysis Mode Enabled."); render(); };
-        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); if(showThreatVision) log("Threat Vision: ON. Select piece to view range."); else log("Threat Vision: OFF."); render(); };
-        document.getElementById('rules-btn').onclick = () => log("RULES: Only captures suspend AS. Headcount is King.", "text-blue-300 font-bold uppercase text-center");
+        document.getElementById('analysis-btn').onclick = () => { analysisIndex = historySnapshots.length - 1; log("Analysis Enabled."); render(); };
+        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
+        document.getElementById('rules-btn').onclick = () => log("RULES: Checkmate logic restored.", "text-blue-300 font-bold uppercase text-center");
         document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
         document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
         document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value);
         document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
         document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
-        document.getElementById('no-clock-btn').onclick = () => { useClock = false; gameActive = true; document.getElementById('start-overlay').style.display = 'none'; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); log("Chronos Off."); };
-        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteStartDuration = parseInt(document.getElementById('white-input').value) * 60; blackStartDuration = parseInt(document.getElementById('black-input').value) * 60; whiteTime = whiteStartDuration; blackTime = blackStartDuration; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Chronos Initialized."); };
+        document.getElementById('no-clock-btn').onclick = () => { useClock = false; gameActive = true; document.getElementById('start-overlay').style.display = 'none'; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); log("Clock OFF."); };
+        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; whiteTime = parseInt(document.getElementById('white-input').value) * 60; blackTime = parseInt(document.getElementById('black-input').value) * 60; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); log("Clock ON."); };
         document.getElementById('start-game-btn').onclick = startGame;
         document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
@@ -1228,7 +1106,6 @@
         document.getElementById('cancel-new-game').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
         document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
         document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE); };
-
         initGame();
     </script>
 </body>
