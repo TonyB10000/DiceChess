@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v31 - Tony Berard</title>
+    <title>Dice Chess Ultra v35 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -222,7 +222,7 @@
 
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v31 Archivist</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v35</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -348,7 +348,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -487,7 +486,6 @@
         let historySnapshots = []; 
         let showThreatVision = false;
 
-        // What If State Machine variables
         let whatIfOriginalSnapshots = null;
         let whatIfStartIndex = -1;
 
@@ -529,7 +527,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v31 Synchronized. Importer Active.`, "text-blue-400 font-black uppercase");
+            log(`v35 Synchronized. Treason & Trading Logic Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() {
@@ -777,15 +775,12 @@
 
         function whatIf() {
             if (analysisIndex === -1) return;
-            // Save the original timeline state
             whatIfOriginalSnapshots = JSON.parse(JSON.stringify(historySnapshots));
             whatIfStartIndex = analysisIndex;
             
-            // Truncate the current timeline to begin the new branch
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
             
-            // Drop into live manipulation mode
             analysisIndex = -1; 
             captureTurnState();
             log("Branch Created. What If Active.", "text-purple-400 font-black uppercase");
@@ -794,11 +789,9 @@
 
         function leaveWhatIf() {
             if (!whatIfOriginalSnapshots) return;
-            // Restore the original timeline
             historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots));
             analysisIndex = whatIfStartIndex;
             
-            // Clear What If State
             whatIfOriginalSnapshots = null;
             whatIfStartIndex = -1;
             
@@ -808,7 +801,6 @@
 
         function freshWhatIf() {
             if (!whatIfOriginalSnapshots) return;
-            // Reset to the original branch point
             historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1);
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history));
             
@@ -885,8 +877,8 @@
                         if (ep.type === 'king') {
                             if (dist === 1) return true; 
                         } else {
+                            // Quantum Threat Evaluation
                             const eV = ep.value;
-                            // A piece needs 5 AP to capture, leaving 1 AP max to mod its face value
                             for (let mod = -1; mod <= 1; mod++) {
                                 const nV = eV + mod;
                                 if (nV >= 1 && nV <= 6 && nV >= dist && nV <= targetV) return true;
@@ -911,29 +903,82 @@
             if(!enK) return 100000000; if(!myK) return -100000000;
 
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
-            if (node.ap === 0 && !asPass) return -50000000;
+            
+            if (node.ap < 3 && !asPass) return -50000000;
 
-            // Efficiency Bonus: Penalize excessively long sequences when shorter ones achieve similar results
             score -= node.actions.length * 10;
 
-            // Flat valuation: All pieces are equal
-            score += (myP.length - enP.length) * 1000000;
+            // --- UPGRADE v35: Dynamic Trading Complexity ---
+            const diff = myP.length - enP.length;
+            const totalPieces = myP.length + enP.length;
             
+            score += diff * 1000000; // Base material difference
+            // If up material (diff > 0), missing pieces increases score (loves trades).
+            // If down material (diff < 0), missing pieces decreases score (avoids trades).
+            score += diff * (40 - totalPieces) * 15000; 
+            // -----------------------------------------------
+            
+            // King Geometry Protection
+            if (myK) {
+                if (myK.r === 0 || myK.r === BOARD_SIZE - 1 || myK.c === 0 || myK.c === BOARD_SIZE - 1) {
+                    score -= 50000; 
+                    if ((myK.r === 0 || myK.r === BOARD_SIZE - 1) && (myK.c === 0 || myK.c === BOARD_SIZE - 1)) {
+                        score -= 100000; 
+                    }
+                }
+                let shields = 0;
+                const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                for(let d of dirs) {
+                    let nr = myK.r + d[0], nc = myK.c + d[1];
+                    if(nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE && b[nr][nc] && b[nr][nc].owner === aiOwner) shields++;
+                }
+                score += shields * 15000; 
+            }
+
             let kingThreatened = false;
             myP.forEach(p => { 
                 if (isThreatened(b, p.r, p.c, enemyOwner)) {
                     if (p.type === 'king') kingThreatened = true;
-                    // Heavy self-preservation penalty (overrides Kamikaze behavior)
-                    else score -= 900000; 
+                    else {
+                        // --- UPGRADE v35: Treasonous Trade Detection (X-Ray) ---
+                        let originalOwner = b[p.r][p.c].owner;
+                        let originalValue = b[p.r][p.c].value;
+                        let originalType = b[p.r][p.c].type;
+                        
+                        // Simulate max-range enemy piece occupying this square
+                        b[p.r][p.c].owner = enemyOwner;
+                        b[p.r][p.c].value = 6; 
+                        b[p.r][p.c].type = 'die';
+                        
+                        // If giving up this piece exposes our King, it's a fatal trap!
+                        if (isThreatened(b, myK.r, myK.c, enemyOwner)) {
+                            score -= 2500000; // Massive penalty for opening an X-Ray
+                        } else {
+                            score -= 1200000; // Standard hanging penalty (upgraded from 900k)
+                        }
+                        
+                        // Restore board state
+                        b[p.r][p.c].owner = originalOwner;
+                        b[p.r][p.c].value = originalValue;
+                        b[p.r][p.c].type = originalType;
+                        // --------------------------------------------------------
+                    }
                 }
-                if (p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) score += 2000; // Encourage center control
+                
+                if (p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) {
+                    score += (p.type === 'king') ? 15000 : 5000;
+                }
             });
-            if (kingThreatened) score -= 50000000;
+
+            if (kingThreatened) {
+                if (node.ap < 3) score -= 50000000; 
+                else score -= 2500000; 
+            }
 
             enP.forEach(p => {
                 if (isThreatened(b, p.r, p.c, aiOwner)) {
-                    if (p.type === 'king') score += 100000;
-                    else score += 40000; 
+                    if (p.type === 'king') score += 150000;
+                    else score += 100000; 
                 }
             });
 
@@ -957,7 +1002,7 @@
                 targetThinkTime = (timeDiff > 60) ? 9000 : 3000;
             }
 
-            let currentWidth = 150;
+            let currentWidth = 400; 
             let bestTurn = null;
 
             while (true) {
@@ -965,13 +1010,13 @@
                 let result = await performSearchAsync(root, currentWidth, turn);
                 if (result) bestTurn = result;
                 const elapsed = Date.now() - startThinking;
-                if (elapsed >= targetThinkTime || currentWidth >= 3500) break;
-                currentWidth += 600; 
+                
+                if (elapsed >= targetThinkTime || currentWidth >= 8000) break; 
+                currentWidth += 800; 
                 log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
                 await new Promise(r => setTimeout(r, 10)); 
             }
 
-            // Checkmate Recognition Threshold
             if(!bestTurn || bestTurn.h <= -20000000) {
                 log("AI: Checkmate Detected. Resigning.", "text-red-500 font-bold uppercase text-center");
                 aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking');
@@ -998,7 +1043,6 @@
                     
                     const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
                     
-                    // Allow the AI to cleanly forfeit remaining AP and end its turn if AS is met.
                     if (asPass) {
                         next.push({ ...node, ap: 0 });
                     }
@@ -1035,7 +1079,6 @@
                 if(next.length === 0) break;
                 
                 const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
-                // Early win detection: if a node already captures the King, stop searching that branch and just execute it!
                 let winNode = next.find(n => {
                     let hasEnemyKing = false;
                     for(let r=0; r<BOARD_SIZE; r++) 
@@ -1063,13 +1106,17 @@
             if(selectedSquare && showThreatVision) {
                 const p = board[selectedSquare.r][selectedSquare.c];
                 if(p) {
-                    const mobility = p.type === 'king' ? 1 : p.value;
+                    const realMobility = p.type === 'king' ? 1 : p.value;
+                    const quantumMobility = p.type === 'king' ? 1 : Math.min(6, p.value + 1);
                     const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
                     dirs.forEach(d => {
-                        for(let i=1; i<=mobility; i++) {
+                        for(let i=1; i<=quantumMobility; i++) {
                             let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
                             if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
-                            currentInfluence.add(`${nr},${nc}`);
+                            
+                            if (i <= realMobility) currentInfluence.add(`${nr},${nc}`);
+                            else projectedInfluence.add(`${nr},${nc}`);
+                            
                             if(board[nr][nc]) break;
                         }
                     });
@@ -1090,6 +1137,7 @@
                     if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
                     if(showThreatVision) {
                         if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current');
+                        else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected');
                     }
                     sq.onclick = () => selectSquare(r, c);
                     const p = board[r][c];
@@ -1117,7 +1165,6 @@
             const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
             if (currentAP === 0 && !asPass && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
 
-            // Handle Control UI visibility based on timeline state
             const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
             const wic = document.getElementById('what-if-controls');
 
@@ -1166,7 +1213,6 @@
 
         document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
         
-        // Analysis button now acts as a proper toggle between Live play and Analysis beginning
         document.getElementById('analysis-btn').onclick = () => { 
             if (analysisIndex === -1) {
                 analysisIndex = 0; 
