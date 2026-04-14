@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v35 - Tony Berard</title>
+    <title>Dice Chess Ultra v37 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -222,7 +222,7 @@
 
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v35</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v37 KSM</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -348,6 +348,7 @@
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -527,7 +528,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'none';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v35 Synchronized. Treason & Trading Logic Active.`, "text-blue-400 font-black uppercase");
+            log(`v37 Synchronized. KSM Vector Field Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() {
@@ -903,70 +904,126 @@
             if(!enK) return 100000000; if(!myK) return -100000000;
 
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
-            
             if (node.ap < 3 && !asPass) return -50000000;
 
             score -= node.actions.length * 10;
 
-            // --- UPGRADE v35: Dynamic Trading Complexity ---
             const diff = myP.length - enP.length;
             const totalPieces = myP.length + enP.length;
-            
-            score += diff * 1000000; // Base material difference
-            // If up material (diff > 0), missing pieces increases score (loves trades).
-            // If down material (diff < 0), missing pieces decreases score (avoids trades).
+            score += diff * 1000000;
             score += diff * (40 - totalPieces) * 15000; 
-            // -----------------------------------------------
-            
-            // King Geometry Protection
+
+            // --- UPGRADE v37: King Safety Metric (KSM) ---
             if (myK) {
-                if (myK.r === 0 || myK.r === BOARD_SIZE - 1 || myK.c === 0 || myK.c === BOARD_SIZE - 1) {
-                    score -= 50000; 
-                    if ((myK.r === 0 || myK.r === BOARD_SIZE - 1) && (myK.c === 0 || myK.c === BOARD_SIZE - 1)) {
-                        score -= 100000; 
-                    }
-                }
-                let shields = 0;
+                let KSM = 0;
+                let flightSquares = 0;
+                let immediateShields = 0;
+                let vectorDanger = 0;
                 const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                for(let d of dirs) {
+                
+                // 1. Flight Squares & 2. Immediate Shields
+                dirs.forEach(d => {
                     let nr = myK.r + d[0], nc = myK.c + d[1];
-                    if(nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE && b[nr][nc] && b[nr][nc].owner === aiOwner) shields++;
+                    if (nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE) {
+                        const p = b[nr][nc];
+                        if (p && p.owner === aiOwner) immediateShields++;
+                        if ((!p || p.owner !== aiOwner) && !isThreatened(b, nr, nc, enemyOwner)) flightSquares++;
+                    }
+                });
+
+                // 3. Vector Field Awareness
+                dirs.forEach(d => {
+                    let dist = 1;
+                    while(true) {
+                        let nr = myK.r + d[0]*dist, nc = myK.c + d[1]*dist;
+                        if(nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
+                        
+                        if (b[nr][nc]) {
+                            // Interposition check
+                            if (b[nr][nc].owner === aiOwner) KSM += 5000; 
+                            break;
+                        }
+                        
+                        // Empty Node - predictive danger mapping
+                        let nodeThreatened = false;
+                        for (let e of enP) {
+                            if (e.type === 'king') continue;
+                            let dr = Math.abs(e.r - nr), dc = Math.abs(e.c - nc);
+                            let moveDist = Math.max(dr, dc);
+                            
+                            if (moveDist > 0 && (dr === 0 || dc === 0 || dr === dc)) {
+                                let neededIncrementsForMove = Math.max(0, moveDist - e.value);
+                                let apAfterMove = 6 - 3 - neededIncrementsForMove; // 3 AP move cost
+                                
+                                if (apAfterMove >= 0) {
+                                    let faceValueAtNode = e.value + neededIncrementsForMove;
+                                    let neededIncrementsForCheck = Math.max(0, dist - faceValueAtNode);
+                                    
+                                    if (apAfterMove >= neededIncrementsForCheck) {
+                                        // Path to node must be clear
+                                        let pathClear = true;
+                                        let sr = (nr - e.r) === 0 ? 0 : (nr - e.r) / moveDist;
+                                        let sc = (nc - e.c) === 0 ? 0 : (nc - e.c) / moveDist;
+                                        for (let i=1; i<moveDist; i++) {
+                                            if (b[e.r + i*sr][e.c + i*sc]) { pathClear = false; break; }
+                                        }
+                                        if (pathClear) { nodeThreatened = true; break; }
+                                    }
+                                }
+                            }
+                        }
+                        if (nodeThreatened) vectorDanger -= 20000;
+                        dist++;
+                    }
+                });
+
+                KSM += flightSquares * 10000;
+                KSM += immediateShields * 15000;
+                KSM += vectorDanger;
+
+                // Castle Doctrine Integration
+                const isEdge = myK.r === 0 || myK.r === BOARD_SIZE - 1 || myK.c === 0 || myK.c === BOARD_SIZE - 1;
+                const isCorner = (myK.r === 0 || myK.r === BOARD_SIZE - 1) && (myK.c === 0 || myK.c === BOARD_SIZE - 1);
+
+                if (isCorner) {
+                    if (immediateShields >= 3) KSM += 150000; 
+                    else KSM -= 150000; 
+                } else if (isEdge) {
+                    if (immediateShields >= 2) KSM += 50000; 
+                    else KSM -= 50000; 
+                } else {
+                    if (myK.r >= 3 && myK.r <= 6 && myK.c >= 3 && myK.c <= 6) KSM += 15000;
                 }
-                score += shields * 15000; 
+                score += KSM;
             }
+            // ---------------------------------------------
 
             let kingThreatened = false;
             myP.forEach(p => { 
                 if (isThreatened(b, p.r, p.c, enemyOwner)) {
                     if (p.type === 'king') kingThreatened = true;
                     else {
-                        // --- UPGRADE v35: Treasonous Trade Detection (X-Ray) ---
                         let originalOwner = b[p.r][p.c].owner;
                         let originalValue = b[p.r][p.c].value;
                         let originalType = b[p.r][p.c].type;
                         
-                        // Simulate max-range enemy piece occupying this square
                         b[p.r][p.c].owner = enemyOwner;
                         b[p.r][p.c].value = 6; 
                         b[p.r][p.c].type = 'die';
                         
-                        // If giving up this piece exposes our King, it's a fatal trap!
                         if (isThreatened(b, myK.r, myK.c, enemyOwner)) {
-                            score -= 2500000; // Massive penalty for opening an X-Ray
+                            score -= 2500000; 
                         } else {
-                            score -= 1200000; // Standard hanging penalty (upgraded from 900k)
+                            score -= 1200000; 
                         }
                         
-                        // Restore board state
                         b[p.r][p.c].owner = originalOwner;
                         b[p.r][p.c].value = originalValue;
                         b[p.r][p.c].type = originalType;
-                        // --------------------------------------------------------
                     }
                 }
-                
-                if (p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) {
-                    score += (p.type === 'king') ? 15000 : 5000;
+                if (p.type !== 'king' && p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) {
+                    score += 5000;
                 }
             });
 
