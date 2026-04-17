@@ -3,233 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v37 - Tony Berard</title>
+    <title>Dice Chess Ultra v38 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --text-color: #f1f5f9;
-        }
-        
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            overflow: hidden; 
-            height: 100dvh; 
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header, .panel, .board-container {
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        header {
-            flex-shrink: 0;
-            background-color: #020617;
-            padding: 0.5rem;
-            text-align: center;
-            border-bottom: 1px solid #1e293b;
-            z-index: 10;
-        }
-
-        main {
-            flex-grow: 1;
-            display: flex;
-            overflow: hidden;
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        .layout-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-            padding: 0.5rem;
-            gap: 0.5rem;
-            overflow-y: auto;
-        }
-
-        #board-wrapper {
-            position: relative;
-            width: 90vmin;
-            height: 90vmin;
-            max-width: 580px;
-            max-height: 580px;
-            aspect-ratio: 1 / 1;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .sidebar {
-            width: 100%;
-            max-width: 580px;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
+        :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; height: 100dvh; width: 100vw; display: flex; flex-direction: column; }
+        header, .panel, .board-container { user-select: none; -webkit-user-select: none; }
+        header { flex-shrink: 0; background-color: #020617; padding: 0.5rem; text-align: center; border-bottom: 1px solid #1e293b; z-index: 10; }
+        main { flex-grow: 1; display: flex; overflow: hidden; position: relative; width: 100%; height: 100%; }
+        .layout-container { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; padding: 0.5rem; gap: 0.5rem; overflow-y: auto; }
+        #board-wrapper { position: relative; width: 90vmin; height: 90vmin; max-width: 580px; max-height: 580px; aspect-ratio: 1/1; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
+        .sidebar { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 0.5rem; }
         @media (orientation: landscape) {
             header { display: none; }
-            .layout-container {
-                flex-direction: row;
-                justify-content: center;
-                align-items: center;
-                padding: 1rem;
-                gap: 1.5rem;
-            }
-            #board-wrapper {
-                height: 88vh; 
-                width: 88vh; 
-                max-width: none;
-                max-height: none;
-            }
-            .sidebar {
-                width: 320px;
-                height: 88vh;
-                overflow-y: auto;
-            }
+            .layout-container { flex-direction: row; justify-content: center; align-items: center; padding: 1rem; gap: 1.5rem; }
+            #board-wrapper { height: 88vh; width: 88vh; max-width: none; max-height: none; }
+            .sidebar { width: 320px; height: 88vh; overflow-y: auto; }
         }
-
-        .board-container {
-            display: grid;
-            width: 100%;
-            height: 100%;
-            border: 6px solid #334155;
-            border-radius: 8px;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
-            background-color: #334155;
-            gap: 2px;
-            padding: 1px;
-        }
-
-        #start-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 50;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 8px;
-            gap: 1rem;
-        }
-
-        .square {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.1s ease;
-            aspect-ratio: 1 / 1; 
-        }
-
-        .square.light { background-color: #cbd5e1; }
-        .square.dark { background-color: #475569; }
+        .board-container { display: grid; width: 100%; height: 100%; border: 6px solid #334155; border-radius: 8px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6); background-color: #334155; gap: 2px; padding: 1px; }
+        #start-overlay { position: absolute; inset: 0; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); z-index: 50; display: none; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; gap: 1rem; }
+        .square { display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; transition: background-color 0.1s ease; aspect-ratio: 1/1; }
+        .square.light { background-color: #cbd5e1; } .square.dark { background-color: #475569; }
         .square.selected { background-color: #fbbf24 !important; z-index: 5; } 
-        .square.valid-move::after {
-            content: '';
-            width: 25%;
-            height: 25%;
-            background-color: rgba(34, 197, 94, 0.7);
-            border-radius: 50%;
-        }
+        .square.valid-move::after { content: ''; width: 25%; height: 25%; background-color: rgba(34,197,94,0.7); border-radius: 50%; }
         .square.valid-capture { background-color: #ef4444 !important; }
-        
-        .square.threat-current { background-color: rgba(239, 68, 68, 0.5) !important; }
-        .square.threat-projected { background-color: rgba(245, 158, 11, 0.4) !important; }
-
-        .die {
-            width: 86%;
-            height: 86%;
-            border-radius: 18%;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
+        .square.threat-current { background-color: rgba(239,68,68,0.5) !important; }
+        .square.threat-projected { background-color: rgba(245,158,11,0.4) !important; }
+        .die { width: 86%; height: 86%; border-radius: 18%; box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; position: relative; }
         .die.white { background: linear-gradient(135deg, #ffffff, #e2e8f0); border: 1px solid #94a3b8; }
         .die.black { background: linear-gradient(135deg, #1e293b, #020617); border: 1px solid #334155; }
-
-        .die-face {
-            width: 100%; height: 100%; display: grid;
-            grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 12%;
-        }
-
+        .die-face { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 12%; }
         .pip-container { display: flex; justify-content: center; align-items: center; }
         .pip { border-radius: 50%; width: 65%; height: 65%; box-shadow: inset 0 1px 1px rgba(0,0,0,0.5); }
-        .die.white .pip { background-color: #1e293b; }
-        .die.black .pip { background-color: #f8fafc; }
-        
+        .die.white .pip { background-color: #1e293b; } .die.black .pip { background-color: #f8fafc; }
         .king-symbol { font-size: 6vmin; font-weight: bold; display: flex; justify-content: center; align-items: center; }
-        .die.white .king-symbol { color: #475569; }
-        .die.black .king-symbol { color: #f1f5f9; }
+        .die.white .king-symbol { color: #475569; } .die.black .king-symbol { color: #f1f5f9; }
         @media (min-width: 600px) { .king-symbol { font-size: 2.8rem; } }
-
-        .panel { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
-
+        .panel { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); }
         .btn { @apply flex justify-center items-center font-bold transition-all duration-200 active:scale-95; border-radius: 0.5rem; }
         .btn-action { @apply bg-blue-600 hover:bg-blue-500 text-white shadow-lg disabled:opacity-20 disabled:cursor-not-allowed; }
         .btn-utility { @apply bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] py-1.5 uppercase tracking-widest; }
-
         .clock { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
         .clock-off { color: #475569; }
         .flash-red { animation: flashRed 0.8s infinite; }
         @keyframes flashRed { 0%, 100% { background-color: #dc2626; } 50% { background-color: #7f1d1d; } }
-
         .log-container { height: 70px; overflow-y: auto; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; background: #020617; border-radius: 0.5rem; padding: 0.4rem; color: #94a3b8; border: 1px solid #1e293b; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); }
-
-        .ai-thinking { animation: pulse-blue 1.5s infinite; }
-        .predator-thinking { animation: pulse-red 0.8s infinite; }
+        .ai-thinking { animation: pulse-blue 1.5s infinite; } .predator-thinking { animation: pulse-red 0.8s infinite; }
         @keyframes pulse-blue { 0%, 100% { color: #818cf8; text-shadow: 0 0 5px #4f46e5; } 50% { color: #f1f5f9; text-shadow: none; } }
         @keyframes pulse-red { 0%, 100% { color: #f87171; text-shadow: 0 0 5px #ef4444; } 50% { color: #f1f5f9; text-shadow: none; } }
-
-        .start-btn {
-            @apply bg-green-600 hover:bg-green-500 text-white font-black py-6 px-12 rounded-2xl text-2xl shadow-2xl transition-all active:scale-90 uppercase;
-            border: 4px solid rgba(255,255,255,0.2);
-            letter-spacing: 0.1em;
-        }
-
-        select {
-            background-color: #020617 !important;
-            color: #f1f5f9 !important;
-            border: 1px solid #475569 !important;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 10px;
-            font-weight: 800;
-            appearance: auto; 
-            cursor: pointer;
-            outline: none;
-        }
+        .start-btn { @apply bg-green-600 hover:bg-green-500 text-white font-black py-6 px-12 rounded-2xl text-2xl shadow-2xl transition-all active:scale-90 uppercase; border: 4px solid rgba(255,255,255,0.2); letter-spacing: 0.1em; }
+        select { background-color: #020617 !important; color: #f1f5f9 !important; border: 1px solid #475569 !important; border-radius: 4px; padding: 2px 8px; font-size: 10px; font-weight: 800; appearance: auto; cursor: pointer; outline: none; }
     </style>
 </head>
 <body>
-
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v37 KSM</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v38 KSM</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
 
     <main>
         <div class="layout-container">
-            
             <div id="board-wrapper">
                 <div id="board" class="board-container"></div>
                 <div id="start-overlay">
@@ -239,7 +75,6 @@
             </div>
 
             <div class="sidebar">
-                
                 <div class="flex gap-2">
                     <div id="white-clock-panel" class="flex-1 panel flex flex-col items-center border-b-4 border-slate-700 transition-all">
                         <div class="text-[8px] text-slate-400 uppercase font-black text-center">White Time</div>
@@ -255,7 +90,7 @@
                     <div class="flex justify-between items-center mb-1">
                         <div class="flex-1">
                             <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Status</div>
-                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center">WHITE TURN</div>
+                            <div id="turn-indicator" class="text-xs font-black text-white leading-none uppercase text-center transition-colors duration-300">WHITE TURN</div>
                         </div>
                         <div class="flex-1 px-3 border-l border-r border-slate-700">
                             <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5 text-center">Adv. Score</div>
@@ -269,7 +104,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-2 px-2">
                         <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI</span>
@@ -278,9 +112,9 @@
                         <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
-                                <option value="8">8x8 Grid</option>
-                                <option value="9">9x9 Grid</option>
-                                <option value="10" selected>10x10 Grid</option>
+                                <option value="8">8x8</option>
+                                <option value="9">9x9</option>
+                                <option value="10" selected>10x10</option>
                             </select>
                         </div>
                     </div>
@@ -288,7 +122,6 @@
 
                 <div class="panel relative">
                     <div id="selected-piece-display" class="text-[8px] text-blue-400 font-bold text-center mb-1 uppercase tracking-tighter">Live Session</div>
-                    
                     <div id="play-controls" class="space-y-1.5">
                         <div class="grid grid-cols-2 gap-2">
                             <button id="inc-btn" class="btn btn-action py-2 uppercase">▲ <span class="ml-1 text-[8px] opacity-60">INC</span></button>
@@ -332,16 +165,13 @@
                 
                 <div class="mt-1 flex justify-center gap-1.5">
                     <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-blue-900/30 hover:bg-blue-800/50 border border-blue-800/50 rounded text-[9px] font-black text-blue-400 hover:text-white uppercase transition-all flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                        Group
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Group
                     </a>
                     <a href="https://www.youtube.com/@TranscendentThinking1" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-red-900/30 hover:bg-red-800/50 border border-red-800/50 rounded text-[9px] font-black text-red-400 hover:text-white uppercase transition-all flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                        YT
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT
                     </a>
                     <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-900/30 hover:bg-emerald-800/50 border border-emerald-800/50 rounded text-[9px] font-black text-emerald-400 hover:text-white uppercase transition-all flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Support
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Support
                     </a>
                 </div>
             </div>
@@ -399,9 +229,7 @@
             <div class="flex items-center justify-between mb-2 px-2">
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size:</span>
                 <select id="import-size-select" class="w-24 bg-slate-900 border-slate-700 text-white rounded text-[10px] p-1 outline-none">
-                    <option value="8">8x8 Grid</option>
-                    <option value="9">9x9 Grid</option>
-                    <option value="10" selected>10x10 Grid</option>
+                    <option value="8">8x8</option><option value="9">9x9</option><option value="10" selected>10x10</option>
                 </select>
             </div>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
@@ -419,30 +247,27 @@
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col shadow-2xl">
             <h3 class="text-xl font-black text-white mb-4 uppercase tracking-tighter text-center border-b border-slate-700 pb-2">Dice Chess Rules</h3>
             <div class="overflow-y-auto text-sm text-slate-300 space-y-4 pr-2 text-left selection:bg-blue-500/50 flex-grow">
-                <p><strong>The Objective:</strong> Capture the opponent's King, force a Checkmate, or force a "Freeze Out" (where the opponent cannot satisfy the Advancement Score).</p>
-
+                <p><strong>The Objective:</strong> Capture opponent's King, force Checkmate, or force a "Freeze Out" (cannot satisfy Advancement Score).</p>
                 <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">1. Power vs. Mobility</h4>
                 <ul class="list-disc pl-5 space-y-1">
-                    <li>Pieces are represented by 6-sided dice (values 1-6) and a King (♔).</li>
-                    <li><strong>Mobility (Range):</strong> A piece can move up to its face value in squares (orthogonally or diagonally). Kings move 1 square.</li>
-                    <li><strong>Power (Capture):</strong> To capture, the attacker's value must be <strong>less than or equal to</strong> the target's value. (A '1' can capture anything; a '6' can only capture a '6' or a King). Kings have infinite power and can capture any piece. Kings can be captured by any piece.</li>
+                    <li>Pieces are 6-sided dice (1-6) and a King (♔).</li>
+                    <li><strong>Mobility:</strong> Move up to face value (orthogonally/diagonally). Kings move 1.</li>
+                    <li><strong>Power:</strong> Attacker value must be &le; target value. ('1' captures anything; '6' captures '6'/King). Kings have infinite power.</li>
                 </ul>
-
                 <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">2. Action Points (AP)</h4>
-                <p>You have <strong>6 AP</strong> per turn (White starts Turn 1 with only 3 AP). You may split AP among any number of pieces.</p>
+                <p>6 AP per turn (White starts with 3 AP). Split among any pieces.</p>
                 <ul class="list-disc pl-5 space-y-1">
-                    <li><strong>Modify (1 AP):</strong> Increment (+1) or Decrement (-1) a die's face value. (Values must stay between 1 and 6).</li>
-                    <li><strong>Move (3 AP):</strong> Move a piece to an empty square.</li>
-                    <li><strong>Capture (5 AP):</strong> Move a piece onto an enemy occupied square, capturing it.</li>
+                    <li><strong>Modify (1 AP):</strong> +1 or -1 face value (1-6).</li>
+                    <li><strong>Move (3 AP):</strong> Move to empty square.</li>
+                    <li><strong>Capture (5 AP):</strong> Move onto enemy square.</li>
                 </ul>
-
                 <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">3. The Advancement Score (AS)</h4>
-                <p>To prevent passive stalling, players are forced to advance across the board.</p>
+                <p>Prevents stalling by forcing board progression.</p>
                 <ul class="list-disc pl-5 space-y-1">
-                    <li>Your Advancement Score is the sum of how far across the board your pieces have moved.</li>
-                    <li>Your net AS at the end of your turn <strong>must be strictly higher</strong> than at the start of your turn.</li>
-                    <li><strong>Exception:</strong> If you perform a Capture (a "Significant Event"), the AS requirement is suspended for that turn.</li>
-                    <li>If you finish your actions and have not satisfied the AS rule or captured a piece, the turn is illegal.</li>
+                    <li>AS is the sum of how far pieces have moved.</li>
+                    <li>Net AS at turn end <strong>must be strictly higher</strong> than turn start.</li>
+                    <li><strong>Exception:</strong> Captures suspend AS rule for that turn.</li>
+                    <li>If actions don't satisfy AS or capture, turn is illegal.</li>
                 </ul>
             </div>
             <button id="close-rules-modal-btn" class="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black uppercase tracking-widest flex-shrink-0 transition-colors">OK / Close</button>
@@ -454,14 +279,12 @@
     </div>
 
     <script>
-        // Sound Engine for Tactical Feedback
         const SoundEngine = {
             ctx: null,
             init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
             play(f, d = 0.08, t = 'sine') {
                 if (!this.ctx) return;
-                const o = this.ctx.createOscillator();
-                const g = this.ctx.createGain();
+                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
                 o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
                 g.gain.setValueAtTime(0.05, this.ctx.currentTime);
                 g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + d);
@@ -471,50 +294,24 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        // Game Configuration
         let BOARD_SIZE = 10;
-        let board = [];
-        let turn = 'white';
-        let currentAP = 3;
-        let selectedSquare = null;
-        let moveHistory = [];
-        let currentTurnActions = [];
-        let fullMoveCount = 1;
-        let gameOver = false;
-        let aiThinking = false;
+        let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
+        let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
+        let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
+        let showThreatVision = false, whatIfOriginalSnapshots = null, whatIfStartIndex = -1;
+        let useClock = false, gameActive = false, whiteTime = 900, blackTime = 900, clockInterval = null;
+        let turnStartBoardSnapshot = null, turnStartScore = 0, capturedThisTurn = false;
 
-        let analysisIndex = -1; 
-        let historySnapshots = []; 
-        let showThreatVision = false;
-
-        let whatIfOriginalSnapshots = null;
-        let whatIfStartIndex = -1;
-
-        let useClock = false; 
-        let gameActive = true; 
-        let whiteTime = 900, blackTime = 900;
-        let clockInterval = null;
-
-        let turnStartBoardSnapshot = null, turnStartScore = 0;
-        let capturedThisTurn = false;
-
-        const boardEl = document.getElementById('board');
-        const turnEl = document.getElementById('turn-indicator');
-        const apEl = document.getElementById('ap-counter');
-        const scoreEl = document.getElementById('adv-score-display');
+        const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
+        const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
 
         function initGame(size = 10) {
-            BOARD_SIZE = size;
-            document.getElementById('board-size-select').value = BOARD_SIZE;
+            BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-            turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; gameOver = false; selectedSquare = null;
-            useClock = false; gameActive = true; 
-            
-            analysisIndex = -1; 
-            historySnapshots = [];
-            whatIfOriginalSnapshots = null;
-            whatIfStartIndex = -1;
+            turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
+            gameOver = false; selectedSquare = null; gameActive = false; 
+            analysisIndex = -1; historySnapshots = []; whatIfOriginalSnapshots = null; whatIfStartIndex = -1;
 
             const layout = { 8:[5,4,3,6,0,3,4,5], 9:[5,4,3,6,0,2,3,4,5], 10:[5,4,3,2,6,0,2,3,4,5] }[BOARD_SIZE];
             for (let c = 0; c < BOARD_SIZE; c++) {
@@ -524,108 +321,65 @@
                 board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
             }
             
-            clearInterval(clockInterval);
-            clockInterval = setInterval(tickClock, 1000);
-            document.getElementById('start-overlay').style.display = 'none';
+            clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
+            document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v37 Synchronized. KSM Vector Field Active.`, "text-blue-400 font-black uppercase");
+            log(`v38 Synchronized. Dynamic Trade Matrix Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() {
-            historySnapshots.push({
-                board: JSON.parse(JSON.stringify(board)),
-                turn, ap: currentAP, fullMoveCount,
-                history: JSON.parse(JSON.stringify(moveHistory))
-            });
+            historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) });
         }
 
         function importGame(text, overrideSize) {
             try {
-                const turns = text.trim().split('\n');
-                if (turns.length === 0) return;
-
-                let size = overrideSize || 10;
-                initGame(size);
-                
+                const turns = text.trim().split('\n'); if (turns.length === 0) return;
+                initGame(overrideSize || 10);
                 for (const line of turns) {
-                    const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/);
-                    if (!match) continue;
-
-                    const whiteMoves = match[1].split(',').map(s => s.trim());
-                    const blackMoves = match[2].split(',').map(s => s.trim());
-
-                    processActions(whiteMoves, 'white');
-                    saveSnapshot();
-                    
-                    if (blackMoves[0] !== "") {
-                        processActions(blackMoves, 'black');
-                        saveSnapshot();
-                    }
+                    const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/); if (!match) continue;
+                    processActions(match[1].split(',').map(s => s.trim()), 'white'); saveSnapshot();
+                    if (match[2].trim() !== "") { processActions(match[2].split(',').map(s => s.trim()), 'black'); saveSnapshot(); }
                 }
-                
-                analysisIndex = 0;
-                log("Import Successful. Accessing History at Start.");
-                document.getElementById('record-modal').classList.add('hidden');
-                applySnapshot(0);
-            } catch (e) {
-                log("Error: Invalid Game Notation.", "text-red-500");
-            }
+                analysisIndex = 0; log("Import Successful. Accessing History at Start.");
+                document.getElementById('record-modal').classList.add('hidden'); applySnapshot(0);
+            } catch (e) { log("Error: Invalid Game Notation.", "text-red-500"); }
         }
 
         function processActions(actions, player) {
-            turn = player;
-            currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
-            currentTurnActions = [];
-            captureTurnState();
-
-            for (const action of actions) {
-                if (!action) continue;
-                const parseCoord = (s) => {
-                    if (!s || s.length < 2) return null;
-                    const c = s.charCodeAt(0) - 97;
-                    const r = BOARD_SIZE - parseInt(s.substring(1));
-                    return {r, c};
-                };
-
-                const isMove = action.includes('x') || (action.includes('-') && action.split('-').length > 1 && action.split('-')[1] !== "");
-
-                if (isMove) {
-                    const parts = action.split(/[-x]/);
-                    const from = parseCoord(parts[0]);
-                    const to = parseCoord(parts[1]);
+            turn = player; currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
+            currentTurnActions = []; captureTurnState();
+            for (const a of actions) {
+                if (!a) continue;
+                const parseCoord = (s) => { if (!s || s.length < 2) return null; return { r: BOARD_SIZE - parseInt(s.substring(1)), c: s.charCodeAt(0) - 97 }; };
+                if (a.includes('x') || (a.includes('-') && a.split('-')[1] !== "")) {
+                    const parts = a.split(/[-x]/), from = parseCoord(parts[0]), to = parseCoord(parts[1]);
                     if (!from || !to || !board[from.r] || !board[to.r]) continue;
-                    const target = board[to.r][to.c];
-                    if (target) capturedThisTurn = true;
-                    board[to.r][to.c] = board[from.r][from.c];
-                    board[from.r][from.c] = null;
+                    const target = board[to.r][to.c]; if (target) capturedThisTurn = true;
+                    board[to.r][to.c] = board[from.r][from.c]; board[from.r][from.c] = null;
                     currentAP -= target ? 5 : 3;
-                } else if (action.includes('+') || action.includes('-')) {
-                    const coord = parseCoord(action.substring(0, action.length - 1));
-                    const inc = action.endsWith('+');
-                    if (coord && board[coord.r] && board[coord.r][coord.c]) {
+                } else if (a.includes('+') || a.includes('-')) {
+                    const coord = parseCoord(a.substring(0, a.length - 1)), inc = a.endsWith('+');
+                    if (coord && board[coord.r][coord.c]) {
                         if (inc && board[coord.r][coord.c].value < 6) board[coord.r][coord.c].value++;
                         else if (!inc && board[coord.r][coord.c].value > 1) board[coord.r][coord.c].value--;
-                        currentAP -= 1;
+                        currentAP--;
                     }
                 }
-                currentTurnActions.push(action);
+                currentTurnActions.push(a);
             }
-
             const actStr = currentTurnActions.join(', ');
-            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
-            else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
-            turn = (turn === 'white') ? 'black' : 'white';
+            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' }); else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
+            turn = turn === 'white' ? 'black' : 'white';
         }
 
         function startGame() {
-            gameActive = true;
-            document.getElementById('start-overlay').style.display = 'none';
-            SoundEngine.play(800, 0.2, 'square');
-            log(`Battle Commenced.`, "text-green-400 font-bold uppercase");
+            gameActive = true; document.getElementById('start-overlay').style.display = 'none';
+            SoundEngine.play(800, 0.2, 'square'); log(`Battle Commenced.`, "text-green-400 font-bold uppercase");
         }
 
         function tickClock() {
-            if (gameOver || aiThinking || !gameActive || !useClock || analysisIndex !== -1) return;
+            if (gameOver || !gameActive || !useClock || analysisIndex !== -1) return; 
+            // aiThinking check removed so clock continues to tick during AI calc
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
@@ -633,31 +387,22 @@
 
         function updateClockDisplay() {
             const format = (s) => { const m = Math.floor(s / 60); const r = s % 60; return `${m}:${r < 10 ? '0' : ''}${r}`; };
-            const wtEl = document.getElementById('white-time');
-            const btEl = document.getElementById('black-time');
+            const wtEl = document.getElementById('white-time'), btEl = document.getElementById('black-time');
             if (!useClock) {
-                wtEl.innerText = "OFF"; btEl.innerText = "OFF";
-                wtEl.classList.add('clock-off'); btEl.classList.add('clock-off');
+                wtEl.innerText = "OFF"; btEl.innerText = "OFF"; wtEl.classList.add('clock-off'); btEl.classList.add('clock-off');
             } else {
-                wtEl.innerText = format(Math.max(0, whiteTime));
-                btEl.innerText = format(Math.max(0, blackTime));
+                wtEl.innerText = format(Math.max(0, whiteTime)); btEl.innerText = format(Math.max(0, blackTime));
                 wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off');
             }
             document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1) ? 'white' : '#334155';
             document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1) ? '#818cf8' : '#334155';
         }
 
-        function captureTurnState() {
-            turnStartBoardSnapshot = JSON.stringify(board);
-            turnStartScore = calcAS(board, turn);
-            capturedThisTurn = false;
-        }
+        function captureTurnState() { turnStartBoardSnapshot = JSON.stringify(board); turnStartScore = calcAS(board, turn); capturedThisTurn = false; }
 
         function calcAS(b, p) {
             let s = 0;
-            for(let r=0; r<BOARD_SIZE; r++)
-                for(let c=0; c<BOARD_SIZE; c++)
-                    if(b[r][c] && b[r][c].owner === p) s += (p === 'white') ? (BOARD_SIZE - r) : (r + 1);
+            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c] && b[r][c].owner === p) s += (p === 'white') ? (BOARD_SIZE - r) : (r + 1);
             return s;
         }
 
@@ -679,37 +424,24 @@
         function tryMove(fr, fc, tr, tc) {
             const v = validateMove(board, fr, fc, tr, tc, true);
             if(!v.valid) { SoundEngine.play(150, 0.15, 'sawtooth'); return; }
-            const p = board[fr][fc], t = board[tr][tc];
-            if(t) capturedThisTurn = true;
+            const p = board[fr][fc], t = board[tr][tc]; if(t) capturedThisTurn = true;
             const coord = (r, c) => `${String.fromCharCode(97+c)}${BOARD_SIZE-r}`;
             currentTurnActions.push(t ? `${coord(fr,fc)}x${coord(tr,tc)}` : `${coord(fr,fc)}-${coord(tr,tc)}`);
-            board[tr][tc] = p; board[fr][fc] = null;
-            currentAP -= t ? 5 : 3;
+            board[tr][tc] = p; board[fr][fc] = null; currentAP -= t ? 5 : 3;
             if(currentAP < 1) selectedSquare = null; else selectedSquare = {r: tr, c: tc};
             if(t && t.type === 'king') {
                 const actStr = currentTurnActions.join(', ');
-                if (turn === 'white') {
-                    moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
-                } else {
-                    if (moveHistory.length > 0 && moveHistory[moveHistory.length-1].n === fullMoveCount) {
-                        moveHistory[moveHistory.length-1].b = actStr;
-                    } else {
-                        moveHistory.push({ n: fullMoveCount, w: '', b: actStr });
-                    }
-                }
+                if (turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
+                else { if (moveHistory.length > 0 && moveHistory[moveHistory.length-1].n === fullMoveCount) moveHistory[moveHistory.length-1].b = actStr; else moveHistory.push({ n: fullMoveCount, w: '', b: actStr }); }
                 endGame(turn, "King Capture");
-            }
-            else { SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); }
+            } else { SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); }
         }
 
         function selectSquare(r, c) {
             if(gameOver || aiThinking || !gameActive) return;
             if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1) return;
+            if (analysisIndex !== -1) { if (showThreatVision) { selectedSquare = {r,c}; render(); } return; }
             const p = board[r][c];
-            if (analysisIndex !== -1) {
-                if (showThreatVision) { selectedSquare = {r,c}; render(); }
-                return;
-            }
             if(p && p.owner === turn && currentAP > 0) { selectedSquare = {r, c}; SoundEngine.play(400); }
             else if(selectedSquare) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
             render();
@@ -719,376 +451,173 @@
             if(!selectedSquare || currentAP < 1 || !gameActive || analysisIndex !== -1) return;
             const p = board[selectedSquare.r][selectedSquare.c];
             if(!p || p.type === 'king' || p.owner !== turn) return;
-            if(inc && p.value < 6) { p.value++; currentAP--; }
-            else if(!inc && p.value > 1) { p.value--; currentAP--; }
-            else return;
+            if(inc && p.value < 6) { p.value++; currentAP--; } else if(!inc && p.value > 1) { p.value--; currentAP--; } else return;
             currentTurnActions.push(`${String.fromCharCode(97+selectedSquare.c)}${BOARD_SIZE-selectedSquare.r}${inc?'+':'-'}`);
-            SoundEngine.play(inc ? 700 : 350);
-            if(currentAP < 1) selectedSquare = null;
+            SoundEngine.play(inc ? 700 : 350); if(currentAP < 1) selectedSquare = null;
             render(); checkAutoTurnEnd();
         }
 
-        function checkAutoTurnEnd() {
-            if(currentAP === 0) {
-                const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
-                if(asPass) setTimeout(endTurn, 400);
-            }
-        }
+        function checkAutoTurnEnd() { if(currentAP === 0 && (capturedThisTurn || calcAS(board, turn) > turnStartScore)) setTimeout(endTurn, 400); }
 
         function endTurn() {
             if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
-            const curScore = calcAS(board, turn);
-            const asPass = capturedThisTurn || curScore > turnStartScore;
-            if(!asPass) { log("Illegal Turn: AS rule failure.", "text-red-500 font-bold uppercase"); return; }
-            
+            if(!capturedThisTurn && calcAS(board, turn) <= turnStartScore) { log("Illegal Turn: AS rule failure.", "text-red-500 font-bold uppercase"); return; }
             const actStr = currentTurnActions.join(', ');
-            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
-            else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
-            
+            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' }); else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
             turn = turn === 'white' ? 'black' : 'white';
             currentAP = 6; currentTurnActions = []; selectedSquare = null;
-            captureTurnState(); saveSnapshot(); flashTurn(); render();
+            captureTurnState(); saveSnapshot(); flashTurn(); render(); updateClockDisplay();
             if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver) setTimeout(runAI, 100);
         }
 
-        function stepBack() {
-            if (analysisIndex === -1) analysisIndex = historySnapshots.length - 2;
-            else analysisIndex--;
-            if (analysisIndex < 0) analysisIndex = 0;
-            applySnapshot(analysisIndex);
-        }
+        function stepBack() { analysisIndex = analysisIndex === -1 ? historySnapshots.length - 2 : analysisIndex - 1; if (analysisIndex < 0) analysisIndex = 0; applySnapshot(analysisIndex); }
+        function stepForward() { if (analysisIndex === -1) return; analysisIndex++; if (analysisIndex >= historySnapshots.length - 1) { analysisIndex = -1; applySnapshot(historySnapshots.length - 1); } else applySnapshot(analysisIndex); }
+        function applySnapshot(idx) { const s = historySnapshots[idx]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; moveHistory = JSON.parse(JSON.stringify(s.history)); render(); }
+        
+        function whatIf() { if (analysisIndex === -1) return; whatIfOriginalSnapshots = JSON.parse(JSON.stringify(historySnapshots)); whatIfStartIndex = analysisIndex; historySnapshots = historySnapshots.slice(0, analysisIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history)); analysisIndex = -1; captureTurnState(); log("Branch Created. What If Active.", "text-purple-400 font-black uppercase"); render(); }
+        function leaveWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)); analysisIndex = whatIfStartIndex; whatIfOriginalSnapshots = null; whatIfStartIndex = -1; log("Left What If Mode.", "text-yellow-400 font-bold uppercase"); applySnapshot(analysisIndex); }
+        function freshWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history)); const s = historySnapshots[whatIfStartIndex]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; analysisIndex = -1; captureTurnState(); log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); render(); }
 
-        function stepForward() {
-            if (analysisIndex === -1) return;
-            analysisIndex++;
-            if (analysisIndex >= historySnapshots.length - 1) {
-                analysisIndex = -1; applySnapshot(historySnapshots.length - 1);
-            } else applySnapshot(analysisIndex);
-        }
-
-        function applySnapshot(idx) {
-            const snap = historySnapshots[idx];
-            board = JSON.parse(JSON.stringify(snap.board));
-            turn = snap.turn; currentAP = snap.ap; fullMoveCount = snap.fullMoveCount;
-            moveHistory = JSON.parse(JSON.stringify(snap.history));
-            render();
-        }
-
-        function whatIf() {
-            if (analysisIndex === -1) return;
-            whatIfOriginalSnapshots = JSON.parse(JSON.stringify(historySnapshots));
-            whatIfStartIndex = analysisIndex;
-            
-            historySnapshots = historySnapshots.slice(0, analysisIndex + 1);
-            moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history));
-            
-            analysisIndex = -1; 
-            captureTurnState();
-            log("Branch Created. What If Active.", "text-purple-400 font-black uppercase");
-            render();
-        }
-
-        function leaveWhatIf() {
-            if (!whatIfOriginalSnapshots) return;
-            historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots));
-            analysisIndex = whatIfStartIndex;
-            
-            whatIfOriginalSnapshots = null;
-            whatIfStartIndex = -1;
-            
-            log("Left What If Mode. Returned to main timeline.", "text-yellow-400 font-bold uppercase");
-            applySnapshot(analysisIndex);
-        }
-
-        function freshWhatIf() {
-            if (!whatIfOriginalSnapshots) return;
-            historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1);
-            moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history));
-            
-            const snap = historySnapshots[whatIfStartIndex];
-            board = JSON.parse(JSON.stringify(snap.board));
-            turn = snap.turn; 
-            currentAP = snap.ap; 
-            fullMoveCount = snap.fullMoveCount;
-            
-            analysisIndex = -1;
-            captureTurnState();
-            log("What If Branch Reset.", "text-blue-400 font-bold uppercase");
-            render();
-        }
-
-        function flashTurn() {
-            const overlay = document.getElementById('flash-overlay');
-            const txt = document.getElementById('flash-text');
-            txt.innerText = `${turn.toUpperCase()} TURN`;
-            txt.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1';
-            overlay.style.opacity = '1';
-            setTimeout(() => overlay.style.opacity = '0', 500);
-        }
-
-        function endGame(w, reason = "Resignation") {
-            gameOver = true; gameActive = false;
-            document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${reason})`;
-            document.getElementById('winner-modal').classList.remove('hidden');
-        }
-
-        function copyToClipboard(text, btn) {
-            try {
-                const textArea = document.createElement("textarea"); 
-                textArea.value = text; 
-                textArea.style.position = "fixed";
-                textArea.style.opacity = "0";
-                document.body.appendChild(textArea); 
-                textArea.select(); 
-                document.execCommand("copy"); 
-                document.body.removeChild(textArea);
-                if(btn) {
-                    const orig = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600");
-                    setTimeout(() => { btn.innerText = orig; btn.classList.remove("bg-green-600"); }, 1500);
-                }
-            } catch (err) {
-                console.error("Clipboard API failed", err);
-            }
-        }
+        function flashTurn() { const o = document.getElementById('flash-overlay'), t = document.getElementById('flash-text'); t.innerText = `${turn.toUpperCase()} TURN`; t.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1'; o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 500); }
+        function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); }
+        function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
         // AI Engine
         function isThreatened(b, r, c, attackerOwner) {
-            const targetP = b[r][c];
-            if (!targetP) return false;
-            const targetV = targetP.type === 'king' ? 7 : targetP.value; 
-
-            for (let er = 0; er < BOARD_SIZE; er++) {
-                for (let ec = 0; ec < BOARD_SIZE; ec++) {
-                    const ep = b[er][ec];
-                    if (ep && ep.owner === attackerOwner) {
-                        const dr = Math.abs(r - er), dc = Math.abs(c - ec);
-                        const dist = Math.max(dr, dc);
-                        if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue; 
-
-                        let pathClear = true;
-                        const sr = (r - er) === 0 ? 0 : (r - er) / dist;
-                        const sc = (c - ec) === 0 ? 0 : (c - ec) / dist;
-                        for (let i = 1; i < dist; i++) {
-                            if (b[er + i * sr][ec + i * sc]) {
-                                pathClear = false; break;
-                            }
-                        }
-                        if (!pathClear) continue;
-
-                        if (ep.type === 'king') {
-                            if (dist === 1) return true; 
-                        } else {
-                            // Quantum Threat Evaluation
-                            const eV = ep.value;
-                            for (let mod = -1; mod <= 1; mod++) {
-                                const nV = eV + mod;
-                                if (nV >= 1 && nV <= 6 && nV >= dist && nV <= targetV) return true;
-                            }
-                        }
-                    }
+            const tgtP = b[r][c]; if (!tgtP) return false; const tgtV = tgtP.type === 'king' ? 7 : tgtP.value; 
+            for (let er = 0; er < BOARD_SIZE; er++) for (let ec = 0; ec < BOARD_SIZE; ec++) {
+                const ep = b[er][ec];
+                if (ep && ep.owner === attackerOwner) {
+                    const dr = Math.abs(r - er), dc = Math.abs(c - ec), dist = Math.max(dr, dc);
+                    if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue; 
+                    let clear = true, sr = (r - er) === 0 ? 0 : (r - er) / dist, sc = (c - ec) === 0 ? 0 : (c - ec) / dist;
+                    for (let i = 1; i < dist; i++) if (b[er + i * sr][ec + i * sc]) { clear = false; break; }
+                    if (!clear) continue;
+                    if (ep.type === 'king') { if (dist === 1) return true; } 
+                    else { for (let m = -1; m <= 1; m++) { const nV = ep.value + m; if (nV >= 1 && nV <= 6 && nV >= dist && nV <= tgtV) return true; } }
                 }
-            }
-            return false;
+            } return false;
         }
 
         function heuristic(node, aiOwner) {
-            const b = node.board; let score = 0;
-            const myP = [], enP = [];
-            const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
-            
-            for(let r=0; r<BOARD_SIZE; r++)
-                for(let c=0; c<BOARD_SIZE; c++)
-                    if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
-            
+            const b = node.board; let score = 0; const myP = [], enP = []; const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
+            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             if(!enK) return 100000000; if(!myK) return -100000000;
-
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -50000000;
-
             score -= node.actions.length * 10;
 
-            const diff = myP.length - enP.length;
-            const totalPieces = myP.length + enP.length;
-            score += diff * 1000000;
-            score += diff * (40 - totalPieces) * 15000; 
+            const diff = myP.length - enP.length, totalP = myP.length + enP.length;
+            const baseValue = 3000000;
+            score += diff * baseValue;
+            
+            // v38 Dynamic Trade Matrix
+            let threatPenalty = baseValue * 1.1; 
+            if (diff > 0) { score -= totalP * 100000; threatPenalty = baseValue * 0.9; } // Ahead: Simplify board
+            else if (diff < 0) { score += totalP * 100000; threatPenalty = baseValue * 2.0; } // Behind: Complicate, avoid trades
+            else { score -= totalP * 10000; threatPenalty = baseValue * 0.95; } // Equal
 
-            // --- UPGRADE v37: King Safety Metric (KSM) ---
+            // King Safety Metric
             if (myK) {
-                let KSM = 0;
-                let flightSquares = 0;
-                let immediateShields = 0;
-                let vectorDanger = 0;
+                let KSM = 0, flt = 0, shd = 0, vDgr = 0;
                 const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                
-                // 1. Flight Squares & 2. Immediate Shields
                 dirs.forEach(d => {
-                    let nr = myK.r + d[0], nc = myK.c + d[1];
+                    let nr = myK.r+d[0], nc = myK.c+d[1];
                     if (nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE) {
-                        const p = b[nr][nc];
-                        if (p && p.owner === aiOwner) immediateShields++;
-                        if ((!p || p.owner !== aiOwner) && !isThreatened(b, nr, nc, enemyOwner)) flightSquares++;
+                        const p = b[nr][nc]; if (p && p.owner === aiOwner) shd++;
+                        if ((!p || p.owner !== aiOwner) && !isThreatened(b, nr, nc, enemyOwner)) flt++;
                     }
                 });
-
-                // 3. Vector Field Awareness
                 dirs.forEach(d => {
                     let dist = 1;
                     while(true) {
-                        let nr = myK.r + d[0]*dist, nc = myK.c + d[1]*dist;
+                        let nr = myK.r+d[0]*dist, nc = myK.c+d[1]*dist;
                         if(nr<0 || nr>=BOARD_SIZE || nc<0 || nc>=BOARD_SIZE) break;
-                        
-                        if (b[nr][nc]) {
-                            // Interposition check
-                            if (b[nr][nc].owner === aiOwner) KSM += 5000; 
-                            break;
-                        }
-                        
-                        // Empty Node - predictive danger mapping
-                        let nodeThreatened = false;
+                        if (b[nr][nc]) { if (b[nr][nc].owner === aiOwner) KSM += 5000; break; }
+                        let nodeThr = false;
                         for (let e of enP) {
                             if (e.type === 'king') continue;
-                            let dr = Math.abs(e.r - nr), dc = Math.abs(e.c - nc);
-                            let moveDist = Math.max(dr, dc);
-                            
-                            if (moveDist > 0 && (dr === 0 || dc === 0 || dr === dc)) {
-                                let neededIncrementsForMove = Math.max(0, moveDist - e.value);
-                                let apAfterMove = 6 - 3 - neededIncrementsForMove; // 3 AP move cost
-                                
-                                if (apAfterMove >= 0) {
-                                    let faceValueAtNode = e.value + neededIncrementsForMove;
-                                    let neededIncrementsForCheck = Math.max(0, dist - faceValueAtNode);
-                                    
-                                    if (apAfterMove >= neededIncrementsForCheck) {
-                                        // Path to node must be clear
-                                        let pathClear = true;
-                                        let sr = (nr - e.r) === 0 ? 0 : (nr - e.r) / moveDist;
-                                        let sc = (nc - e.c) === 0 ? 0 : (nc - e.c) / moveDist;
-                                        for (let i=1; i<moveDist; i++) {
-                                            if (b[e.r + i*sr][e.c + i*sc]) { pathClear = false; break; }
-                                        }
-                                        if (pathClear) { nodeThreatened = true; break; }
+                            let dr = Math.abs(e.r-nr), dc = Math.abs(e.c-nc), mvDist = Math.max(dr, dc);
+                            if (mvDist > 0 && (dr === 0 || dc === 0 || dr === dc)) {
+                                let inc = Math.max(0, mvDist - e.value), apAft = 6 - 3 - inc;
+                                if (apAft >= 0) {
+                                    let vNd = e.value + inc, chkInc = Math.max(0, dist - vNd);
+                                    if (apAft >= chkInc) {
+                                        let clr = true, sr = (nr-e.r)===0?0:(nr-e.r)/mvDist, sc = (nc-e.c)===0?0:(nc-e.c)/mvDist;
+                                        for (let i=1; i<mvDist; i++) if (b[e.r+i*sr][e.c+i*sc]) { clr = false; break; }
+                                        if (clr) { nodeThr = true; break; }
                                     }
                                 }
                             }
                         }
-                        if (nodeThreatened) vectorDanger -= 20000;
+                        if (nodeThr) vDgr -= 20000;
                         dist++;
                     }
                 });
-
-                KSM += flightSquares * 10000;
-                KSM += immediateShields * 15000;
-                KSM += vectorDanger;
-
-                // Castle Doctrine Integration
-                const isEdge = myK.r === 0 || myK.r === BOARD_SIZE - 1 || myK.c === 0 || myK.c === BOARD_SIZE - 1;
-                const isCorner = (myK.r === 0 || myK.r === BOARD_SIZE - 1) && (myK.c === 0 || myK.c === BOARD_SIZE - 1);
-
-                if (isCorner) {
-                    if (immediateShields >= 3) KSM += 150000; 
-                    else KSM -= 150000; 
-                } else if (isEdge) {
-                    if (immediateShields >= 2) KSM += 50000; 
-                    else KSM -= 50000; 
-                } else {
-                    if (myK.r >= 3 && myK.r <= 6 && myK.c >= 3 && myK.c <= 6) KSM += 15000;
-                }
+                KSM += flt*10000 + shd*15000 + vDgr;
+                const isCnr = (myK.r===0 || myK.r===BOARD_SIZE-1) && (myK.c===0 || myK.c===BOARD_SIZE-1);
+                const isEdg = myK.r===0 || myK.r===BOARD_SIZE-1 || myK.c===0 || myK.c===BOARD_SIZE-1;
+                if (isCnr) KSM += (shd >= 3 ? 150000 : -150000); 
+                else if (isEdg) KSM += (shd >= 2 ? 50000 : -50000);
+                else if (myK.r >= 3 && myK.r <= 6 && myK.c >= 3 && myK.c <= 6) KSM += 15000;
                 score += KSM;
             }
-            // ---------------------------------------------
 
-            let kingThreatened = false;
+            let kingThr = false;
             myP.forEach(p => { 
                 if (isThreatened(b, p.r, p.c, enemyOwner)) {
-                    if (p.type === 'king') kingThreatened = true;
+                    if (p.type === 'king') kingThr = true;
                     else {
-                        let originalOwner = b[p.r][p.c].owner;
-                        let originalValue = b[p.r][p.c].value;
-                        let originalType = b[p.r][p.c].type;
-                        
-                        b[p.r][p.c].owner = enemyOwner;
-                        b[p.r][p.c].value = 6; 
-                        b[p.r][p.c].type = 'die';
-                        
-                        if (isThreatened(b, myK.r, myK.c, enemyOwner)) {
-                            score -= 2500000; 
-                        } else {
-                            score -= 1200000; 
-                        }
-                        
-                        b[p.r][p.c].owner = originalOwner;
-                        b[p.r][p.c].value = originalValue;
-                        b[p.r][p.c].type = originalType;
+                        let oO = b[p.r][p.c].owner, oV = b[p.r][p.c].value, oT = b[p.r][p.c].type;
+                        b[p.r][p.c].owner = enemyOwner; b[p.r][p.c].value = 6; b[p.r][p.c].type = 'die';
+                        score -= isThreatened(b, myK.r, myK.c, enemyOwner) ? (threatPenalty + 1000000) : threatPenalty;
+                        b[p.r][p.c].owner = oO; b[p.r][p.c].value = oV; b[p.r][p.c].type = oT;
                     }
                 }
-                if (p.type !== 'king' && p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) {
-                    score += 5000;
-                }
+                if (p.type !== 'king' && p.r >= 3 && p.r <= 6 && p.c >= 3 && p.c <= 6) score += 5000;
             });
-
-            if (kingThreatened) {
-                if (node.ap < 3) score -= 50000000; 
-                else score -= 2500000; 
-            }
-
-            enP.forEach(p => {
-                if (isThreatened(b, p.r, p.c, aiOwner)) {
-                    if (p.type === 'king') score += 150000;
-                    else score += 100000; 
-                }
-            });
-
-            score += calcAS(b, aiOwner) * 150;
-            if (asPass) score += 50000;
+            if (kingThr) score -= (node.ap < 3 ? 50000000 : 2500000);
+            enP.forEach(p => { if (isThreatened(b, p.r, p.c, aiOwner)) score += (p.type === 'king' ? 150000 : 100000); });
+            score += calcAS(b, aiOwner) * 150; if (asPass) score += 50000;
             return score;
         }
 
         async function runAI() {
-            const totalPieces = board.flat().filter(x => x).length;
+            let myP = [], enP = []; const enemyOwner = turn === 'white' ? 'black' : 'white';
+            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(board[r][c]) (board[r][c].owner===turn?myP:enP).push({r,c,...board[r][c]});
+            const myK = myP.find(x => x.type === 'king');
+            
+            // v38 Adaptive Beam Search Config
+            const isBehind = myP.length < enP.length;
+            const kingInDanger = myK && isThreatened(board, myK.r, myK.c, enemyOwner);
+            const targetWidth = (isBehind || kingInDanger) ? 5000 : 2000;
+            const totalPieces = myP.length + enP.length;
             const isPredator = totalPieces < 12;
+
             aiThinking = true; 
             turnEl.classList.add(isPredator ? 'predator-thinking' : 'ai-thinking'); 
-            if (isPredator) turnEl.innerText = "PREDATOR ACTIVE";
-            render();
+            turnEl.innerText = "CALCULATING...";
             
-            const startThinking = Date.now();
-            let targetThinkTime = 1000; 
-            if (useClock) {
-                const timeDiff = blackTime - whiteTime;
-                targetThinkTime = (timeDiff > 60) ? 9000 : 3000;
-            }
+            let thinkingTimer = setTimeout(() => { if (aiThinking) turnEl.innerText = "BOT THINKING..."; }, 2000);
+            render(); log(`THINKING: Fixed Width ${targetWidth}...`, "text-slate-500 italic uppercase");
 
-            let currentWidth = 400; 
-            let bestTurn = null;
-
-            while (true) {
-                let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
-                let result = await performSearchAsync(root, currentWidth, turn);
-                if (result) bestTurn = result;
-                const elapsed = Date.now() - startThinking;
-                
-                if (elapsed >= targetThinkTime || currentWidth >= 8000) break; 
-                currentWidth += 800; 
-                log(`THINKING: Width ${currentWidth}...`, "text-slate-500 italic uppercase");
-                await new Promise(r => setTimeout(r, 10)); 
-            }
+            let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
+            let bestTurn = await performSearchAsync(root, targetWidth, turn);
+            clearTimeout(thinkingTimer);
 
             if(!bestTurn || bestTurn.h <= -20000000) {
                 log("AI: Checkmate Detected. Resigning.", "text-red-500 font-bold uppercase text-center");
                 aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking');
-                endGame(turn === 'white' ? 'black' : 'white', "Checkmate"); 
-                return;
+                endGame(turn === 'white' ? 'black' : 'white', "Checkmate"); return;
             }
-
             for(let a of bestTurn.actions) {
                 if(gameOver) break;
                 if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
                 else tryMove(a.fr, a.fc, a.tr, a.tc);
                 render(); await new Promise(r => setTimeout(r, 400));
             }
-            aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking'); if(turn === 'black') endTurn();
-            render();
+            aiThinking = false; turnEl.classList.remove('ai-thinking', 'predator-thinking'); if(turn === 'black') endTurn(); render();
         }
 
         async function performSearchAsync(root, width, aiOwner) {
@@ -1097,25 +626,16 @@
                 let next = [];
                 for(let node of beam) {
                     if(node.ap === 0) { next.push(node); continue; }
-                    
                     const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
-                    
-                    if (asPass) {
-                        next.push({ ...node, ap: 0 });
-                    }
-
+                    if (asPass) next.push({ ...node, ap: 0 });
                     const myP = [];
-                    for(let r=0; r<BOARD_SIZE; r++)
-                        for(let c=0; c<BOARD_SIZE; c++)
-                            if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
-
+                    for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
                     for(let p of myP) {
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3)) {
                             if(p.value < 6) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value++; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
                             if(p.value > 1) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value--; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
                         }
-                        const range = p.type === 'king' ? 1 : p.value;
-                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
                         for(let d of dirs) {
                             for(let i=1; i<=range; i++) {
                                 let tr = p.r+d[0]*i, tc = p.c+d[1]*i;
@@ -1124,8 +644,7 @@
                                 if(!v.valid) { if(node.board[tr][tc]) break; continue; }
                                 const cost = node.board[tr][tc] ? 5 : 3;
                                 if(node.ap >= cost) {
-                                    let nb = JSON.parse(JSON.stringify(node.board));
-                                    nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
+                                    let nb = JSON.parse(JSON.stringify(node.board)); nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
                                     next.push({ ...node, board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
                                 }
                                 if(node.board[tr][tc]) break;
@@ -1134,17 +653,9 @@
                     }
                 }
                 if(next.length === 0) break;
-                
                 const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
-                let winNode = next.find(n => {
-                    let hasEnemyKing = false;
-                    for(let r=0; r<BOARD_SIZE; r++) 
-                        for(let c=0; c<BOARD_SIZE; c++) 
-                            if(n.board[r][c]?.type === 'king' && n.board[r][c]?.owner === enemyOwner) hasEnemyKing = true;
-                    return !hasEnemyKing;
-                });
+                let winNode = next.find(n => { let hk = false; for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(n.board[r][c]?.type === 'king' && n.board[r][c]?.owner === enemyOwner) hk = true; return !hk; });
                 if(winNode) return winNode;
-
                 next.forEach(n => n.h = heuristic(n, aiOwner));
                 next.sort((a,b) => b.h - a.h);
                 beam = next.slice(0, width); 
@@ -1156,46 +667,31 @@
 
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-            let targets = [];
-            let currentInfluence = new Set();
-            let projectedInfluence = new Set();
-
+            let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
             if(selectedSquare && showThreatVision) {
                 const p = board[selectedSquare.r][selectedSquare.c];
                 if(p) {
-                    const realMobility = p.type === 'king' ? 1 : p.value;
-                    const quantumMobility = p.type === 'king' ? 1 : Math.min(6, p.value + 1);
+                    const rMob = p.type === 'king' ? 1 : p.value, qMob = p.type === 'king' ? 1 : Math.min(6, p.value + 1);
                     const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
                     dirs.forEach(d => {
-                        for(let i=1; i<=quantumMobility; i++) {
+                        for(let i=1; i<=qMob; i++) {
                             let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
                             if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
-                            
-                            if (i <= realMobility) currentInfluence.add(`${nr},${nc}`);
-                            else projectedInfluence.add(`${nr},${nc}`);
-                            
+                            if (i <= rMob) currentInfluence.add(`${nr},${nc}`); else projectedInfluence.add(`${nr},${nc}`);
                             if(board[nr][nc]) break;
                         }
                     });
                 }
             }
-
             if(selectedSquare && currentAP > 0 && gameActive && analysisIndex === -1 && !showThreatVision) {
-                for(let r=0; r<BOARD_SIZE; r++)
-                    for(let c=0; c<BOARD_SIZE; c++)
-                        if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
+                for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
             }
-
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
-                    const sq = document.createElement('div');
-                    sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
+                    const sq = document.createElement('div'); sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
                     if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
                     if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
-                    if(showThreatVision) {
-                        if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current');
-                        else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected');
-                    }
+                    if(showThreatVision) { if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current'); else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected'); }
                     sq.onclick = () => selectSquare(r, c);
                     const p = board[r][c];
                     if(p) {
@@ -1204,11 +700,7 @@
                         else {
                             const face = document.createElement('div'); face.className = 'die-face';
                             const pips = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[p.value] || [];
-                            for(let i=0; i<9; i++) {
-                                const pc = document.createElement('div'); pc.className = 'pip-container';
-                                if(pips.includes(i)) { const dot = document.createElement('div'); dot.className = 'pip'; pc.appendChild(dot); }
-                                face.appendChild(pc);
-                            }
+                            for(let i=0; i<9; i++) { const pc = document.createElement('div'); pc.className = 'pip-container'; if(pips.includes(i)) { const dot = document.createElement('div'); dot.className = 'pip'; pc.appendChild(dot); } face.appendChild(pc); }
                             die.appendChild(face);
                         }
                         sq.appendChild(die);
@@ -1219,38 +711,18 @@
             if (!aiThinking) turnEl.innerText = `${turn.toUpperCase()} TURN`;
             apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
             const etb = document.getElementById('end-turn-btn');
-            const asPass = capturedThisTurn || calcAS(board, turn) > turnStartScore;
-            if (currentAP === 0 && !asPass && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
+            if (currentAP === 0 && !(capturedThisTurn || calcAS(board, turn) > turnStartScore) && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
 
             const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
             const wic = document.getElementById('what-if-controls');
-
             if (whatIfOriginalSnapshots !== null) {
                 wic.classList.remove('hidden');
-                if (analysisIndex !== -1) {
-                    pc.classList.add('hidden');
-                    rc.classList.remove('hidden');
-                    spd.innerText = `WHAT IF STEP ${analysisIndex}`;
-                    spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400";
-                } else {
-                    pc.classList.remove('hidden');
-                    rc.classList.add('hidden');
-                    spd.innerText = selectedSquare ? "WHAT IF: SELECTION" : "WHAT IF: LIVE";
-                    spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400";
-                }
+                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `WHAT IF STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; } 
+                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "WHAT IF: SELECTION" : "WHAT IF: LIVE"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; }
             } else {
                 wic.classList.add('hidden');
-                if (analysisIndex !== -1) {
-                    pc.classList.add('hidden');
-                    rc.classList.remove('hidden');
-                    spd.innerText = `REPLAY STEP ${analysisIndex}`;
-                    spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-yellow-400";
-                } else {
-                    pc.classList.remove('hidden');
-                    rc.classList.add('hidden');
-                    spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION";
-                    spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-blue-400";
-                }
+                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `REPLAY STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-yellow-400"; } 
+                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-blue-400"; }
             }
         }
 
@@ -1261,44 +733,32 @@
         document.getElementById('dec-btn').onclick = () => handleMod(false);
         document.getElementById('end-turn-btn').onclick = endTurn;
         document.getElementById('reset-turn-btn').onclick = () => { if(turnStartBoardSnapshot) { board = JSON.parse(turnStartBoardSnapshot); currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6; currentTurnActions = []; selectedSquare = null; render(); } };
-        document.getElementById('replay-back-btn').onclick = stepBack;
-        document.getElementById('replay-forward-btn').onclick = stepForward;
-        
-        document.getElementById('what-if-btn').onclick = whatIf;
-        document.getElementById('leave-what-if-btn').onclick = leaveWhatIf;
-        document.getElementById('fresh-what-if-btn').onclick = freshWhatIf;
-
+        document.getElementById('replay-back-btn').onclick = stepBack; document.getElementById('replay-forward-btn').onclick = stepForward;
+        document.getElementById('what-if-btn').onclick = whatIf; document.getElementById('leave-what-if-btn').onclick = leaveWhatIf; document.getElementById('fresh-what-if-btn').onclick = freshWhatIf;
         document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
-        
-        document.getElementById('analysis-btn').onclick = () => { 
-            if (analysisIndex === -1) {
-                analysisIndex = 0; 
-                applySnapshot(0);
-                log("Analysis Mode Entered.");
-            } else {
-                analysisIndex = -1;
-                showThreatVision = false;
-                applySnapshot(historySnapshots.length - 1);
-                log("Exited Analysis Mode.");
-            }
-        };
-
+        document.getElementById('analysis-btn').onclick = () => { if (analysisIndex === -1) { analysisIndex = 0; applySnapshot(0); log("Analysis Mode Entered."); } else { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length - 1); log("Exited Analysis Mode."); } };
         document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
-        
         document.getElementById('rules-btn').onclick = () => document.getElementById('rules-modal').classList.remove('hidden');
         document.getElementById('close-rules-modal-btn').onclick = () => document.getElementById('rules-modal').classList.add('hidden');
-        
         document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
         document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
-        document.getElementById('import-record-btn').onclick = () => {
-            const size = parseInt(document.getElementById('import-size-select').value);
-            importGame(document.getElementById('record-text').value, size);
-        };
+        document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value, parseInt(document.getElementById('import-size-select').value));
         document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
         document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
         document.getElementById('no-clock-btn').onclick = () => { useClock = false; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); };
-        document.getElementById('enable-clock-btn').onclick = () => { useClock = true; gameActive = false; document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('start-overlay').style.display = 'flex'; updateClockDisplay(); };
+        
+        // Clock settings bugfix applied here:
+        document.getElementById('enable-clock-btn').onclick = () => { 
+            whiteTime = parseInt(document.getElementById('white-input').value) * 60;
+            blackTime = parseInt(document.getElementById('black-input').value) * 60;
+            if (isNaN(whiteTime) || whiteTime <= 0) whiteTime = 900;
+            if (isNaN(blackTime) || blackTime <= 0) blackTime = 900;
+            useClock = true; 
+            document.getElementById('settings-modal').classList.add('hidden'); 
+            updateClockDisplay(); 
+        };
+
         document.getElementById('start-game-btn').onclick = startGame;
         document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
