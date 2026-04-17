@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v38 - Tony Berard</title>
+    <title>Dice Chess Ultra v39 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -59,7 +59,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v38 KSM</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v39</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -178,7 +178,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -324,7 +323,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v38 Synchronized. Dynamic Trade Matrix Active.`, "text-blue-400 font-black uppercase");
+            log(`v39 Synchronized. 10k Width Enabled.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() {
@@ -379,7 +378,6 @@
 
         function tickClock() {
             if (gameOver || !gameActive || !useClock || analysisIndex !== -1) return; 
-            // aiThinking check removed so clock continues to tick during AI calc
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
@@ -512,13 +510,11 @@
             const baseValue = 3000000;
             score += diff * baseValue;
             
-            // v38 Dynamic Trade Matrix
             let threatPenalty = baseValue * 1.1; 
-            if (diff > 0) { score -= totalP * 100000; threatPenalty = baseValue * 0.9; } // Ahead: Simplify board
-            else if (diff < 0) { score += totalP * 100000; threatPenalty = baseValue * 2.0; } // Behind: Complicate, avoid trades
-            else { score -= totalP * 10000; threatPenalty = baseValue * 0.95; } // Equal
+            if (diff > 0) { score -= totalP * 100000; threatPenalty = baseValue * 0.9; } 
+            else if (diff < 0) { score += totalP * 100000; threatPenalty = baseValue * 2.0; } 
+            else { score -= totalP * 10000; threatPenalty = baseValue * 0.95; } 
 
-            // King Safety Metric
             if (myK) {
                 let KSM = 0, flt = 0, shd = 0, vDgr = 0;
                 const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
@@ -588,10 +584,10 @@
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(board[r][c]) (board[r][c].owner===turn?myP:enP).push({r,c,...board[r][c]});
             const myK = myP.find(x => x.type === 'king');
             
-            // v38 Adaptive Beam Search Config
+            // v39 Adaptive Beam Search Config - Increased default and danger widths
             const isBehind = myP.length < enP.length;
             const kingInDanger = myK && isThreatened(board, myK.r, myK.c, enemyOwner);
-            const targetWidth = (isBehind || kingInDanger) ? 5000 : 2000;
+            const targetWidth = (isBehind || kingInDanger) ? 10000 : 5000;
             const totalPieces = myP.length + enP.length;
             const isPredator = totalPieces < 12;
 
@@ -748,7 +744,6 @@
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
         document.getElementById('no-clock-btn').onclick = () => { useClock = false; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); };
         
-        // Clock settings bugfix applied here:
         document.getElementById('enable-clock-btn').onclick = () => { 
             whiteTime = parseInt(document.getElementById('white-input').value) * 60;
             blackTime = parseInt(document.getElementById('black-input').value) * 60;
