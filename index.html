@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v41 - Tony Berard</title>
+    <title>Dice Chess Ultra v41.1 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v41</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v41.1</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v41: Quantum Shadow PH Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v41.1: UI & PH Online</p>
                 </div>
             </div>
 
@@ -143,6 +143,13 @@
                         <button id="what-if-btn" class="btn bg-purple-600 hover:bg-purple-500 py-1.5 text-white w-full text-[9px] uppercase font-black">WHAT IF...</button>
                         <button id="exit-analysis-btn" class="btn bg-red-600 hover:bg-red-500 py-1 text-white text-[8px] w-full mt-1 uppercase tracking-widest">EXIT ANALYSIS</button>
                     </div>
+
+                    <div id="what-if-controls" class="hidden space-y-1.5 mt-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="leave-what-if-btn" class="btn bg-red-600 hover:bg-red-500 py-1.5 text-white text-[9px] uppercase font-black">LEAVE</button>
+                            <button id="fresh-what-if-btn" class="btn bg-blue-600 hover:bg-blue-500 py-1.5 text-white text-[9px] uppercase font-black">FRESH</button>
+                        </div>
+                    </div>
                     
                     <div class="grid grid-cols-5 gap-1 mt-2">
                         <button id="rules-btn" class="btn btn-utility uppercase text-[7px] bg-slate-800">Rules</button>
@@ -156,6 +163,18 @@
                 <div id="game-log" class="log-container"></div>
                 <div class="mt-1 flex justify-center">
                     <button id="new-game-btn" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-[9px] font-black text-slate-500 hover:text-white uppercase transition-all">New Game</button>
+                </div>
+
+                <div class="mt-1 flex justify-center gap-1.5">
+                    <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-blue-900/30 hover:bg-blue-800/50 border border-blue-800/50 rounded text-[9px] font-black text-blue-400 hover:text-white uppercase transition-all flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Group
+                    </a>
+                    <a href="https://www.youtube.com/@TranscendentThinking1" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-red-900/30 hover:bg-red-800/50 border border-red-800/50 rounded text-[9px] font-black text-red-400 hover:text-white uppercase transition-all flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT
+                    </a>
+                    <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-900/30 hover:bg-emerald-800/50 border border-emerald-800/50 rounded text-[9px] font-black text-emerald-400 hover:text-white uppercase transition-all flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Support
+                    </a>
                 </div>
             </div>
         </div>
@@ -200,15 +219,60 @@
             <div class="space-y-2">
                 <button id="new-campaign-btn" class="w-full py-3 bg-blue-600 text-white font-black rounded-lg uppercase text-xs">New Game</button>
                 <button id="winner-view-board" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px]">View Board</button>
+                <button id="winner-copy-record" class="w-full py-2 bg-slate-700 text-white font-bold rounded-lg uppercase text-[10px] transition-colors">Copy Record</button>
             </div>
         </div>
     </div>
 
     <div id="record-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
-            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter">Game Record</h3>
-            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none"></textarea>
-            <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Close</button>
+            <h3 class="text-lg font-black text-white mb-3 uppercase tracking-tighter">Game Record / Import</h3>
+            <p class="text-[8px] text-slate-500 uppercase mb-2">Paste a standard log below to analyze</p>
+            <div class="flex items-center justify-between mb-2 px-2">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size:</span>
+                <select id="import-size-select" class="w-24 bg-slate-900 border-slate-700 text-white rounded text-[10px] p-1 outline-none">
+                    <option value="8">8x8</option><option value="9">9x9</option><option value="10" selected>10x10</option>
+                </select>
+            </div>
+            <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
+            <div class="flex flex-col gap-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="import-record-btn" class="w-full py-2 bg-purple-600 text-white rounded text-[10px] font-bold uppercase">Import & Analyze</button>
+                    <button id="copy-record-btn" class="w-full py-2 bg-blue-600 text-white rounded text-[10px] font-bold uppercase">Copy Log</button>
+                </div>
+                <button id="close-record-btn" class="w-full py-2 bg-slate-700 text-white rounded text-[10px] font-bold uppercase">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rules-modal" class="modal hidden">
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col shadow-2xl">
+            <h3 class="text-xl font-black text-white mb-4 uppercase tracking-tighter text-center border-b border-slate-700 pb-2">Dice Chess Rules</h3>
+            <div class="overflow-y-auto text-sm text-slate-300 space-y-4 pr-2 text-left selection:bg-blue-500/50 flex-grow">
+                <p><strong>The Objective:</strong> Capture opponent's King, force Checkmate, or force a "Freeze Out" (cannot satisfy Advancement Score).</p>
+                <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">1. Power vs. Mobility</h4>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>Pieces are 6-sided dice (1-6) and a King (♔).</li>
+                    <li><strong>Mobility:</strong> Move up to face value (orthogonally/diagonally). Kings move 1.</li>
+                    <li><strong>Power:</strong> Attacker value must be &le; target value. ('1' captures anything; '6' captures '6'/King). Kings have infinite power.</li>
+                </ul>
+                <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">2. Action Points (AP)</h4>
+                <p>6 AP per turn (White starts with 3 AP). Split among any pieces.</p>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li><strong>Modify (1 AP):</strong> +1 or -1 face value (1-6).</li>
+                    <li><strong>Move (3 AP):</strong> Move to empty square.</li>
+                    <li><strong>Capture (5 AP):</strong> Move onto enemy square.</li>
+                </ul>
+                <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">3. The Advancement Score (AS)</h4>
+                <p>Prevents stalling by forcing board progression.</p>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>AS is the sum of how far pieces have moved.</li>
+                    <li>Net AS at turn end <strong>must be strictly higher</strong> than turn start.</li>
+                    <li><strong>Exception:</strong> Captures suspend AS rule for that turn.</li>
+                    <li>If actions don't satisfy AS or capture, turn is illegal.</li>
+                </ul>
+            </div>
+            <button id="close-rules-modal-btn" class="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black uppercase tracking-widest flex-shrink-0 transition-colors">OK / Close</button>
         </div>
     </div>
 
@@ -241,7 +305,7 @@
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
         let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
-        let showThreatVision = false;
+        let showThreatVision = false, whatIfOriginalSnapshots = null, whatIfStartIndex = -1;
         let useClock = false, gameActive = false, whiteTime = 900, blackTime = 900, clockInterval = null;
         let turnStartBoardSnapshot = null, turnStartScore = 0, capturedThisTurn = false;
 
@@ -282,7 +346,8 @@
             BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
-            gameOver = false; selectedSquare = null; gameActive = false; analysisIndex = -1; historySnapshots = [];
+            gameOver = false; selectedSquare = null; gameActive = false; 
+            analysisIndex = -1; historySnapshots = []; whatIfOriginalSnapshots = null; whatIfStartIndex = -1;
             localStorage.removeItem(SAVE_KEY);
 
             const layout = { 8:[5,4,3,6,0,3,4,5], 9:[5,4,3,6,0,2,3,4,5], 10:[5,4,3,2,6,0,2,3,4,5] }[BOARD_SIZE];
@@ -296,10 +361,51 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v41 Init. Throttling: ${isMobile ? 'ON' : 'OFF'}. Quantum PH: Active.`, "text-blue-400 font-black uppercase");
+            log(`v41.1 Init. UI Restored. Quantum PH Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
+
+        function importGame(text, overrideSize) {
+            try {
+                const turns = text.trim().split('\n'); if (turns.length === 0) return;
+                initGame(overrideSize || 10);
+                for (const line of turns) {
+                    const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/); if (!match) continue;
+                    processActions(match[1].split(',').map(s => s.trim()), 'white'); saveSnapshot();
+                    if (match[2].trim() !== "") { processActions(match[2].split(',').map(s => s.trim()), 'black'); saveSnapshot(); }
+                }
+                analysisIndex = 0; log("Import Successful. Accessing History at Start.");
+                document.getElementById('record-modal').classList.add('hidden'); applySnapshot(0);
+            } catch (e) { log("Error: Invalid Game Notation.", "text-red-500"); }
+        }
+
+        function processActions(actions, player) {
+            turn = player; currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
+            currentTurnActions = []; captureTurnState();
+            for (const a of actions) {
+                if (!a) continue;
+                const parseCoord = (s) => { if (!s || s.length < 2) return null; return { r: BOARD_SIZE - parseInt(s.substring(1)), c: s.charCodeAt(0) - 97 }; };
+                if (a.includes('x') || (a.includes('-') && a.split('-')[1] !== "")) {
+                    const parts = a.split(/[-x]/), from = parseCoord(parts[0]), to = parseCoord(parts[1]);
+                    if (!from || !to || !board[from.r] || !board[to.r]) continue;
+                    const target = board[to.r][to.c]; if (target) capturedThisTurn = true;
+                    board[to.r][to.c] = board[from.r][from.c]; board[from.r][from.c] = null;
+                    currentAP -= target ? 5 : 3;
+                } else if (a.includes('+') || a.includes('-')) {
+                    const coord = parseCoord(a.substring(0, a.length - 1)), inc = a.endsWith('+');
+                    if (coord && board[coord.r][coord.c]) {
+                        if (inc && board[coord.r][coord.c].value < 6) board[coord.r][coord.c].value++;
+                        else if (!inc && board[coord.r][coord.c].value > 1) board[coord.r][coord.c].value--;
+                        currentAP--;
+                    }
+                }
+                currentTurnActions.push(a);
+            }
+            const actStr = currentTurnActions.join(', ');
+            if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' }); else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
+            turn = turn === 'white' ? 'black' : 'white';
+        }
 
         function startGame() {
             gameActive = true; document.getElementById('start-overlay').style.display = 'none';
@@ -319,6 +425,8 @@
             const wtEl = document.getElementById('white-time'), btEl = document.getElementById('black-time');
             if (!useClock) { wtEl.innerText = "OFF"; btEl.innerText = "OFF"; wtEl.classList.add('clock-off'); btEl.classList.add('clock-off'); } 
             else { wtEl.innerText = format(Math.max(0, whiteTime)); btEl.innerText = format(Math.max(0, blackTime)); wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off'); }
+            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1) ? 'white' : '#334155';
+            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1) ? '#818cf8' : '#334155';
         }
 
         function captureTurnState() { turnStartBoardSnapshot = JSON.stringify(board); turnStartScore = calcAS(board, turn); capturedThisTurn = false; }
@@ -348,13 +456,19 @@
             board[tr][tc] = p; board[fr][fc] = null; currentAP -= t ? 5 : 3;
             if(currentAP < 1) selectedSquare = null; else selectedSquare = {r: tr, c: tc};
             
-            if(t && t.type === 'king') { endGame(turn, "King Capture"); } 
+            if(t && t.type === 'king') { 
+                const actStr = currentTurnActions.join(', ');
+                if (turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
+                else { if (moveHistory.length > 0 && moveHistory[moveHistory.length-1].n === fullMoveCount) moveHistory[moveHistory.length-1].b = actStr; else moveHistory.push({ n: fullMoveCount, w: '', b: actStr }); }
+                endGame(turn, "King Capture"); 
+            } 
             else { SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); saveGameToStorage(); }
         }
 
         function selectSquare(r, c) {
-            if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
-            if(turn === 'black' && document.getElementById('ai-toggle').checked) return;
+            if(gameOver || aiThinking || !gameActive) return;
+            if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1) return;
+            if (analysisIndex !== -1) { if (showThreatVision) { selectedSquare = {r,c}; render(); } return; }
             const p = board[r][c];
             if(p && p.owner === turn && currentAP > 0) { selectedSquare = {r, c}; SoundEngine.play(400); }
             else if(selectedSquare) { tryMove(selectedSquare.r, selectedSquare.c, r, c); }
@@ -384,10 +498,19 @@
             if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver) setTimeout(runAI, 100);
         }
 
+        function stepBack() { analysisIndex = analysisIndex === -1 ? historySnapshots.length - 2 : analysisIndex - 1; if (analysisIndex < 0) analysisIndex = 0; applySnapshot(analysisIndex); }
+        function stepForward() { if (analysisIndex === -1) return; analysisIndex++; if (analysisIndex >= historySnapshots.length - 1) { analysisIndex = -1; applySnapshot(historySnapshots.length - 1); } else applySnapshot(analysisIndex); }
+        function applySnapshot(idx) { const s = historySnapshots[idx]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; moveHistory = JSON.parse(JSON.stringify(s.history)); render(); }
+        
+        function whatIf() { if (analysisIndex === -1) return; whatIfOriginalSnapshots = JSON.parse(JSON.stringify(historySnapshots)); whatIfStartIndex = analysisIndex; historySnapshots = historySnapshots.slice(0, analysisIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history)); analysisIndex = -1; captureTurnState(); log("Branch Created. What If Active.", "text-purple-400 font-black uppercase"); render(); }
+        function leaveWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)); analysisIndex = whatIfStartIndex; whatIfOriginalSnapshots = null; whatIfStartIndex = -1; log("Left What If Mode.", "text-yellow-400 font-bold uppercase"); applySnapshot(analysisIndex); }
+        function freshWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history)); const s = historySnapshots[whatIfStartIndex]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; analysisIndex = -1; captureTurnState(); log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); render(); }
+
         function flashTurn() { const o = document.getElementById('flash-overlay'), t = document.getElementById('flash-text'); t.innerText = `${turn.toUpperCase()} TURN`; t.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1'; o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 500); }
         function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
+        function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v41 with Quantum Shadow PH) ---
+        // --- AI ENGINE (v41.1 with Quantum Shadow PH) ---
         function evaluateTensions(b, aiOwner) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
@@ -537,7 +660,22 @@
 
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-            let targets = [];
+            let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
+            if(selectedSquare && showThreatVision) {
+                const p = board[selectedSquare.r][selectedSquare.c];
+                if(p) {
+                    const rMob = p.type === 'king' ? 1 : p.value, qMob = p.type === 'king' ? 1 : Math.min(6, p.value + 1);
+                    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                    dirs.forEach(d => {
+                        for(let i=1; i<=qMob; i++) {
+                            let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
+                            if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
+                            if (i <= rMob) currentInfluence.add(`${nr},${nc}`); else projectedInfluence.add(`${nr},${nc}`);
+                            if(board[nr][nc]) break;
+                        }
+                    });
+                }
+            }
             if(selectedSquare && currentAP > 0 && gameActive && analysisIndex === -1 && !showThreatVision) {
                 for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
             }
@@ -546,6 +684,7 @@
                     const sq = document.createElement('div'); sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
                     if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
                     if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
+                    if(showThreatVision) { if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current'); else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected'); }
                     sq.onclick = () => selectSquare(r, c);
                     const p = board[r][c];
                     if(p) {
@@ -564,13 +703,39 @@
             }
             if (!aiThinking) turnEl.innerText = `${turn.toUpperCase()} TURN`;
             apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
+            const etb = document.getElementById('end-turn-btn');
+            if (currentAP === 0 && !(capturedThisTurn || calcAS(board, turn) > turnStartScore) && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
+
+            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
+            const wic = document.getElementById('what-if-controls');
+            if (whatIfOriginalSnapshots !== null) {
+                wic.classList.remove('hidden');
+                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `WHAT IF STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; } 
+                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "WHAT IF: SELECTION" : "WHAT IF: LIVE"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; }
+            } else {
+                wic.classList.add('hidden');
+                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `REPLAY STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-yellow-400"; } 
+                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-blue-400"; }
+            }
         }
 
         function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
+        function getMoveHistoryStr() { return moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); }
 
         document.getElementById('inc-btn').onclick = () => handleMod(true); document.getElementById('dec-btn').onclick = () => handleMod(false);
         document.getElementById('end-turn-btn').onclick = endTurn;
         document.getElementById('reset-turn-btn').onclick = () => { if(turnStartBoardSnapshot) { board = JSON.parse(turnStartBoardSnapshot); currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6; currentTurnActions = []; selectedSquare = null; render(); } };
+        document.getElementById('replay-back-btn').onclick = stepBack; document.getElementById('replay-forward-btn').onclick = stepForward;
+        document.getElementById('what-if-btn').onclick = whatIf; document.getElementById('leave-what-if-btn').onclick = leaveWhatIf; document.getElementById('fresh-what-if-btn').onclick = freshWhatIf;
+        document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
+        document.getElementById('analysis-btn').onclick = () => { if (analysisIndex === -1) { analysisIndex = 0; applySnapshot(0); log("Analysis Mode Entered."); } else { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length - 1); log("Exited Analysis Mode."); } };
+        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
+        document.getElementById('rules-btn').onclick = () => document.getElementById('rules-modal').classList.remove('hidden');
+        document.getElementById('close-rules-modal-btn').onclick = () => document.getElementById('rules-modal').classList.add('hidden');
+        document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
+        document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
+        document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value, parseInt(document.getElementById('import-size-select').value));
+        document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
         document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
         document.getElementById('no-clock-btn').onclick = () => { useClock = false; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); };
@@ -586,6 +751,9 @@
         document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
         document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
         document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE); };
+        document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
+        document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
+        document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
 
         initGame();
         checkSavedGame();
