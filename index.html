@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v43 - Tony Berard</title>
+    <title>Dice Chess Ultra v44 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v43</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v44</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v43: True Quantum Defense Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v44: Mandatory Recapture Protocol (MRP) Online</p>
                 </div>
             </div>
 
@@ -312,7 +312,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV43';
+        const SAVE_KEY = 'diceChessUltraV44';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -361,7 +361,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v43 Init. True Quantum Defense Active.`, "text-blue-400 font-black uppercase");
+            log(`v44 Init. Mandatory Recapture Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -510,12 +510,25 @@
         function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v43 with True Quantum Defense & PH) ---
+        // --- AI ENGINE (v44 with Mandatory Recapture Protocol) ---
+        
+        function didOpponentJustCapture(aiOwner) {
+            if (moveHistory.length === 0) return false;
+            const lastMove = moveHistory[moveHistory.length - 1];
+            if (aiOwner === 'black') {
+                return lastMove.w ? lastMove.w.includes('x') : false;
+            } else {
+                if (moveHistory.length > 1 && !lastMove.b) {
+                    return moveHistory[moveHistory.length - 2].b.includes('x');
+                }
+                return lastMove.b ? lastMove.b.includes('x') : false;
+            }
+        }
+
         function evaluateTensions(b, aiOwner, myP, enP, behindBonus) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
             
-            // Helper to see if 'mover' can reach and legally capture a piece with value 'tgtV'
             const canPieceReach = (mover, tr, tc, tgtV) => {
                 const dr = Math.abs(tr - mover.r), dc = Math.abs(tc - mover.c), dist = Math.max(dr, dc);
                 if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return false;
@@ -524,32 +537,26 @@
                 if (!clear) return false;
 
                 if (mover.type === 'king') return dist === 1;
-                
-                // Base Capture
                 if (dist <= mover.value && mover.value <= tgtV) return true; 
-                // Mutate +1
                 if (mover.value < 6 && dist <= (mover.value + 1) && (mover.value + 1) <= tgtV) return true; 
-                // Mutate -1
                 if (mover.value > 1 && dist <= (mover.value - 1) && (mover.value - 1) <= tgtV) return true; 
                 
                 return false;
             };
 
-            // 1. Evaluate Bot's Vulnerabilities (The Lemming Train Fix)
+            // 1. Evaluate Bot's Vulnerabilities
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = [];
                 enP.forEach(ep => { if (canPieceReach(ep, p.r, p.c, pVal)) attackers.push(ep); });
                 
                 if (attackers.length > 0) {
-                    // Sort to find the MOST dangerous attacker (lowest face value)
                     attackers.sort((a,b) => (a.type === 'king' ? 7 : a.value) - (b.type === 'king' ? 7 : b.value));
                     let primaryAttackerV = attackers[0].type === 'king' ? 7 : attackers[0].value;
                     
                     let defenseLevel = 0;
                     myP.forEach(mp => {
                         if (mp.r !== p.r || mp.c !== p.c) {
-                            // Can my defender actually kill the SPECIFIC ENEMY ATTACKER if it takes this square?
                             if (canPieceReach(mp, p.r, p.c, primaryAttackerV)) defenseLevel++;
                         }
                     });
@@ -596,11 +603,14 @@
             return phScore;
         }
 
-        function heuristic(node, aiOwner) {
+        function heuristic(node, aiOwner, opponentCaptured) {
             const b = node.board; let score = 0; const myP = [], enP = []; const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
+            
+            // Checkmate overrides absolutely everything
             if(!enK) return 100000000; if(!myK) return -100000000;
+            
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -50000000;
 
@@ -616,6 +626,15 @@
 
             score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
 
+            // V44: Mandatory Recapture Protocol
+            if (opponentCaptured) {
+                if (node.captured) {
+                    score += 20000000; // Overrides the PH hanging penalty to force a 1-for-1 trade
+                } else {
+                    score -= 20000000; // Massively penalizes running away when punched
+                }
+            }
+
             return score;
         }
 
@@ -624,14 +643,21 @@
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(board[r][c]) (board[r][c].owner===turn?myP:enP).push({r,c,...board[r][c]});
             const isBehind = myP.length < enP.length;
             const targetWidth = isBehind ? AI_DANGER_WIDTH : AI_BASELINE_WIDTH;
+            
+            const opponentCaptured = didOpponentJustCapture(turn);
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
-            render(); log(`PH ENGINE (v43): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
+            render(); 
+            
+            if (opponentCaptured) {
+                log(`PH ENGINE (v44): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold");
+            } else {
+                log(`PH ENGINE (v44): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
+            }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
-            let bestTurn = await performSearchAsync(root, targetWidth, turn);
+            let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
 
-            // Bugfix: Checkmate threshold adjusted down to -80M so material loss alone doesn't trip it.
             if(!bestTurn || bestTurn.h <= -80000000) {
                 log("AI: Checkmate Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate"); return;
@@ -645,7 +671,7 @@
             aiThinking = false; if(turn === 'black') endTurn(); render();
         }
 
-        async function performSearchAsync(root, width, aiOwner) {
+        async function performSearchAsync(root, width, aiOwner, opponentCaptured) {
             let beam = [root];
             for(let step=0; step<6; step++) {
                 let next = [];
@@ -678,7 +704,7 @@
                     }
                 }
                 if(next.length === 0) break;
-                next.forEach(n => n.h = heuristic(n, aiOwner));
+                next.forEach(n => n.h = heuristic(n, aiOwner, opponentCaptured));
                 next.sort((a,b) => b.h - a.h);
                 beam = next.slice(0, width); 
                 await new Promise(r => setTimeout(r, 1));
