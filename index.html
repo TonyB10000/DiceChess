@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v42 - Tony Berard</title>
+    <title>Dice Chess Ultra v43 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v42</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v43</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v42: Introspective PH Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v43: True Quantum Defense Online</p>
                 </div>
             </div>
 
@@ -312,7 +312,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV42';
+        const SAVE_KEY = 'diceChessUltraV43';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -361,7 +361,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v42 Init. Introspective PH Active.`, "text-blue-400 font-black uppercase");
+            log(`v43 Init. True Quantum Defense Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -510,52 +510,56 @@
         function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v42 with Introspective PH) ---
+        // --- AI ENGINE (v43 with True Quantum Defense & PH) ---
         function evaluateTensions(b, aiOwner, myP, enP, behindBonus) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
             
-            // Evaluates Quantum Shadow (Captures cost 5AP, leaving max 1AP for +/- 1 mutation)
-            const getTensionMag = (tr, tc, ownerToCheck) => {
-                let mag = 0;
-                const tgt = b[tr][tc]; if (!tgt) return 0;
-                const tgtV = tgt.type === 'king' ? 7 : tgt.value;
-                const pool = ownerToCheck === aiOwner ? myP : enP;
-                
-                pool.forEach(p => {
-                    if (p.r === tr && p.c === tc) return; 
-                    const dr = Math.abs(tr - p.r), dc = Math.abs(tc - p.c), dist = Math.max(dr, dc);
-                    if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return;
-                    let clear = true, sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
-                    for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) { clear = false; break; }
-                    if (!clear) return;
+            // Helper to see if 'mover' can reach and legally capture a piece with value 'tgtV'
+            const canPieceReach = (mover, tr, tc, tgtV) => {
+                const dr = Math.abs(tr - mover.r), dc = Math.abs(tc - mover.c), dist = Math.max(dr, dc);
+                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return false;
+                let clear = true, sr = (tr - mover.r) === 0 ? 0 : (tr - mover.r) / dist, sc = (tc - mover.c) === 0 ? 0 : (tc - mover.c) / dist;
+                for (let i = 1; i < dist; i++) if (b[mover.r + i * sr][mover.c + i * sc]) { clear = false; break; }
+                if (!clear) return false;
 
-                    if (p.type === 'king') {
-                        if (dist === 1) mag++;
-                    } else {
-                        let canCapture = false;
-                        if (dist <= p.value && p.value <= tgtV) canCapture = true; 
-                        else if (p.value < 6 && dist <= (p.value + 1) && (p.value + 1) <= tgtV) canCapture = true; 
-                        else if (p.value > 1 && dist <= (p.value - 1) && (p.value - 1) <= tgtV) canCapture = true; 
-                        
-                        if (canCapture) mag++;
-                    }
-                });
-                return mag;
+                if (mover.type === 'king') return dist === 1;
+                
+                // Base Capture
+                if (dist <= mover.value && mover.value <= tgtV) return true; 
+                // Mutate +1
+                if (mover.value < 6 && dist <= (mover.value + 1) && (mover.value + 1) <= tgtV) return true; 
+                // Mutate -1
+                if (mover.value > 1 && dist <= (mover.value - 1) && (mover.value - 1) <= tgtV) return true; 
+                
+                return false;
             };
 
-            // 1. Evaluate Bot's Vulnerabilities (Is my piece hanging?)
+            // 1. Evaluate Bot's Vulnerabilities (The Lemming Train Fix)
             myP.forEach(p => {
-                const attackLevel = getTensionMag(p.r, p.c, enemyOwner);
-                if (attackLevel > 0) {
-                    const defenseLevel = getTensionMag(p.r, p.c, aiOwner);
+                const pVal = p.type === 'king' ? 7 : p.value;
+                let attackers = [];
+                enP.forEach(ep => { if (canPieceReach(ep, p.r, p.c, pVal)) attackers.push(ep); });
+                
+                if (attackers.length > 0) {
+                    // Sort to find the MOST dangerous attacker (lowest face value)
+                    attackers.sort((a,b) => (a.type === 'king' ? 7 : a.value) - (b.type === 'king' ? 7 : b.value));
+                    let primaryAttackerV = attackers[0].type === 'king' ? 7 : attackers[0].value;
+                    
+                    let defenseLevel = 0;
+                    myP.forEach(mp => {
+                        if (mp.r !== p.r || mp.c !== p.c) {
+                            // Can my defender actually kill the SPECIFIC ENEMY ATTACKER if it takes this square?
+                            if (canPieceReach(mp, p.r, p.c, primaryAttackerV)) defenseLevel++;
+                        }
+                    });
+
                     const isPrimary = p.type === 'king'; 
-                    const isProblem = isPrimary ? true : defenseLevel < attackLevel; 
+                    const isProblem = isPrimary ? true : defenseLevel < attackers.length; 
                     
                     if (isPrimary && isProblem) { 
                         phScore -= 50000000; 
                     } else if (isProblem) { 
-                        // Introspection: If hanging, explicitly match the catastrophic penalty of losing the piece entirely
                         phScore -= (3000000 + (p.value * 50000) + behindBonus); 
                     } else { 
                         phScore -= 10000; 
@@ -565,14 +569,24 @@
 
             // 2. Evaluate Bot's Offensive Tensions
             enP.forEach(p => {
-                const attackLevel = getTensionMag(p.r, p.c, aiOwner);
-                if (attackLevel > 0) {
-                    const defenseLevel = getTensionMag(p.r, p.c, enemyOwner);
-                    const isWinningTension = attackLevel > defenseLevel;
-                    
+                const pVal = p.type === 'king' ? 7 : p.value;
+                let attackers = [];
+                myP.forEach(mp => { if (canPieceReach(mp, p.r, p.c, pVal)) attackers.push(mp); });
+                
+                if (attackers.length > 0) {
+                    attackers.sort((a,b) => (a.type === 'king' ? 7 : a.value) - (b.type === 'king' ? 7 : b.value));
+                    let primaryAttackerV = attackers[0].type === 'king' ? 7 : attackers[0].value;
+
+                    let defenseLevel = 0;
+                    enP.forEach(ep => {
+                        if (ep.r !== p.r || ep.c !== p.c) {
+                            if (canPieceReach(ep, p.r, p.c, primaryAttackerV)) defenseLevel++;
+                        }
+                    });
+
+                    const isWinningTension = attackers.length > defenseLevel;
                     if (isWinningTension) { 
-                        // Introspection: Drastically limit the reward so it NEVER mathematically outweighs hanging a piece
-                        phScore += 200000 + (p.type === 'king' ? 2000000 : p.value * 10000); 
+                        phScore += 50000 + (p.type === 'king' ? 2000000 : p.value * 5000); 
                     } else {
                         phScore += 5000;
                     }
@@ -591,9 +605,8 @@
             if (node.ap < 3 && !asPass) return -50000000;
 
             const isBehind = myP.length < enP.length;
-            const behindBonus = isBehind ? 500000 : 0; // Organically prevents trades when losing
+            const behindBonus = isBehind ? 500000 : 0; 
 
-            // Unified Material Evaluation
             let myMaterial = 0, enMaterial = 0;
             myP.forEach(p => myMaterial += 3000000 + (p.type === 'king' ? 0 : p.value * 50000) + behindBonus);
             enP.forEach(p => enMaterial += 3000000 + (p.type === 'king' ? 0 : p.value * 50000));
@@ -601,7 +614,6 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 150; if (asPass) score += 50000;
 
-            // Inject the Precedence Hierarchy (PH) 
             score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
 
             return score;
@@ -614,12 +626,13 @@
             const targetWidth = isBehind ? AI_DANGER_WIDTH : AI_BASELINE_WIDTH;
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
-            render(); log(`PH ENGINE (v42): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
+            render(); log(`PH ENGINE (v43): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn);
 
-            if(!bestTurn || bestTurn.h <= -20000000) {
+            // Bugfix: Checkmate threshold adjusted down to -80M so material loss alone doesn't trip it.
+            if(!bestTurn || bestTurn.h <= -80000000) {
                 log("AI: Checkmate Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate"); return;
             }
