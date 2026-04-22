@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v41.2 - Tony Berard</title>
+    <title>Dice Chess Ultra v42 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v41.2</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v42</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v41.2: PH King-Safety Override</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v42: Introspective PH Online</p>
                 </div>
             </div>
 
@@ -312,7 +312,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV41_2';
+        const SAVE_KEY = 'diceChessUltraV42';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -361,7 +361,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v41.2 Init. King-Safety Override Active.`, "text-blue-400 font-black uppercase");
+            log(`v42 Init. Introspective PH Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -510,12 +510,10 @@
         function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v41.2 with Fixed King PH) ---
-        function evaluateTensions(b, aiOwner) {
+        // --- AI ENGINE (v42 with Introspective PH) ---
+        function evaluateTensions(b, aiOwner, myP, enP, behindBonus) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
-            const myP = [], enP = [];
-            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             
             // Evaluates Quantum Shadow (Captures cost 5AP, leaving max 1AP for +/- 1 mutation)
             const getTensionMag = (tr, tc, ownerToCheck) => {
@@ -536,9 +534,9 @@
                         if (dist === 1) mag++;
                     } else {
                         let canCapture = false;
-                        if (dist <= p.value && p.value <= tgtV) canCapture = true; // 0 mutations (5 AP)
-                        else if (p.value < 6 && dist <= (p.value + 1) && (p.value + 1) <= tgtV) canCapture = true; // +1 mutation (1+5=6 AP)
-                        else if (p.value > 1 && dist <= (p.value - 1) && (p.value - 1) <= tgtV) canCapture = true; // -1 mutation (1+5=6 AP)
+                        if (dist <= p.value && p.value <= tgtV) canCapture = true; 
+                        else if (p.value < 6 && dist <= (p.value + 1) && (p.value + 1) <= tgtV) canCapture = true; 
+                        else if (p.value > 1 && dist <= (p.value - 1) && (p.value - 1) <= tgtV) canCapture = true; 
                         
                         if (canCapture) mag++;
                     }
@@ -546,30 +544,38 @@
                 return mag;
             };
 
-            // 1. Evaluate Bot's Vulnerabilities (Secondary/Primary Tensions)
+            // 1. Evaluate Bot's Vulnerabilities (Is my piece hanging?)
             myP.forEach(p => {
                 const attackLevel = getTensionMag(p.r, p.c, enemyOwner);
                 if (attackLevel > 0) {
                     const defenseLevel = getTensionMag(p.r, p.c, aiOwner);
                     const isPrimary = p.type === 'king'; 
-                    
-                    // V41.2 THE DEFENDER'S FALLACY FIX: You cannot "trade" a King. 
-                    // If King is attacked, it is ALWAYS a problem, overriding any defense level.
                     const isProblem = isPrimary ? true : defenseLevel < attackLevel; 
                     
-                    if (isPrimary && isProblem) { phScore -= 5000000; } // Massive penalty for failing to defend King
-                    else if (isProblem) { phScore -= 100000 * (p.type === 'die' ? p.value : 10); } // Penalty for under-defended piece
-                    else { phScore += 5000; } // Bonus for holding the tension securely
+                    if (isPrimary && isProblem) { 
+                        phScore -= 50000000; 
+                    } else if (isProblem) { 
+                        // Introspection: If hanging, explicitly match the catastrophic penalty of losing the piece entirely
+                        phScore -= (3000000 + (p.value * 50000) + behindBonus); 
+                    } else { 
+                        phScore -= 10000; 
+                    }
                 }
             });
 
-            // 2. Evaluate Bot's Offensive Tensions (First capture opportunities)
+            // 2. Evaluate Bot's Offensive Tensions
             enP.forEach(p => {
                 const attackLevel = getTensionMag(p.r, p.c, aiOwner);
                 if (attackLevel > 0) {
                     const defenseLevel = getTensionMag(p.r, p.c, enemyOwner);
                     const isWinningTension = attackLevel > defenseLevel;
-                    if (isWinningTension) { phScore += 150000 * (p.type === 'king' ? 100 : p.value); } // Massive reward for actionable offensive tension
+                    
+                    if (isWinningTension) { 
+                        // Introspection: Drastically limit the reward so it NEVER mathematically outweighs hanging a piece
+                        phScore += 200000 + (p.type === 'king' ? 2000000 : p.value * 10000); 
+                    } else {
+                        phScore += 5000;
+                    }
                 }
             });
 
@@ -584,12 +590,19 @@
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -50000000;
 
-            const diff = myP.length - enP.length;
-            score += diff * 3000000;
+            const isBehind = myP.length < enP.length;
+            const behindBonus = isBehind ? 500000 : 0; // Organically prevents trades when losing
+
+            // Unified Material Evaluation
+            let myMaterial = 0, enMaterial = 0;
+            myP.forEach(p => myMaterial += 3000000 + (p.type === 'king' ? 0 : p.value * 50000) + behindBonus);
+            enP.forEach(p => enMaterial += 3000000 + (p.type === 'king' ? 0 : p.value * 50000));
+            
+            score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 150; if (asPass) score += 50000;
 
-            // Inject the Precedence Hierarchy (PH) with Quantum Shadow Scoring
-            score += evaluateTensions(b, aiOwner);
+            // Inject the Precedence Hierarchy (PH) 
+            score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
 
             return score;
         }
@@ -601,7 +614,7 @@
             const targetWidth = isBehind ? AI_DANGER_WIDTH : AI_BASELINE_WIDTH;
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
-            render(); log(`PH ENGINE (v41.2): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
+            render(); log(`PH ENGINE (v42): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn);
