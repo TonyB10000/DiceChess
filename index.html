@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v44 - Tony Berard</title>
+    <title>Dice Chess Ultra v45 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v44</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v45</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v44: Mandatory Recapture Protocol (MRP) Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v45: Materialistic Initiative Protocol Online</p>
                 </div>
             </div>
 
@@ -180,7 +180,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -312,7 +311,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV44';
+        const SAVE_KEY = 'diceChessUltraV45';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -361,7 +360,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v44 Init. Mandatory Recapture Active.`, "text-blue-400 font-black uppercase");
+            log(`v45 Init. Materialistic Initiative Protocol Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -510,7 +509,7 @@
         function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v44 with Mandatory Recapture Protocol) ---
+        // --- AI ENGINE (v45 with Materialistic Initiative Protocol) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -574,7 +573,7 @@
                 }
             });
 
-            // 2. Evaluate Bot's Offensive Tensions
+            // 2. Evaluate Bot's Offensive Tensions (The Initiative Protocol)
             enP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = [];
@@ -582,20 +581,42 @@
                 
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => (a.type === 'king' ? 7 : a.value) - (b.type === 'king' ? 7 : b.value));
-                    let primaryAttackerV = attackers[0].type === 'king' ? 7 : attackers[0].value;
+                    let primaryAttacker = attackers[0];
+                    let primaryAttackerV = primaryAttacker.type === 'king' ? 7 : primaryAttacker.value;
 
-                    let defenseLevel = 0;
-                    enP.forEach(ep => {
-                        if (ep.r !== p.r || ep.c !== p.c) {
-                            if (canPieceReach(ep, p.r, p.c, primaryAttackerV)) defenseLevel++;
+                    if (p.type === 'king') {
+                        // V45: Materialistic Initiative Protocol (Is the check safe?)
+                        let checkerAttackers = 0;
+                        enP.forEach(ep => { if (canPieceReach(ep, primaryAttacker.r, primaryAttacker.c, primaryAttackerV)) checkerAttackers++; });
+                        
+                        let checkerDefenders = 0;
+                        myP.forEach(mp => { 
+                            if (mp.r !== primaryAttacker.r || mp.c !== primaryAttacker.c) { 
+                                if (canPieceReach(mp, primaryAttacker.r, primaryAttacker.c, primaryAttackerV)) checkerDefenders++; 
+                            } 
+                        });
+
+                        const isSafeCheck = checkerDefenders >= checkerAttackers;
+                        
+                        if (isSafeCheck) {
+                            phScore += 5000000; // Dictator Chess: Massive reward for a safe check
+                        } else {
+                            phScore += 10000;   // Spite Check: Minimal reward, bot prefers saving pieces
                         }
-                    });
-
-                    const isWinningTension = attackers.length > defenseLevel;
-                    if (isWinningTension) { 
-                        phScore += 50000 + (p.type === 'king' ? 2000000 : p.value * 5000); 
                     } else {
-                        phScore += 5000;
+                        let defenseLevel = 0;
+                        enP.forEach(ep => {
+                            if (ep.r !== p.r || ep.c !== p.c) {
+                                if (canPieceReach(ep, p.r, p.c, primaryAttackerV)) defenseLevel++;
+                            }
+                        });
+
+                        const isWinningTension = attackers.length > defenseLevel;
+                        if (isWinningTension) { 
+                            phScore += 50000 + (p.value * 5000); 
+                        } else {
+                            phScore += 5000;
+                        }
                     }
                 }
             });
@@ -608,7 +629,6 @@
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             
-            // Checkmate overrides absolutely everything
             if(!enK) return 100000000; if(!myK) return -100000000;
             
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
@@ -626,12 +646,11 @@
 
             score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
 
-            // V44: Mandatory Recapture Protocol
             if (opponentCaptured) {
                 if (node.captured) {
-                    score += 20000000; // Overrides the PH hanging penalty to force a 1-for-1 trade
+                    score += 20000000; 
                 } else {
-                    score -= 20000000; // Massively penalizes running away when punched
+                    score -= 20000000; 
                 }
             }
 
@@ -650,9 +669,9 @@
             render(); 
             
             if (opponentCaptured) {
-                log(`PH ENGINE (v44): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold");
+                log(`PH ENGINE (v45): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold");
             } else {
-                log(`PH ENGINE (v44): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
+                log(`PH ENGINE (v45): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
             }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
