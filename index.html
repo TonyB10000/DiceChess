@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v45 - Tony Berard</title>
+    <title>Dice Chess Ultra v47 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v45</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v47</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v45: Materialistic Initiative Protocol Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v47: Quantum Shadow Vector Maps Online</p>
                 </div>
             </div>
 
@@ -180,6 +180,7 @@
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -311,7 +312,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV45';
+        const SAVE_KEY = 'diceChessUltraV47';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -360,7 +361,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v45 Init. Materialistic Initiative Protocol Active.`, "text-blue-400 font-black uppercase");
+            log(`v47 Init. Vector Matrix AI Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -509,114 +510,103 @@
         function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v45 with Materialistic Initiative Protocol) ---
+        // --- AI ENGINE (v47 with Data Structure Quantum Shadows / Threat Matrix) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
             const lastMove = moveHistory[moveHistory.length - 1];
-            if (aiOwner === 'black') {
-                return lastMove.w ? lastMove.w.includes('x') : false;
-            } else {
-                if (moveHistory.length > 1 && !lastMove.b) {
-                    return moveHistory[moveHistory.length - 2].b.includes('x');
+            if (aiOwner === 'black') { return lastMove.w ? lastMove.w.includes('x') : false; } 
+            else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
+        }
+
+        // V47: Pre-calculates all spatial shadow vectors into a 10x10 lookup matrix (O(1) tension checks)
+        function buildThreatMatrix(b, owner) {
+            let matrix = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null).map(() => []));
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    if (p && p.owner === owner) {
+                        const isKing = p.type === 'king';
+                        const v = p.value;
+                        const maxDist = isKing ? 1 : Math.min(6, v + 1);
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                        
+                        for (let d of dirs) {
+                            for (let dist = 1; dist <= maxDist; dist++) {
+                                let tr = r + d[0] * dist; let tc = c + d[1] * dist;
+                                if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) break;
+                                
+                                let minTarget = 0; // King can capture anything (Target value 1-7)
+                                if (!isKing) {
+                                    if (dist <= v - 1 && v > 1) minTarget = v - 1;       // Inner Shadow
+                                    else if (dist <= v) minTarget = v;                   // Base State
+                                    else if (dist <= v + 1 && v < 6) minTarget = v + 1;  // Outer Shadow
+                                    else break; 
+                                }
+                                
+                                matrix[tr][tc].push({ r: r, c: c, minTarget: minTarget, attackerValue: isKing ? 7 : v, isKing: isKing });
+                                if (b[tr][tc]) break; // Line of sight blocked
+                            }
+                        }
+                    }
                 }
-                return lastMove.b ? lastMove.b.includes('x') : false;
             }
+            return matrix;
         }
 
         function evaluateTensions(b, aiOwner, myP, enP, behindBonus) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
             
-            const canPieceReach = (mover, tr, tc, tgtV) => {
-                const dr = Math.abs(tr - mover.r), dc = Math.abs(tc - mover.c), dist = Math.max(dr, dc);
-                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return false;
-                let clear = true, sr = (tr - mover.r) === 0 ? 0 : (tr - mover.r) / dist, sc = (tc - mover.c) === 0 ? 0 : (tc - mover.c) / dist;
-                for (let i = 1; i < dist; i++) if (b[mover.r + i * sr][mover.c + i * sc]) { clear = false; break; }
-                if (!clear) return false;
+            const myThreats = buildThreatMatrix(b, aiOwner);
+            const enemyThreats = buildThreatMatrix(b, enemyOwner);
 
-                if (mover.type === 'king') return dist === 1;
-                if (dist <= mover.value && mover.value <= tgtV) return true; 
-                if (mover.value < 6 && dist <= (mover.value + 1) && (mover.value + 1) <= tgtV) return true; 
-                if (mover.value > 1 && dist <= (mover.value - 1) && (mover.value - 1) <= tgtV) return true; 
-                
-                return false;
-            };
-
-            // 1. Evaluate Bot's Vulnerabilities
+            // 1. Evaluate Bot's Vulnerabilities (Instant Matrix Lookup)
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
-                let attackers = [];
-                enP.forEach(ep => { if (canPieceReach(ep, p.r, p.c, pVal)) attackers.push(ep); });
+                let attackers = enemyThreats[p.r][p.c].filter(t => t.minTarget <= pVal);
                 
                 if (attackers.length > 0) {
-                    attackers.sort((a,b) => (a.type === 'king' ? 7 : a.value) - (b.type === 'king' ? 7 : b.value));
-                    let primaryAttackerV = attackers[0].type === 'king' ? 7 : attackers[0].value;
+                    attackers.sort((a,b) => a.attackerValue - b.attackerValue);
+                    let primaryAttackerV = attackers[0].attackerValue;
                     
                     let defenseLevel = 0;
-                    myP.forEach(mp => {
-                        if (mp.r !== p.r || mp.c !== p.c) {
-                            if (canPieceReach(mp, p.r, p.c, primaryAttackerV)) defenseLevel++;
-                        }
-                    });
+                    myThreats[p.r][p.c].forEach(t => { if ((t.r !== p.r || t.c !== p.c) && t.minTarget <= primaryAttackerV) defenseLevel++; });
 
                     const isPrimary = p.type === 'king'; 
                     const isProblem = isPrimary ? true : defenseLevel < attackers.length; 
                     
-                    if (isPrimary && isProblem) { 
-                        phScore -= 50000000; 
-                    } else if (isProblem) { 
-                        phScore -= (3000000 + (p.value * 50000) + behindBonus); 
-                    } else { 
-                        phScore -= 10000; 
-                    }
+                    if (isPrimary && isProblem) { phScore -= 50000000; } 
+                    else if (isProblem) { phScore -= (3000000 + (p.value * 50000) + behindBonus); } 
+                    else { phScore -= 10000; }
                 }
             });
 
-            // 2. Evaluate Bot's Offensive Tensions (The Initiative Protocol)
+            // 2. Evaluate Bot's Offensive Tensions
             enP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
-                let attackers = [];
-                myP.forEach(mp => { if (canPieceReach(mp, p.r, p.c, pVal)) attackers.push(mp); });
+                let attackers = myThreats[p.r][p.c].filter(t => t.minTarget <= pVal);
                 
                 if (attackers.length > 0) {
-                    attackers.sort((a,b) => (a.type === 'king' ? 7 : a.value) - (b.type === 'king' ? 7 : b.value));
+                    attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primaryAttacker = attackers[0];
-                    let primaryAttackerV = primaryAttacker.type === 'king' ? 7 : primaryAttacker.value;
+                    let primaryAttackerV = primaryAttacker.attackerValue;
 
                     if (p.type === 'king') {
-                        // V45: Materialistic Initiative Protocol (Is the check safe?)
-                        let checkerAttackers = 0;
-                        enP.forEach(ep => { if (canPieceReach(ep, primaryAttacker.r, primaryAttacker.c, primaryAttackerV)) checkerAttackers++; });
-                        
+                        let checkerAttackers = enemyThreats[primaryAttacker.r][primaryAttacker.c].filter(t => t.minTarget <= primaryAttackerV).length;
                         let checkerDefenders = 0;
-                        myP.forEach(mp => { 
-                            if (mp.r !== primaryAttacker.r || mp.c !== primaryAttacker.c) { 
-                                if (canPieceReach(mp, primaryAttacker.r, primaryAttacker.c, primaryAttackerV)) checkerDefenders++; 
-                            } 
-                        });
+                        myThreats[primaryAttacker.r][primaryAttacker.c].forEach(t => { if ((t.r !== primaryAttacker.r || t.c !== primaryAttacker.c) && t.minTarget <= primaryAttackerV) checkerDefenders++; });
 
                         const isSafeCheck = checkerDefenders >= checkerAttackers;
-                        
-                        if (isSafeCheck) {
-                            phScore += 5000000; // Dictator Chess: Massive reward for a safe check
-                        } else {
-                            phScore += 10000;   // Spite Check: Minimal reward, bot prefers saving pieces
-                        }
+                        if (isSafeCheck) { phScore += 5000000; } 
+                        else { phScore += 10000; }
                     } else {
                         let defenseLevel = 0;
-                        enP.forEach(ep => {
-                            if (ep.r !== p.r || ep.c !== p.c) {
-                                if (canPieceReach(ep, p.r, p.c, primaryAttackerV)) defenseLevel++;
-                            }
-                        });
+                        enemyThreats[p.r][p.c].forEach(t => { if ((t.r !== p.r || t.c !== p.c) && t.minTarget <= primaryAttackerV) defenseLevel++; });
 
                         const isWinningTension = attackers.length > defenseLevel;
-                        if (isWinningTension) { 
-                            phScore += 50000 + (p.value * 5000); 
-                        } else {
-                            phScore += 5000;
-                        }
+                        if (isWinningTension) { phScore += 50000 + (p.value * 5000); } 
+                        else { phScore += 5000; }
                     }
                 }
             });
@@ -647,11 +637,8 @@
             score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
 
             if (opponentCaptured) {
-                if (node.captured) {
-                    score += 20000000; 
-                } else {
-                    score -= 20000000; 
-                }
+                if (node.captured) { score += 20000000; } 
+                else { score -= 20000000; }
             }
 
             return score;
@@ -668,18 +655,15 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) {
-                log(`PH ENGINE (v45): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold");
-            } else {
-                log(`PH ENGINE (v45): Width ${targetWidth}...`, "text-slate-500 italic uppercase");
-            }
+            if (opponentCaptured) { log(`PH ENGINE (v47): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v47): Vector Map Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
 
-            if(!bestTurn || bestTurn.h <= -80000000) {
-                log("AI: Checkmate Detected. Resigning.", "text-red-500 font-bold uppercase");
-                aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate"); return;
+            if(!bestTurn || bestTurn.h <= -40000000) {
+                log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
+                aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
             }
             for(let a of bestTurn.actions) {
                 if(gameOver) break;
