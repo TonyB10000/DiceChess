@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v47 - Tony Berard</title>
+    <title>Dice Chess Ultra v48 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v47</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v48</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v47: Quantum Shadow Vector Maps Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v48: Data Refactored & Standard Logs Online</p>
                 </div>
             </div>
 
@@ -180,7 +180,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -296,7 +295,6 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        // Mobile Detection & Throttling
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const AI_BASELINE_WIDTH = isMobile ? 1500 : 5000;
         const AI_DANGER_WIDTH = isMobile ? 4000 : 10000;
@@ -312,7 +310,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV47';
+        const SAVE_KEY = 'diceChessUltraV48';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -361,7 +359,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v47 Init. Vector Matrix AI Online.`, "text-blue-400 font-black uppercase");
+            log(`v48 Init. [site, value] Structure & Standard Notation Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -372,8 +370,8 @@
                 initGame(overrideSize || 10);
                 for (const line of turns) {
                     const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/); if (!match) continue;
-                    processActions(match[1].split(',').map(s => s.trim()), 'white'); saveSnapshot();
-                    if (match[2].trim() !== "") { processActions(match[2].split(',').map(s => s.trim()), 'black'); saveSnapshot(); }
+                    processActions(match[1].split(',').map(s => s.trim().replace('#', '')), 'white'); saveSnapshot();
+                    if (match[2].trim() !== "") { processActions(match[2].split(',').map(s => s.trim().replace('#', '')), 'black'); saveSnapshot(); }
                 }
                 analysisIndex = 0; log("Import Successful. Accessing History at Start.");
                 document.getElementById('record-modal').classList.add('hidden'); applySnapshot(0);
@@ -507,10 +505,27 @@
         function freshWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history)); const s = historySnapshots[whatIfStartIndex]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; analysisIndex = -1; captureTurnState(); log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); render(); }
 
         function flashTurn() { const o = document.getElementById('flash-overlay'), t = document.getElementById('flash-text'); t.innerText = `${turn.toUpperCase()} TURN`; t.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1'; o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 500); }
-        function endGame(w, r = "Resignation") { gameOver = true; gameActive = false; document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; document.getElementById('winner-modal').classList.remove('hidden'); localStorage.removeItem(SAVE_KEY); }
+        
+        // V48: Standardized Notation and Win/Loss handling
+        function endGame(w, r = "Resignation") { 
+            gameOver = true; gameActive = false; 
+            document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; 
+            document.getElementById('winner-modal').classList.remove('hidden'); 
+            
+            if (moveHistory.length > 0 && (r === "Checkmate / Freeze Out" || r === "King Capture")) {
+                let lastObj = moveHistory[moveHistory.length - 1];
+                if (lastObj.b && lastObj.b !== '') { lastObj.b += '#'; } 
+                else if (lastObj.w !== '') { lastObj.w += '#'; }
+            }
+            
+            const resStr = w === 'white' ? '1-0' : '0-1';
+            log(resStr, "text-yellow-400 font-black");
+            localStorage.removeItem(SAVE_KEY); 
+        }
+
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v47 with Data Structure Quantum Shadows / Threat Matrix) ---
+        // --- AI ENGINE (v48: Data Structure Refactor `[site, value]`) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -519,59 +534,51 @@
             else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
         }
 
-        // V47: Pre-calculates all spatial shadow vectors into a 10x10 lookup matrix (O(1) tension checks)
-        function buildThreatMatrix(b, owner) {
-            let matrix = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null).map(() => []));
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    const p = b[r][c];
-                    if (p && p.owner === owner) {
-                        const isKing = p.type === 'king';
-                        const v = p.value;
-                        const maxDist = isKing ? 1 : Math.min(6, v + 1);
-                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                        
-                        for (let d of dirs) {
-                            for (let dist = 1; dist <= maxDist; dist++) {
-                                let tr = r + d[0] * dist; let tc = c + d[1] * dist;
-                                if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) break;
-                                
-                                let minTarget = 0; // King can capture anything (Target value 1-7)
-                                if (!isKing) {
-                                    if (dist <= v - 1 && v > 1) minTarget = v - 1;       // Inner Shadow
-                                    else if (dist <= v) minTarget = v;                   // Base State
-                                    else if (dist <= v + 1 && v < 6) minTarget = v + 1;  // Outer Shadow
-                                    else break; 
-                                }
-                                
-                                matrix[tr][tc].push({ r: r, c: c, minTarget: minTarget, attackerValue: isKing ? 7 : v, isKing: isKing });
-                                if (b[tr][tc]) break; // Line of sight blocked
-                            }
-                        }
-                    }
+        // V48: O(P) Dynamic Attacker Check (Replaces the massive 10x10 pre-calculated Threat Matrix)
+        function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
+            let attackers = [];
+            for (let p of potentialAttackers) {
+                if (p.r === tr && p.c === tc) continue;
+                const dr = Math.abs(tr - p.r), dc = Math.abs(tc - p.c), dist = Math.max(dr, dc);
+                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
+                
+                let clear = true;
+                const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
+                for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) { clear = false; break; }
+                if (!clear) continue;
+
+                let minTarget = Infinity; 
+                if (p.type === 'king') {
+                    if (dist === 1) minTarget = 1; // King can capture anything
+                } else {
+                    const v = p.value;
+                    const canHit = (rad, pow) => (dist <= rad && (pow <= tgtV || pow === 1));
+                    let possiblePowers = [];
+                    if (canHit(v, v)) possiblePowers.push(v); // Base State
+                    if (v < 6 && canHit(v + 1, v + 1)) possiblePowers.push(v + 1); // Outer Shadow
+                    if (v > 1 && canHit(v - 1, v - 1)) possiblePowers.push(v - 1); // Inner Shadow
+                    
+                    if (possiblePowers.length > 0) minTarget = Math.min(...possiblePowers);
                 }
+                
+                if (minTarget !== Infinity) { attackers.push({ ...p, attackerValue: p.type === 'king' ? 7 : minTarget }); }
             }
-            return matrix;
+            return attackers;
         }
 
         function evaluateTensions(b, aiOwner, myP, enP, behindBonus) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
-            
-            const myThreats = buildThreatMatrix(b, aiOwner);
-            const enemyThreats = buildThreatMatrix(b, enemyOwner);
 
-            // 1. Evaluate Bot's Vulnerabilities (Instant Matrix Lookup)
+            // 1. Evaluate Bot's Vulnerabilities
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
-                let attackers = enemyThreats[p.r][p.c].filter(t => t.minTarget <= pVal);
+                let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primaryAttackerV = attackers[0].attackerValue;
-                    
-                    let defenseLevel = 0;
-                    myThreats[p.r][p.c].forEach(t => { if ((t.r !== p.r || t.c !== p.c) && t.minTarget <= primaryAttackerV) defenseLevel++; });
+                    let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
 
                     const isPrimary = p.type === 'king'; 
                     const isProblem = isPrimary ? true : defenseLevel < attackers.length; 
@@ -585,7 +592,7 @@
             // 2. Evaluate Bot's Offensive Tensions
             enP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
-                let attackers = myThreats[p.r][p.c].filter(t => t.minTarget <= pVal);
+                let attackers = getAttackers(p.r, p.c, pVal, myP, b);
                 
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
@@ -593,17 +600,14 @@
                     let primaryAttackerV = primaryAttacker.attackerValue;
 
                     if (p.type === 'king') {
-                        let checkerAttackers = enemyThreats[primaryAttacker.r][primaryAttacker.c].filter(t => t.minTarget <= primaryAttackerV).length;
-                        let checkerDefenders = 0;
-                        myThreats[primaryAttacker.r][primaryAttacker.c].forEach(t => { if ((t.r !== primaryAttacker.r || t.c !== primaryAttacker.c) && t.minTarget <= primaryAttackerV) checkerDefenders++; });
+                        let checkerAttackers = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, enP, b).length;
+                        let checkerDefenders = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, myP, b).length;
 
                         const isSafeCheck = checkerDefenders >= checkerAttackers;
                         if (isSafeCheck) { phScore += 5000000; } 
                         else { phScore += 10000; }
                     } else {
-                        let defenseLevel = 0;
-                        enemyThreats[p.r][p.c].forEach(t => { if ((t.r !== p.r || t.c !== p.c) && t.minTarget <= primaryAttackerV) defenseLevel++; });
-
+                        let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
                         const isWinningTension = attackers.length > defenseLevel;
                         if (isWinningTension) { phScore += 50000 + (p.value * 5000); } 
                         else { phScore += 5000; }
@@ -649,14 +653,13 @@
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(board[r][c]) (board[r][c].owner===turn?myP:enP).push({r,c,...board[r][c]});
             const isBehind = myP.length < enP.length;
             const targetWidth = isBehind ? AI_DANGER_WIDTH : AI_BASELINE_WIDTH;
-            
             const opponentCaptured = didOpponentJustCapture(turn);
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v47): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v47): Vector Map Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v48): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v48): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
@@ -778,7 +781,17 @@
         }
 
         function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
-        function getMoveHistoryStr() { return moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); }
+        
+        // V48: Standard Format Game Record Generator
+        function getMoveHistoryStr() { 
+            let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); 
+            if (gameOver) {
+                const wText = document.getElementById('winner-text').innerText;
+                if (wText.includes('WHITE')) str += '\n1-0';
+                else if (wText.includes('BLACK')) str += '\n0-1';
+            }
+            return str;
+        }
 
         document.getElementById('inc-btn').onclick = () => handleMod(true); document.getElementById('dec-btn').onclick = () => handleMod(false);
         document.getElementById('end-turn-btn').onclick = endTurn;
