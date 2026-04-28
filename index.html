@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v50 - Tony Berard</title>
+    <title>Dice Chess Ultra v51 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v50</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v51</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v50: Quantum Superposition & Predictive Weights Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v51: Equal Piece Valuation & Simplify Logic Online</p>
                 </div>
             </div>
 
@@ -296,9 +296,8 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        // V50: Force 10,000 Beam Width
+        // V51: Force 10,000 Beam Width
         const AI_BASELINE_WIDTH = 10000;
-        const AI_DANGER_WIDTH = 10000;
 
         let BOARD_SIZE = 10;
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
@@ -311,7 +310,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV50';
+        const SAVE_KEY = 'diceChessUltraV51';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -360,7 +359,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v50 Init. Quantum Superposition & Predictive Weights Online.`, "text-blue-400 font-black uppercase");
+            log(`v51 Init. Equal Valuation & Trade Matrix Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -525,7 +524,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v50: Quantum Superposition & Predictive Weights) ---
+        // --- AI ENGINE (v51: Equal Valuation & Simplify Trade Matrix) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -565,9 +564,12 @@
             return attackers;
         }
 
-        function evaluateTensions(b, aiOwner, myP, enP, behindBonus) {
+        function evaluateTensions(b, aiOwner, myP, enP, diff) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
+            const isAhead = diff > 0;
+            const isBehind = diff < 0;
+            const isEqual = diff === 0;
 
             // 1. Evaluate Bot's Vulnerabilities (Quantum Superposition Foresight)
             myP.forEach(p => {
@@ -577,18 +579,21 @@
                 if (attackers.length > 0) {
                     const isPrimary = p.type === 'king'; 
                     if (isPrimary) {
-                        // V50 INSTANT DEATH PENALTY. Overrides all MRP logic.
-                        phScore -= 1000000000; 
+                        phScore -= 1000000000; // Instant Death
                     } else {
                         attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                         let primaryAttackerV = attackers[0].attackerValue;
-                        let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
+                        let defenders = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
 
-                        if (defenseLevel < attackers.length) {
-                            // V50 Weights: 10M base + 5M per pip
-                            phScore -= (10000000 + (p.value * 5000000) + behindBonus);
+                        if (defenders < attackers.length) {
+                            phScore -= 25000000; // Undefended piece loss (Catches 1-AP traps)
                         } else {
-                            phScore -= 50000; // Safe tension
+                            // Defended piece (1-for-1 trade against me)
+                            if (isBehind) {
+                                phScore -= 5000000; // Muddy the waters! Do not accept trades when behind!
+                            } else {
+                                phScore -= 100000; // Acceptable tension when ahead or equal.
+                            }
                         }
                     }
                 }
@@ -612,10 +617,18 @@
                         if (isSafeCheck) { phScore += 50000000; } 
                         else { phScore += 50000; }
                     } else {
-                        let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
-                        const isWinningTension = attackers.length > defenseLevel;
-                        if (isWinningTension) { phScore += 10000000 + (p.value * 5000000); } // V50 Weights
-                        else { phScore += 50000; }
+                        let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
+
+                        if (attackers.length > defenders) {
+                            phScore += 25000000; // Free enemy piece!
+                        } else {
+                            // 1-for-1 trade available
+                            if (isAhead || isEqual) {
+                                phScore += 5000000; // Simplify! We want to initiate trades if not behind.
+                            } else if (isBehind) {
+                                phScore -= 2000000; // Muddy the waters! Don't clear the board if behind.
+                            }
+                        }
                     }
                 }
             });
@@ -624,33 +637,41 @@
         }
 
         function heuristic(node, aiOwner, opponentCaptured) {
-            const b = node.board; let score = 0; const myP = [], enP = []; const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
+            const b = node.board; let score = 0; const myP = [], enP = []; 
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             
-            if(!enK) return 1000000000; // V50: 1 Billion
-            if(!myK) return -1000000000; // V50: 1 Billion
+            if(!enK) return 1000000000;
+            if(!myK) return -1000000000;
             
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
-            if (node.ap < 3 && !asPass) return -500000000; // V50: 500 Million
+            if (node.ap < 3 && !asPass) return -500000000;
 
-            const isBehind = myP.length < enP.length;
-            const behindBonus = isBehind ? 5000000 : 0; // V50: 5M
-
+            // V51: Flat Valuation. All dice = 20M points.
+            const baseValue = 20000000;
             let myMaterial = 0, enMaterial = 0;
-            // V50 Material Scale: 10M base, 5M per pip
-            myP.forEach(p => myMaterial += 10000000 + (p.type === 'king' ? 0 : p.value * 5000000) + behindBonus);
-            enP.forEach(p => enMaterial += 10000000 + (p.type === 'king' ? 0 : p.value * 5000000));
+            myP.forEach(p => myMaterial += (p.type === 'king' ? 0 : baseValue));
+            enP.forEach(p => enMaterial += (p.type === 'king' ? 0 : baseValue));
             
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
+            const diff = myP.length - enP.length;
+            const isBehind = diff < 0;
+            const isAhead = diff > 0;
+            
+            score += evaluateTensions(b, aiOwner, myP, enP, diff);
 
-            // V50: Re-scaled MRP Bonus to prevent 1-for-1 trap suicides
+            // V51: MRP tuned to Simplify vs Muddy logic
             if (opponentCaptured) {
-                if (node.captured) { score += 10000000; } // 10M Reward
-                else { score -= 10000000; }               // 10M Penalty
+                if (node.captured) { 
+                    if (isAhead || diff === 0) score += 15000000; // Very eager to recapture if equal/ahead (Simplify)
+                    else score += 5000000; // Still recaptures if behind, but won't suicide to do it
+                } 
+                else { 
+                    if (isAhead || diff === 0) score -= 15000000; // Strong penalty for dodging trade when equal/ahead
+                    else score -= 5000000; // Weaker penalty for dodging if behind (Running away is an option)
+                }
             }
 
             return score;
@@ -663,8 +684,8 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v50): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v50): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v51): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v51): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
