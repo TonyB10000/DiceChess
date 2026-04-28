@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v48 - Tony Berard</title>
+    <title>Dice Chess Ultra v50 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v48</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v50</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v48: Data Refactored & Standard Logs Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v50: Quantum Superposition & Predictive Weights Online</p>
                 </div>
             </div>
 
@@ -180,6 +180,7 @@
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -295,9 +296,9 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const AI_BASELINE_WIDTH = isMobile ? 1500 : 5000;
-        const AI_DANGER_WIDTH = isMobile ? 4000 : 10000;
+        // V50: Force 10,000 Beam Width
+        const AI_BASELINE_WIDTH = 10000;
+        const AI_DANGER_WIDTH = 10000;
 
         let BOARD_SIZE = 10;
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
@@ -310,7 +311,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV48';
+        const SAVE_KEY = 'diceChessUltraV50';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -359,7 +360,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v48 Init. [site, value] Structure & Standard Notation Online.`, "text-blue-400 font-black uppercase");
+            log(`v50 Init. Quantum Superposition & Predictive Weights Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -506,7 +507,6 @@
 
         function flashTurn() { const o = document.getElementById('flash-overlay'), t = document.getElementById('flash-text'); t.innerText = `${turn.toUpperCase()} TURN`; t.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1'; o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 500); }
         
-        // V48: Standardized Notation and Win/Loss handling
         function endGame(w, r = "Resignation") { 
             gameOver = true; gameActive = false; 
             document.getElementById('winner-text').innerText = `${w.toUpperCase()} WINS (${r})`; 
@@ -525,7 +525,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v48: Data Structure Refactor `[site, value]`) ---
+        // --- AI ENGINE (v50: Quantum Superposition & Predictive Weights) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -534,7 +534,6 @@
             else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
         }
 
-        // V48: O(P) Dynamic Attacker Check (Replaces the massive 10x10 pre-calculated Threat Matrix)
         function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
             let attackers = [];
             for (let p of potentialAttackers) {
@@ -549,14 +548,14 @@
 
                 let minTarget = Infinity; 
                 if (p.type === 'king') {
-                    if (dist === 1) minTarget = 1; // King can capture anything
+                    if (dist === 1) minTarget = 1; 
                 } else {
                     const v = p.value;
                     const canHit = (rad, pow) => (dist <= rad && (pow <= tgtV || pow === 1));
                     let possiblePowers = [];
-                    if (canHit(v, v)) possiblePowers.push(v); // Base State
-                    if (v < 6 && canHit(v + 1, v + 1)) possiblePowers.push(v + 1); // Outer Shadow
-                    if (v > 1 && canHit(v - 1, v - 1)) possiblePowers.push(v - 1); // Inner Shadow
+                    if (canHit(v, v)) possiblePowers.push(v); 
+                    if (v < 6 && canHit(v + 1, v + 1)) possiblePowers.push(v + 1); 
+                    if (v > 1 && canHit(v - 1, v - 1)) possiblePowers.push(v - 1); 
                     
                     if (possiblePowers.length > 0) minTarget = Math.min(...possiblePowers);
                 }
@@ -570,22 +569,28 @@
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
 
-            // 1. Evaluate Bot's Vulnerabilities
+            // 1. Evaluate Bot's Vulnerabilities (Quantum Superposition Foresight)
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 
                 if (attackers.length > 0) {
-                    attackers.sort((a,b) => a.attackerValue - b.attackerValue);
-                    let primaryAttackerV = attackers[0].attackerValue;
-                    let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
-
                     const isPrimary = p.type === 'king'; 
-                    const isProblem = isPrimary ? true : defenseLevel < attackers.length; 
-                    
-                    if (isPrimary && isProblem) { phScore -= 50000000; } 
-                    else if (isProblem) { phScore -= (3000000 + (p.value * 50000) + behindBonus); } 
-                    else { phScore -= 10000; }
+                    if (isPrimary) {
+                        // V50 INSTANT DEATH PENALTY. Overrides all MRP logic.
+                        phScore -= 1000000000; 
+                    } else {
+                        attackers.sort((a,b) => a.attackerValue - b.attackerValue);
+                        let primaryAttackerV = attackers[0].attackerValue;
+                        let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
+
+                        if (defenseLevel < attackers.length) {
+                            // V50 Weights: 10M base + 5M per pip
+                            phScore -= (10000000 + (p.value * 5000000) + behindBonus);
+                        } else {
+                            phScore -= 50000; // Safe tension
+                        }
+                    }
                 }
             });
 
@@ -604,13 +609,13 @@
                         let checkerDefenders = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, myP, b).length;
 
                         const isSafeCheck = checkerDefenders >= checkerAttackers;
-                        if (isSafeCheck) { phScore += 5000000; } 
-                        else { phScore += 10000; }
+                        if (isSafeCheck) { phScore += 50000000; } 
+                        else { phScore += 50000; }
                     } else {
                         let defenseLevel = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
                         const isWinningTension = attackers.length > defenseLevel;
-                        if (isWinningTension) { phScore += 50000 + (p.value * 5000); } 
-                        else { phScore += 5000; }
+                        if (isWinningTension) { phScore += 10000000 + (p.value * 5000000); } // V50 Weights
+                        else { phScore += 50000; }
                     }
                 }
             });
@@ -623,48 +628,48 @@
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             
-            if(!enK) return 100000000; if(!myK) return -100000000;
+            if(!enK) return 1000000000; // V50: 1 Billion
+            if(!myK) return -1000000000; // V50: 1 Billion
             
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
-            if (node.ap < 3 && !asPass) return -50000000;
+            if (node.ap < 3 && !asPass) return -500000000; // V50: 500 Million
 
             const isBehind = myP.length < enP.length;
-            const behindBonus = isBehind ? 500000 : 0; 
+            const behindBonus = isBehind ? 5000000 : 0; // V50: 5M
 
             let myMaterial = 0, enMaterial = 0;
-            myP.forEach(p => myMaterial += 3000000 + (p.type === 'king' ? 0 : p.value * 50000) + behindBonus);
-            enP.forEach(p => enMaterial += 3000000 + (p.type === 'king' ? 0 : p.value * 50000));
+            // V50 Material Scale: 10M base, 5M per pip
+            myP.forEach(p => myMaterial += 10000000 + (p.type === 'king' ? 0 : p.value * 5000000) + behindBonus);
+            enP.forEach(p => enMaterial += 10000000 + (p.type === 'king' ? 0 : p.value * 5000000));
             
             score += (myMaterial - enMaterial);
-            score += calcAS(b, aiOwner) * 150; if (asPass) score += 50000;
+            score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
             score += evaluateTensions(b, aiOwner, myP, enP, behindBonus);
 
+            // V50: Re-scaled MRP Bonus to prevent 1-for-1 trap suicides
             if (opponentCaptured) {
-                if (node.captured) { score += 20000000; } 
-                else { score -= 20000000; }
+                if (node.captured) { score += 10000000; } // 10M Reward
+                else { score -= 10000000; }               // 10M Penalty
             }
 
             return score;
         }
 
         async function runAI() {
-            let myP = [], enP = []; const enemyOwner = turn === 'white' ? 'black' : 'white';
-            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(board[r][c]) (board[r][c].owner===turn?myP:enP).push({r,c,...board[r][c]});
-            const isBehind = myP.length < enP.length;
-            const targetWidth = isBehind ? AI_DANGER_WIDTH : AI_BASELINE_WIDTH;
+            const targetWidth = AI_BASELINE_WIDTH; 
             const opponentCaptured = didOpponentJustCapture(turn);
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v48): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v48): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v50): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v50): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
 
-            if(!bestTurn || bestTurn.h <= -40000000) {
+            if(!bestTurn || bestTurn.h <= -400000000) {
                 log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
             }
@@ -782,7 +787,6 @@
 
         function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
         
-        // V48: Standard Format Game Record Generator
         function getMoveHistoryStr() { 
             let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); 
             if (gameOver) {
