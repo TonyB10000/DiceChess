@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v51 - Tony Berard</title>
+    <title>Dice Chess Ultra v53 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v51</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v53</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v51: Equal Piece Valuation & Simplify Logic Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v53: Tempo Shield & Check Awareness Online</p>
                 </div>
             </div>
 
@@ -180,7 +180,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -296,7 +295,6 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        // V51: Force 10,000 Beam Width
         const AI_BASELINE_WIDTH = 10000;
 
         let BOARD_SIZE = 10;
@@ -310,7 +308,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV51';
+        const SAVE_KEY = 'diceChessUltraV53';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -359,7 +357,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v51 Init. Equal Valuation & Trade Matrix Online.`, "text-blue-400 font-black uppercase");
+            log(`v53 Init. Tempo Shield & Check Awareness Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -524,7 +522,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v51: Equal Valuation & Simplify Trade Matrix) ---
+        // --- AI ENGINE (v53: Tempo Shield & Check Awareness) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -571,11 +569,32 @@
             const isBehind = diff < 0;
             const isEqual = diff === 0;
 
-            // 1. Evaluate Bot's Vulnerabilities (Quantum Superposition Foresight)
+            const baseVal = 15000000;
+            const pipVal = 1000000;
+
+            // V53: Check Awareness - Is the Enemy King in Check?
+            const enK = enP.find(p => p.type === 'king');
+            let enemyCheckers = [];
+            if (enK) {
+                enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
+            }
+            const enemyInCheck = enemyCheckers.length > 0;
+            const isDoubleCheck = enemyCheckers.length > 1;
+
+            if (enemyInCheck) phScore += 15000000; // Initiative Bonus
+            if (isDoubleCheck) phScore += 35000000; // Devastating AP disruption
+
+            // 1. Evaluate Bot's Vulnerabilities
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 
+                // V53 TEMPO SHIELD: If enemy is in check, they must spend AP to escape. They cannot capture OTHER pieces.
+                let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
+                if (enemyInCheck && !isChecker && p.type !== 'king') {
+                    attackers = []; // This piece is immune from capture next turn!
+                }
+
                 if (attackers.length > 0) {
                     const isPrimary = p.type === 'king'; 
                     if (isPrimary) {
@@ -585,14 +604,15 @@
                         let primaryAttackerV = attackers[0].attackerValue;
                         let defenders = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
 
+                        const pieceTrueValue = baseVal + (p.value * pipVal);
+
                         if (defenders < attackers.length) {
-                            phScore -= 25000000; // Undefended piece loss (Catches 1-AP traps)
+                            phScore -= pieceTrueValue * 2.5; 
                         } else {
-                            // Defended piece (1-for-1 trade against me)
                             if (isBehind) {
-                                phScore -= 5000000; // Muddy the waters! Do not accept trades when behind!
+                                phScore -= 2000000; 
                             } else {
-                                phScore -= 100000; // Acceptable tension when ahead or equal.
+                                phScore -= 100000; 
                             }
                         }
                     }
@@ -609,6 +629,8 @@
                     let primaryAttacker = attackers[0];
                     let primaryAttackerV = primaryAttacker.attackerValue;
 
+                    const pieceTrueValue = baseVal + (p.value * pipVal);
+
                     if (p.type === 'king') {
                         let checkerAttackers = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, enP, b).length;
                         let checkerDefenders = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, myP, b).length;
@@ -620,13 +642,12 @@
                         let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
 
                         if (attackers.length > defenders) {
-                            phScore += 25000000; // Free enemy piece!
+                            phScore += pieceTrueValue * 2.0; 
                         } else {
-                            // 1-for-1 trade available
                             if (isAhead || isEqual) {
-                                phScore += 5000000; // Simplify! We want to initiate trades if not behind.
+                                phScore += 2000000; 
                             } else if (isBehind) {
-                                phScore -= 2000000; // Muddy the waters! Don't clear the board if behind.
+                                phScore -= 1000000; 
                             }
                         }
                     }
@@ -647,30 +668,25 @@
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -500000000;
 
-            // V51: Flat Valuation. All dice = 20M points.
-            const baseValue = 20000000;
+            const baseValue = 15000000;
+            const pipValue = 1000000;
             let myMaterial = 0, enMaterial = 0;
-            myP.forEach(p => myMaterial += (p.type === 'king' ? 0 : baseValue));
-            enP.forEach(p => enMaterial += (p.type === 'king' ? 0 : baseValue));
+            myP.forEach(p => myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)));
+            enP.forEach(p => enMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)));
             
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
             const diff = myP.length - enP.length;
-            const isBehind = diff < 0;
-            const isAhead = diff > 0;
             
             score += evaluateTensions(b, aiOwner, myP, enP, diff);
 
-            // V51: MRP tuned to Simplify vs Muddy logic
             if (opponentCaptured) {
                 if (node.captured) { 
-                    if (isAhead || diff === 0) score += 15000000; // Very eager to recapture if equal/ahead (Simplify)
-                    else score += 5000000; // Still recaptures if behind, but won't suicide to do it
+                    score += 18000000;
                 } 
                 else { 
-                    if (isAhead || diff === 0) score -= 15000000; // Strong penalty for dodging trade when equal/ahead
-                    else score -= 5000000; // Weaker penalty for dodging if behind (Running away is an option)
+                    score -= 18000000;
                 }
             }
 
@@ -684,8 +700,8 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v51): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v51): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v53): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v53): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
