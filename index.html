@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v53 - Tony Berard</title>
+    <title>Dice Chess Ultra v54 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v53</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v54</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v53: Tempo Shield & Check Awareness Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v54: Mass Retention & Safe Check Validation</p>
                 </div>
             </div>
 
@@ -180,6 +180,7 @@
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -308,7 +309,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV53';
+        const SAVE_KEY = 'diceChessUltraV54';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -357,7 +358,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v53 Init. Tempo Shield & Check Awareness Online.`, "text-blue-400 font-black uppercase");
+            log(`v54 Init. Mass Retention Protocol Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -522,7 +523,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v53: Tempo Shield & Check Awareness) ---
+        // --- AI ENGINE (v54: Mass Retention & Patzer Eradication) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -565,34 +566,53 @@
         function evaluateTensions(b, aiOwner, myP, enP, diff) {
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
-            const isAhead = diff > 0;
             const isBehind = diff < 0;
             const isEqual = diff === 0;
 
-            const baseVal = 15000000;
+            const baseVal = 25000000; // Increased base value for Mass Retention
             const pipVal = 1000000;
 
-            // V53: Check Awareness - Is the Enemy King in Check?
+            // V54: Safe Check Validation (No Patzer Checks)
             const enK = enP.find(p => p.type === 'king');
             let enemyCheckers = [];
             if (enK) {
                 enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
             }
             const enemyInCheck = enemyCheckers.length > 0;
-            const isDoubleCheck = enemyCheckers.length > 1;
+            
+            let safeCheckers = 0;
+            let unsafeCheckers = 0;
 
-            if (enemyInCheck) phScore += 15000000; // Initiative Bonus
-            if (isDoubleCheck) phScore += 35000000; // Devastating AP disruption
+            if (enemyInCheck) {
+                enemyCheckers.forEach(c => {
+                    let cAttackersFromEnemy = getAttackers(c.r, c.c, c.attackerValue, enP, b).length;
+                    let cDefendersFromMe = getAttackers(c.r, c.c, c.attackerValue, myP, b).length;
+                    if (cDefendersFromMe >= cAttackersFromEnemy || cAttackersFromEnemy === 0) {
+                        safeCheckers++;
+                    } else {
+                        unsafeCheckers++;
+                    }
+                });
 
-            // 1. Evaluate Bot's Vulnerabilities
+                if (safeCheckers > 0) {
+                    phScore += 15000000 * safeCheckers;
+                    if (safeCheckers > 1) phScore += 35000000; // Safe Double Check
+                }
+                if (unsafeCheckers > 0) {
+                    phScore -= 50000000 * unsafeCheckers; // MASSIVE PENALTY for throwing pieces away for a check
+                }
+            }
+
+            // 1. Evaluate Bot's Vulnerabilities (Mass Retention Protocol)
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
+                // Quantum Paranoia: Assume enemy will use AP to make their attack lethal if they are in range
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 
-                // V53 TEMPO SHIELD: If enemy is in check, they must spend AP to escape. They cannot capture OTHER pieces.
+                // TEMPO SHIELD
                 let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
                 if (enemyInCheck && !isChecker && p.type !== 'king') {
-                    attackers = []; // This piece is immune from capture next turn!
+                    attackers = []; // Immune if enemy must respond to check
                 }
 
                 if (attackers.length > 0) {
@@ -607,10 +627,12 @@
                         const pieceTrueValue = baseVal + (p.value * pipVal);
 
                         if (defenders < attackers.length) {
-                            phScore -= pieceTrueValue * 2.5; 
+                            // MASS RETENTION MULTIPLIER: If losing, do NOT lose more pieces!
+                            const penaltyMult = isBehind ? 5.0 : 2.5;
+                            phScore -= pieceTrueValue * penaltyMult; 
                         } else {
                             if (isBehind) {
-                                phScore -= 2000000; 
+                                phScore -= 5000000; // Still hurts if we are losing
                             } else {
                                 phScore -= 100000; 
                             }
@@ -621,34 +643,26 @@
 
             // 2. Evaluate Bot's Offensive Tensions
             enP.forEach(p => {
-                const pVal = p.type === 'king' ? 7 : p.value;
+                if (p.type === 'king') return; // King handled by check logic above
+                
+                const pVal = p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, myP, b);
                 
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primaryAttacker = attackers[0];
                     let primaryAttackerV = primaryAttacker.attackerValue;
-
                     const pieceTrueValue = baseVal + (p.value * pipVal);
+                    
+                    let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
 
-                    if (p.type === 'king') {
-                        let checkerAttackers = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, enP, b).length;
-                        let checkerDefenders = getAttackers(primaryAttacker.r, primaryAttacker.c, primaryAttackerV, myP, b).length;
-
-                        const isSafeCheck = checkerDefenders >= checkerAttackers;
-                        if (isSafeCheck) { phScore += 50000000; } 
-                        else { phScore += 50000; }
+                    if (attackers.length > defenders) {
+                        phScore += pieceTrueValue * 2.0; 
                     } else {
-                        let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
-
-                        if (attackers.length > defenders) {
-                            phScore += pieceTrueValue * 2.0; 
+                        if (!isBehind) {
+                            phScore += 2000000; 
                         } else {
-                            if (isAhead || isEqual) {
-                                phScore += 2000000; 
-                            } else if (isBehind) {
-                                phScore -= 1000000; 
-                            }
+                            phScore -= 2000000; // Don't initiate equal trades if losing!
                         }
                     }
                 }
@@ -668,7 +682,7 @@
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -500000000;
 
-            const baseValue = 15000000;
+            const baseValue = 25000000;
             const pipValue = 1000000;
             let myMaterial = 0, enMaterial = 0;
             myP.forEach(p => myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)));
@@ -683,10 +697,10 @@
 
             if (opponentCaptured) {
                 if (node.captured) { 
-                    score += 18000000;
+                    score += 20000000;
                 } 
                 else { 
-                    score -= 18000000;
+                    score -= 20000000;
                 }
             }
 
@@ -700,8 +714,8 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v53): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v53): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v54): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v54): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
