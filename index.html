@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v57 - Tony Berard</title>
+    <title>Dice Chess Ultra v58 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v57</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v58</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v57: Remora Fish & Landmine Safety</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v58: Phantom Threat Fix & Logic Tuning</p>
                 </div>
             </div>
 
@@ -115,8 +115,8 @@
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
                                 <option value="8">8x8</option>
-                                <option value="9">9x9</option>
-                                <option value="10" selected>10x10</option>
+                                <option value="9" selected>9x9</option>
+                                <option value="10">10x10</option>
                             </select>
                         </div>
                     </div>
@@ -298,7 +298,7 @@
 
         const AI_BASELINE_WIDTH = 10000;
 
-        let BOARD_SIZE = 10;
+        let BOARD_SIZE = 9; // Defaulting to 9x9 per user's latest focus
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
         let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
@@ -309,7 +309,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV57';
+        const SAVE_KEY = 'diceChessUltraV58';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -339,7 +339,7 @@
             } catch (e) { log("Error resuming game.", "text-red-500"); initGame(); }
         }
 
-        function initGame(size = 10) {
+        function initGame(size = 9) {
             BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
@@ -358,7 +358,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v57 Init. Remora Fish & Landmine Safety Online.`, "text-blue-400 font-black uppercase");
+            log(`v58 Init. Phantom Threat Fix & Logic Tuning.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -523,7 +523,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v57: Remora Fish & Landmine Safety) ---
+        // --- AI ENGINE (v58: Phantom Threat Fix & Logic Tuning) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -602,6 +602,9 @@
                 }
             }
 
+            // v58: The Phantom Threat Erasure (Dead Piece Tracking)
+            let myDeadPieces = new Set();
+
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
@@ -623,12 +626,14 @@
                         const pieceTrueValue = baseVal + (p.value * pipVal);
 
                         if (pVal === 1 && defenders < attackers.length) {
-                            // v57 Landmine Assessment: If enemy can 1-AP take it, it is free food! Massive penalty.
+                            // v58 Landmine Assessment: If enemy can 1-AP take it, it is free food! Massive penalty.
                             phScore -= 45000000;
+                            myDeadPieces.add(`${p.r},${p.c}`); // Mark as dead
                         } else if (defenders < attackers.length) {
-                            // v56 Standard Retention Math
+                            // v58 Standard Retention Math
                             const penaltyMult = (isBehind && pVal !== 1) ? 4.0 : (pVal === 1 ? 1.0 : 2.5); 
                             phScore -= pieceTrueValue * penaltyMult; 
+                            myDeadPieces.add(`${p.r},${p.c}`); // Mark as dead
                         } else {
                             if (isBehind) {
                                 phScore -= 2000000; 
@@ -645,6 +650,10 @@
                 
                 const pVal = p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, myP, b);
+                
+                // v58 Fix: Filter out dead attackers! 
+                // A piece that is going to be captured for free should not project offensive value.
+                attackers = attackers.filter(a => !myDeadPieces.has(`${a.r},${a.c}`));
                 
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
@@ -689,7 +698,7 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            // v57: Board Size Specific Protocols (Glacier vs Remora Fish)
+            // v58: Board Size Specific Protocols (Glacier vs Remora Fish)
             if (BOARD_SIZE === 10) {
                 // The Glacier Protocol (10x10 Only)
                 if (myK) {
@@ -764,13 +773,14 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v57): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v57): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v58): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v58): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
 
-            if(!bestTurn || bestTurn.h <= -400000000) {
+            // v58: Adjusted threshold to -600M to prevent "Algorithmic Despair"
+            if(!bestTurn || bestTurn.h <= -600000000) {
                 log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
             }
@@ -932,7 +942,7 @@
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
 
-        initGame();
+        initGame(9); // Initializing to 9x9 per the default selection
         checkSavedGame();
     </script>
 </body>
