@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v56 - Tony Berard</title>
+    <title>Dice Chess Ultra v57 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v56</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v57</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -72,7 +72,7 @@
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v56: Immunity Shields & Glaciers</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v57: Remora Fish & Landmine Safety</p>
                 </div>
             </div>
 
@@ -309,7 +309,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV56';
+        const SAVE_KEY = 'diceChessUltraV57';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -358,7 +358,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v56 Init. Immunity Shields & Glaciers Online.`, "text-blue-400 font-black uppercase");
+            log(`v57 Init. Remora Fish & Landmine Safety Online.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -523,7 +523,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v56: Immunity Shields & Glaciers) ---
+        // --- AI ENGINE (v57: Remora Fish & Landmine Safety) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -622,9 +622,11 @@
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
 
-                        if (defenders < attackers.length) {
-                            // v56: If the piece is a '1', it is highly likely to be immune to recapture unless the enemy has a '1'.
-                            // Reduce the Mass Retention penalty if we are a '1'.
+                        if (pVal === 1 && defenders < attackers.length) {
+                            // v57 Landmine Assessment: If enemy can 1-AP take it, it is free food! Massive penalty.
+                            phScore -= 45000000;
+                        } else if (defenders < attackers.length) {
+                            // v56 Standard Retention Math
                             const penaltyMult = (isBehind && pVal !== 1) ? 4.0 : (pVal === 1 ? 1.0 : 2.5); 
                             phScore -= pieceTrueValue * penaltyMult; 
                         } else {
@@ -652,9 +654,8 @@
                     
                     let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
 
-                    // v56 "Free Food" Override: If we are attacking with a weaker piece (trading up), value it highly!
                     if (attackers.length > defenders || primaryAttackerV < pVal) {
-                        phScore += pieceTrueValue * 3.0; // Increased incentive to take favorable trades
+                        phScore += pieceTrueValue * 3.0; 
                     } else {
                         if (!isBehind) {
                             phScore += 2000000; 
@@ -669,7 +670,7 @@
         }
 
         function heuristic(node, aiOwner, opponentCaptured) {
-            const b = node.board; let score = 0; const myP = [], enP = []; 
+            const b = node.board; let score = 0; const myP = [], enP = []; const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             
@@ -688,17 +689,60 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            // v56: The Glacier Subsidization Reward
-            // Heavily reward the AI for having its King advanced past the back rank while maintaining positive AS
-            if (myK) {
-                const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
-                if (kingAdvance > 0) {
-                    score += (kingAdvance * 5000000); // 5 Million points per rank advanced for the King (Bunkering)
+            // v57: Board Size Specific Protocols (Glacier vs Remora Fish)
+            if (BOARD_SIZE === 10) {
+                // The Glacier Protocol (10x10 Only)
+                if (myK) {
+                    const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
+                    const isKingSafe = getAttackers(myK.r, myK.c, 7, enP, b).length === 0;
+                    
+                    if (kingAdvance === 1 || kingAdvance === 2) {
+                        if (isKingSafe) {
+                            score += (kingAdvance * 8000000); // Safe under the ice
+                        } else {
+                            score -= 5000000; // Not safe! Node awareness triggers penalty
+                        }
+                    } else if (kingAdvance > 2) {
+                        score -= (kingAdvance * 20000000); // Braveheart Glitch Fix: Do not overextend
+                    }
+                }
+            } else {
+                // The Remora Protocol (8x8 and 9x9)
+                if (myK) {
+                    const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
+                    if (kingAdvance > 0) {
+                        score -= (kingAdvance * 20000000); // DO NOT MOVE OFF BACK RANK
+                    } else {
+                        score += 5000000; // Reward for staying anchored
+                    }
+                    
+                    // Evaluate Remora Shield
+                    const forwardDir = (aiOwner === 'white') ? -1 : 1;
+                    const remoraSquares = [
+                        {r: myK.r + forwardDir, c: myK.c - 1},
+                        {r: myK.r + forwardDir, c: myK.c},
+                        {r: myK.r + forwardDir, c: myK.c + 1}
+                    ];
+                    
+                    remoraSquares.forEach(sq => {
+                        if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE) {
+                            const p = b[sq.r][sq.c];
+                            if (p && p.owner === aiOwner) {
+                                score += 3000000; // Intact Remora!
+                            } else {
+                                const isKingThreatened = getAttackers(myK.r, myK.c, 7, enP, b).length > 0;
+                                if (isKingThreatened) {
+                                    score -= 25000000; // Missing shield and king in danger! Fill gap immediately!
+                                } else {
+                                    score -= 1000000; // Missing shield, try to replace next turn
+                                }
+                            }
+                        }
+                    });
                 }
             }
 
             const diff = myP.length - enP.length;
-            
             score += evaluateTensions(b, aiOwner, myP, enP, diff);
 
             if (opponentCaptured) {
@@ -720,8 +764,8 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v56): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v56): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            if (opponentCaptured) { log(`PH ENGINE (v57): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
+            else { log(`PH ENGINE (v57): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
@@ -751,7 +795,7 @@
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
                     for(let p of myP) {
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
-                            // v56 Immunity Shield Logic: Allow decrements even if AS isn't passed IF we just captured (Phase Shift)
+                            // Phase Shift logic included
                             if(p.value < 6) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value++; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
                             if(p.value > 1) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value--; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
                         }
