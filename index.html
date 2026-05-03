@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v58 - Tony Berard</title>
+    <title>Dice Chess Ultra v59 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -52,15 +52,15 @@
         .ai-thinking { animation: pulse-blue 1.5s infinite; } .predator-thinking { animation: pulse-red 0.8s infinite; }
         @keyframes pulse-blue { 0%, 100% { color: #818cf8; text-shadow: 0 0 5px #4f46e5; } 50% { color: #f1f5f9; text-shadow: none; } }
         @keyframes pulse-red { 0%, 100% { color: #f87171; text-shadow: 0 0 5px #ef4444; } 50% { color: #f1f5f9; text-shadow: none; } }
-        .start-btn { @apply bg-green-600 hover:bg-green-500 text-white font-black py-6 px-12 rounded-2xl text-2xl shadow-2xl transition-all active:scale-90 uppercase; border: 4px solid rgba(255,255,255,0.2); letter-spacing: 0.1em; }
-        .resume-btn { @apply bg-orange-600 hover:bg-orange-500 text-white font-black py-3 px-8 rounded-xl text-lg shadow-2xl transition-all active:scale-90 uppercase mt-4 hidden; border: 2px solid rgba(255,255,255,0.2); }
+        .start-btn { @apply bg-green-600 hover:bg-green-500 text-white font-black py-4 px-12 rounded-2xl text-2xl shadow-2xl transition-all active:scale-90 uppercase; border: 4px solid rgba(255,255,255,0.2); letter-spacing: 0.1em; }
+        .resume-btn { @apply bg-orange-600 hover:bg-orange-500 text-white font-black py-3 px-8 rounded-xl text-lg shadow-2xl transition-all active:scale-90 uppercase mt-2 hidden; border: 2px solid rgba(255,255,255,0.2); }
         select { background-color: #020617 !important; color: #f1f5f9 !important; border: 1px solid #475569 !important; border-radius: 4px; padding: 2px 8px; font-size: 10px; font-weight: 800; appearance: auto; cursor: pointer; outline: none; }
     </style>
 </head>
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v58</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v59</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -71,8 +71,16 @@
                 <div id="board" class="board-container"></div>
                 <div id="start-overlay">
                     <button id="start-game-btn" class="start-btn uppercase">START GAME</button>
+                    <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
+                        <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
+                        <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
+                            <option value="standard">Standard (8k / 10k Kick)</option>
+                            <option value="medium" selected>Medium (12k / 15k Kick)</option>
+                            <option value="strong">Strong (20k / 30k Kick)</option>
+                        </select>
+                    </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v58: Phantom Threat Fix & Logic Tuning</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v59: Lone Wolf Excursion Fix & Dynamic Beam</p>
                 </div>
             </div>
 
@@ -109,13 +117,13 @@
                     <div class="grid grid-cols-2 gap-2 px-2">
                         <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">AI</span>
-                            <input type="checkbox" id="ai-toggle" class="w-3 h-3 rounded bg-slate-900 border-slate-600 text-blue-600 cursor-pointer" checked>
+                            <input type="checkbox" id="ai-toggle" class="w-3 h-3 rounded bg-slate-900 border-slate-600 text-blue-600 cursor-pointer" checked onchange="document.getElementById('ai-strength-container').style.display = this.checked ? 'flex' : 'none';">
                         </div>
                         <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
-                                <option value="8">8x8</option>
-                                <option value="9" selected>9x9</option>
+                                <option value="8" selected>8x8</option>
+                                <option value="9">9x9</option>
                                 <option value="10">10x10</option>
                             </select>
                         </div>
@@ -180,7 +188,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -231,7 +238,7 @@
             <div class="flex items-center justify-between mb-2 px-2">
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size:</span>
                 <select id="import-size-select" class="w-24 bg-slate-900 border-slate-700 text-white rounded text-[10px] p-1 outline-none">
-                    <option value="8">8x8</option><option value="9">9x9</option><option value="10" selected>10x10</option>
+                    <option value="8" selected>8x8</option><option value="9">9x9</option><option value="10">10x10</option>
                 </select>
             </div>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
@@ -296,9 +303,7 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        const AI_BASELINE_WIDTH = 10000;
-
-        let BOARD_SIZE = 9; // Defaulting to 9x9 per user's latest focus
+        let BOARD_SIZE = 8; // Defaulting to 8x8 per user's latest focus
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
         let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
@@ -309,7 +314,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV58';
+        const SAVE_KEY = 'diceChessUltraV59';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -339,7 +344,7 @@
             } catch (e) { log("Error resuming game.", "text-red-500"); initGame(); }
         }
 
-        function initGame(size = 9) {
+        function initGame(size = 8) {
             BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
@@ -358,7 +363,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v58 Init. Phantom Threat Fix & Logic Tuning.`, "text-blue-400 font-black uppercase");
+            log(`v59 Init. Lone Wolf Eradication & Dynamic Beam Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -523,7 +528,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v58: Phantom Threat Fix & Logic Tuning) ---
+        // --- AI ENGINE (v59: Dynamic Beam Width & Lone Wolf Fix) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -602,7 +607,7 @@
                 }
             }
 
-            // v58: The Phantom Threat Erasure (Dead Piece Tracking)
+            // v59: Dead Piece Tracking AND Lone Wolf Generalization
             let myDeadPieces = new Set();
 
             myP.forEach(p => {
@@ -624,16 +629,23 @@
                         let defenders = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
+                        
+                        // v59: Check if piece is on an "Excursion" (enemy half of board)
+                        const isExcursion = (aiOwner === 'white') ? (p.r < Math.floor(BOARD_SIZE / 2)) : (p.r >= Math.floor(BOARD_SIZE / 2));
 
                         if (pVal === 1 && defenders < attackers.length) {
-                            // v58 Landmine Assessment: If enemy can 1-AP take it, it is free food! Massive penalty.
-                            phScore -= 45000000;
-                            myDeadPieces.add(`${p.r},${p.c}`); // Mark as dead
+                            phScore -= 45000000; // Landmine penalty
+                            myDeadPieces.add(`${p.r},${p.c}`);
                         } else if (defenders < attackers.length) {
-                            // v58 Standard Retention Math
                             const penaltyMult = (isBehind && pVal !== 1) ? 4.0 : (pVal === 1 ? 1.0 : 2.5); 
                             phScore -= pieceTrueValue * penaltyMult; 
-                            myDeadPieces.add(`${p.r},${p.c}`); // Mark as dead
+                            
+                            // v59: THE LONE WOLF PENALTY
+                            if (isExcursion && pVal > 1) {
+                                phScore -= 80000000; // Massive penalty for unsupported deep dives
+                            }
+                            
+                            myDeadPieces.add(`${p.r},${p.c}`); 
                         } else {
                             if (isBehind) {
                                 phScore -= 2000000; 
@@ -647,12 +659,10 @@
 
             enP.forEach(p => {
                 if (p.type === 'king') return; 
-                
                 const pVal = p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, myP, b);
                 
-                // v58 Fix: Filter out dead attackers! 
-                // A piece that is going to be captured for free should not project offensive value.
+                // Filter out dead attackers
                 attackers = attackers.filter(a => !myDeadPieces.has(`${a.r},${a.c}`));
                 
                 if (attackers.length > 0) {
@@ -698,34 +708,23 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            // v58: Board Size Specific Protocols (Glacier vs Remora Fish)
             if (BOARD_SIZE === 10) {
-                // The Glacier Protocol (10x10 Only)
                 if (myK) {
                     const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
                     const isKingSafe = getAttackers(myK.r, myK.c, 7, enP, b).length === 0;
-                    
                     if (kingAdvance === 1 || kingAdvance === 2) {
-                        if (isKingSafe) {
-                            score += (kingAdvance * 8000000); // Safe under the ice
-                        } else {
-                            score -= 5000000; // Not safe! Node awareness triggers penalty
-                        }
+                        if (isKingSafe) score += (kingAdvance * 8000000); 
+                        else score -= 5000000; 
                     } else if (kingAdvance > 2) {
-                        score -= (kingAdvance * 20000000); // Braveheart Glitch Fix: Do not overextend
+                        score -= (kingAdvance * 20000000); 
                     }
                 }
             } else {
-                // The Remora Protocol (8x8 and 9x9)
                 if (myK) {
                     const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
-                    if (kingAdvance > 0) {
-                        score -= (kingAdvance * 20000000); // DO NOT MOVE OFF BACK RANK
-                    } else {
-                        score += 5000000; // Reward for staying anchored
-                    }
+                    if (kingAdvance > 0) score -= (kingAdvance * 20000000); 
+                    else score += 5000000; 
                     
-                    // Evaluate Remora Shield
                     const forwardDir = (aiOwner === 'white') ? -1 : 1;
                     const remoraSquares = [
                         {r: myK.r + forwardDir, c: myK.c - 1},
@@ -736,15 +735,11 @@
                     remoraSquares.forEach(sq => {
                         if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE) {
                             const p = b[sq.r][sq.c];
-                            if (p && p.owner === aiOwner) {
-                                score += 3000000; // Intact Remora!
-                            } else {
+                            if (p && p.owner === aiOwner) score += 3000000; 
+                            else {
                                 const isKingThreatened = getAttackers(myK.r, myK.c, 7, enP, b).length > 0;
-                                if (isKingThreatened) {
-                                    score -= 25000000; // Missing shield and king in danger! Fill gap immediately!
-                                } else {
-                                    score -= 1000000; // Missing shield, try to replace next turn
-                                }
+                                if (isKingThreatened) score -= 25000000; 
+                                else score -= 1000000; 
                             }
                         }
                     });
@@ -755,31 +750,54 @@
             score += evaluateTensions(b, aiOwner, myP, enP, diff);
 
             if (opponentCaptured) {
-                if (node.captured) { 
-                    score += 300000000; 
-                } 
-                else { 
-                    score -= 300000000;
-                }
+                if (node.captured) score += 300000000; 
+                else score -= 300000000;
             }
 
             return score;
         }
 
         async function runAI() {
-            const targetWidth = AI_BASELINE_WIDTH; 
+            // v59: Dynamic Panic Assessment
+            let myMaterial = 0, enMaterial = 0;
+            let myK = null;
+            const myP = [], enP = [];
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = board[r][c];
+                    if(p) {
+                        if(p.owner === turn) { myP.push({r,c,...p}); if(p.type === 'king') myK = {r,c}; myMaterial += (p.type === 'king' ? 0 : p.value); }
+                        else { enP.push({r,c,...p}); enMaterial += (p.type === 'king' ? 0 : p.value); }
+                    }
+                }
+            }
+            
+            let isBehindInMaterial = myMaterial < enMaterial;
+            let isKingThreatened = false;
+            if (myK) {
+                if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) isKingThreatened = true;
+            }
+
+            const strengthSetting = document.getElementById('bot-strength-select').value;
+            let baseWidth = 8000, kickWidth = 10000;
+            if (strengthSetting === 'medium') { baseWidth = 12000; kickWidth = 15000; }
+            else if (strengthSetting === 'strong') { baseWidth = 20000; kickWidth = 30000; }
+
+            const targetWidth = (isBehindInMaterial || isKingThreatened) ? kickWidth : baseWidth;
             const opponentCaptured = didOpponentJustCapture(turn);
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            if (opponentCaptured) { log(`PH ENGINE (v58): MRP Active! Width ${targetWidth}...`, "text-orange-400 italic uppercase font-bold"); } 
-            else { log(`PH ENGINE (v58): Width ${targetWidth}...`, "text-slate-500 italic uppercase"); }
+            let statusText = `PH ENGINE (v59): Width ${targetWidth}...`;
+            if (targetWidth === kickWidth) statusText = `PH ENGINE (v59): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            if (opponentCaptured) statusText = `PH ENGINE (v59): MRP Active! Width ${targetWidth}...`;
+            
+            log(statusText, targetWidth === kickWidth ? "text-red-400 italic font-bold uppercase" : "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured);
 
-            // v58: Adjusted threshold to -600M to prevent "Algorithmic Despair"
             if(!bestTurn || bestTurn.h <= -600000000) {
                 log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
@@ -942,7 +960,7 @@
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
 
-        initGame(9); // Initializing to 9x9 per the default selection
+        initGame(8);
         checkSavedGame();
     </script>
 </body>
