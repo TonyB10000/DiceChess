@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v60 - Tony Berard</title>
+    <title>Dice Chess Ultra v61 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v60</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v61</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v60: Quantum King Safety (KSM) Online</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v61: AP Cost Recapture & 1-AP Sniper</p>
                 </div>
             </div>
 
@@ -123,8 +123,8 @@
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
                                 <option value="8">8x8</option>
-                                <option value="9">9x9</option>
-                                <option value="10" selected>10x10</option>
+                                <option value="9" selected>9x9</option>
+                                <option value="10">10x10</option>
                             </select>
                         </div>
                     </div>
@@ -188,7 +188,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -239,7 +238,7 @@
             <div class="flex items-center justify-between mb-2 px-2">
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size:</span>
                 <select id="import-size-select" class="w-24 bg-slate-900 border-slate-700 text-white rounded text-[10px] p-1 outline-none">
-                    <option value="8">8x8</option><option value="9">9x9</option><option value="10" selected>10x10</option>
+                    <option value="8">8x8</option><option value="9" selected>9x9</option><option value="10">10x10</option>
                 </select>
             </div>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
@@ -304,7 +303,7 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        let BOARD_SIZE = 10;
+        let BOARD_SIZE = 9; // Defaulting to 9x9 per user's latest focus
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
         let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
@@ -315,7 +314,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV60';
+        const SAVE_KEY = 'diceChessUltraV61';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -345,7 +344,7 @@
             } catch (e) { log("Error resuming game.", "text-red-500"); initGame(); }
         }
 
-        function initGame(size = 10) {
+        function initGame(size = 9) {
             BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
@@ -364,7 +363,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v60 Init. Quantum King Safety (KSM) Active.`, "text-blue-400 font-black uppercase");
+            log(`v61 Init. AP Cost Recapture & 1-AP Sniper Protocols Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -529,7 +528,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v60: Quantum King Safety - KSM) ---
+        // --- AI ENGINE (v61: AP Cost Recapture Analysis & 1-AP Sniper Protocol) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -538,6 +537,7 @@
             else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
         }
 
+        // v61: Massive Upgrade to AP Cost Prediction
         function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
             let attackers = [];
             for (let p of potentialAttackers) {
@@ -550,21 +550,25 @@
                 for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) { clear = false; break; }
                 if (!clear) continue;
 
-                let minTarget = Infinity; 
                 if (p.type === 'king') {
-                    if (dist === 1) minTarget = 1; 
+                    if (dist === 1) attackers.push({ ...p, attackerValue: 7, apCost: 5 });
                 } else {
-                    const v = p.value;
-                    const canHit = (rad, pow) => (dist <= rad && (pow <= tgtV || pow === 1));
-                    let possiblePowers = [];
-                    if (canHit(v, v)) possiblePowers.push(v); 
-                    if (v < 6 && canHit(v + 1, v + 1)) possiblePowers.push(v + 1); 
-                    if (v > 1 && canHit(v - 1, v - 1)) possiblePowers.push(v - 1); 
-                    
-                    if (possiblePowers.length > 0) minTarget = Math.min(...possiblePowers);
+                    let minCost = Infinity;
+                    let bestVal = -1;
+                    // v61 AP Math: Calculate exactly how much AP it costs to legally execute this capture.
+                    for (let mod = -5; mod <= 5; mod++) {
+                        let val = p.value + mod;
+                        if (val < 1 || val > 6) continue;
+                        if (val >= dist && (val <= tgtV || val === 1)) {
+                            let cost = 5 + Math.abs(mod); // 5 for capture, 1 for every modification step
+                            if (cost < minCost) { minCost = cost; bestVal = val; }
+                        }
+                    }
+                    // Only count as an attacker if they mathematically have enough AP to execute it in a single 6-AP turn!
+                    if (minCost <= 6) {
+                        attackers.push({ ...p, attackerValue: bestVal, apCost: minCost });
+                    }
                 }
-                
-                if (minTarget !== Infinity) { attackers.push({ ...p, attackerValue: p.type === 'king' ? 7 : minTarget }); }
             }
             return attackers;
         }
@@ -573,7 +577,6 @@
             let phScore = 0;
             const enemyOwner = aiOwner === 'white' ? 'black' : 'white';
             const isBehind = diff < 0;
-            const isEqual = diff === 0;
 
             const baseVal = 25000000;
             const pipVal = 1000000;
@@ -629,7 +632,6 @@
                         let defenders = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
-                        
                         const isExcursion = (aiOwner === 'white') ? (p.r < Math.floor(BOARD_SIZE / 2)) : (p.r >= Math.floor(BOARD_SIZE / 2));
 
                         if (pVal === 1 && defenders < attackers.length) {
@@ -642,14 +644,10 @@
                             if (isExcursion && pVal > 1) {
                                 phScore -= 80000000; 
                             }
-                            
                             myDeadPieces.add(`${p.r},${p.c}`); 
                         } else {
-                            if (isBehind) {
-                                phScore -= 2000000; 
-                            } else {
-                                phScore -= 100000; 
-                            }
+                            if (isBehind) phScore -= 2000000; 
+                            else phScore -= 100000; 
                         }
                     }
                 }
@@ -666,6 +664,9 @@
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primaryAttacker = attackers[0];
                     let primaryAttackerV = primaryAttacker.attackerValue;
+                    
+                    // v61: Reward capturing pieces that cost the enemy massive AP to defend/recapture
+                    // By maximizing this reward, the bot actively seeks out the most devastating trades.
                     const pieceTrueValue = baseVal + (p.value * pipVal);
                     
                     let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
@@ -673,11 +674,8 @@
                     if (attackers.length > defenders || primaryAttackerV < pVal) {
                         phScore += pieceTrueValue * 3.0; 
                     } else {
-                        if (!isBehind) {
-                            phScore += 2000000; 
-                        } else {
-                            phScore -= 2000000; 
-                        }
+                        if (!isBehind) phScore += 2000000; 
+                        else phScore -= 2000000; 
                     }
                 }
             });
@@ -705,7 +703,6 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            // v60: Quantum King Safety Metric (KSM)
             let KSM = 0;
             let shieldCount = 0;
             let threatCount = 0;
@@ -716,12 +713,10 @@
                 if (nr>=0 && nr<BOARD_SIZE && nc>=0 && nc<BOARD_SIZE) {
                     const p = b[nr][nc];
                     if (p && p.owner === aiOwner) shieldCount++;
-                    // Check if adjacent square is threatened by the enemy
                     if (getAttackers(nr, nc, 7, enP, b).length > 0) threatCount++;
                 }
             });
 
-            // Heavily penalize if King is surrounded by Quantum Shadows
             if (threatCount >= 3) {
                 KSM -= (threatCount * 10000000);
             }
@@ -731,11 +726,10 @@
                 const isKingSafe = getAttackers(myK.r, myK.c, 7, enP, b).length === 0;
 
                 if (kingAdvance === 1 || kingAdvance === 2) {
-                    // v60 Fix: The Glacier Subsidization requires safety AND surrounding shields/low threats
                     if (isKingSafe && threatCount <= 2 && shieldCount >= 2) {
                         score += (kingAdvance * 8000000); 
                     } else {
-                        score -= 15000000; // Punish marching naked into the midfield or shadows
+                        score -= 15000000; 
                     }
                 } else if (kingAdvance > 2) {
                     score -= (kingAdvance * 20000000); 
@@ -770,9 +764,17 @@
             const diff = myP.length - enP.length;
             score += evaluateTensions(b, aiOwner, myP, enP, diff);
 
+            // v61: Distributed AP Capture Protocol
             if (opponentCaptured) {
                 if (node.captured) score += 300000000; 
                 else score -= 300000000;
+            }
+
+            if (node.captured) {
+                // If the bot secured a capture and used remaining AP to check the enemy King
+                if (enK && getAttackers(enK.r, enK.c, 7, myP, b).length > 0) {
+                    score += 25000000; // Massive reward for seizing initiative with the 1-AP Sniper
+                }
             }
 
             return score;
@@ -809,9 +811,9 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v60): Width ${targetWidth}...`;
-            if (targetWidth === kickWidth) statusText = `PH ENGINE (v60): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            if (opponentCaptured) statusText = `PH ENGINE (v60): MRP Active! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v61): Width ${targetWidth}...`;
+            if (targetWidth === kickWidth) statusText = `PH ENGINE (v61): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            if (opponentCaptured) statusText = `PH ENGINE (v61): MRP Active! Width ${targetWidth}...`;
             
             log(statusText, targetWidth === kickWidth ? "text-red-400 italic font-bold uppercase" : "text-slate-500 italic uppercase");
 
@@ -843,7 +845,6 @@
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
                     for(let p of myP) {
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
-                            // Phase Shift logic included
                             if(p.value < 6) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value++; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
                             if(p.value > 1) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value--; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
                         }
@@ -980,7 +981,7 @@
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
 
-        initGame(10); // Initialized to 10x10 per the latest playtest
+        initGame(9);
         checkSavedGame();
     </script>
 </body>
