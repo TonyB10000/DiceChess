@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v62 - Tony Berard</title>
+    <title>Dice Chess Ultra v63 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v62</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v63</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v62: AP-Starvation & Flee-vs-Swat Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">v63: Absolute Panic Override & The Cave</p>
                 </div>
             </div>
 
@@ -123,8 +123,8 @@
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
                                 <option value="8">8x8</option>
-                                <option value="9">9x9</option>
-                                <option value="10" selected>10x10</option>
+                                <option value="9" selected>9x9</option>
+                                <option value="10">10x10</option>
                             </select>
                         </div>
                     </div>
@@ -188,7 +188,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -239,7 +238,7 @@
             <div class="flex items-center justify-between mb-2 px-2">
                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Grid Size:</span>
                 <select id="import-size-select" class="w-24 bg-slate-900 border-slate-700 text-white rounded text-[10px] p-1 outline-none">
-                    <option value="8">8x8</option><option value="9">9x9</option><option value="10" selected>10x10</option>
+                    <option value="8">8x8</option><option value="9" selected>9x9</option><option value="10">10x10</option>
                 </select>
             </div>
             <textarea id="record-text" class="w-full h-40 bg-slate-950 text-slate-300 p-2 rounded text-[10px] font-mono border border-slate-700 mb-3 outline-none" placeholder="1. f2-f4 : a9-c7, a10-a5..."></textarea>
@@ -304,7 +303,7 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        let BOARD_SIZE = 10;
+        let BOARD_SIZE = 9;
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
         let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
@@ -315,7 +314,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV62';
+        const SAVE_KEY = 'diceChessUltraV63';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -345,7 +344,7 @@
             } catch (e) { log("Error resuming game.", "text-red-500"); initGame(); }
         }
 
-        function initGame(size = 10) {
+        function initGame(size = 9) {
             BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
@@ -364,7 +363,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            log(`v62 Init. AP-Starvation & Flee-vs-Swat Active.`, "text-blue-400 font-black uppercase");
+            log(`v63 Init. The Cave & Absolute Panic Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -529,7 +528,7 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE (v62: AP-Starvation, Flee-vs-Swat, Double Checks) ---
+        // --- AI ENGINE (v63: The Cave, Absolute Panic Override, Kamikaze Fix) ---
         
         function didOpponentJustCapture(aiOwner) {
             if (moveHistory.length === 0) return false;
@@ -571,10 +570,9 @@
             return attackers;
         }
 
-        function evaluateTensions(b, aiOwner, myP, enP, diff) {
+        function evaluateTensions(b, aiOwner, myP, enP, diff, nodeCaptured) {
             let phScore = 0;
             const isBehind = diff < 0;
-
             const baseVal = 25000000;
             const pipVal = 1000000;
 
@@ -602,37 +600,43 @@
                 if (safeCheckers > 0) {
                     phScore += 15000000 * safeCheckers;
                 }
+                
+                // v63: Deflection/Kamikaze Fix
                 if (unsafeCheckers > 0) {
-                    phScore -= 50000000 * unsafeCheckers; 
+                    if (nodeCaptured) {
+                        // Traded a vulnerable piece for a capture (Deflection). Soft penalty.
+                        phScore -= 5000000 * unsafeCheckers; 
+                    } else {
+                        // Kamikaze check with no material gain. Massive penalty to prevent free food.
+                        phScore -= 50000000 * unsafeCheckers; 
+                    }
                 }
             }
 
             let myDeadPieces = new Set();
+            let landmineCount = 0;
 
             myP.forEach(p => {
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
-                
                 let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
                 
+                const isExcursion = (aiOwner === 'white') ? (p.r < Math.floor(BOARD_SIZE / 2)) : (p.r >= Math.floor(BOARD_SIZE / 2));
+
                 if (attackers.length > 0) {
                     const isPrimary = p.type === 'king'; 
                     if (isPrimary) {
                         phScore -= 1000000000; 
                     } else {
-                        // v62: AP-Starvation Immunity Protocol
-                        // If the enemy is in check, they must spend their AP to survive.
-                        // Our non-checker pieces are functionally immune to recapture!
                         if (enemyInCheck && !isChecker) {
-                            phScore += 10000000; // Small reward for safely pushing pieces while starving the opponent
+                            phScore += 10000000; 
                         } else {
                             attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                             let primaryAttackerV = attackers[0].attackerValue;
                             let defenders = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
 
                             const pieceTrueValue = baseVal + (p.value * pipVal);
-                            const isExcursion = (aiOwner === 'white') ? (p.r < Math.floor(BOARD_SIZE / 2)) : (p.r >= Math.floor(BOARD_SIZE / 2));
-
+                            
                             if (pVal === 1 && defenders < attackers.length) {
                                 phScore -= 45000000; 
                                 myDeadPieces.add(`${p.r},${p.c}`);
@@ -650,8 +654,18 @@
                             }
                         }
                     }
+                } else {
+                    // v63 Landmine Logic: Safe pieces in enemy territory
+                    if (isExcursion && pVal <= 3 && !isChecker) {
+                        landmineCount++;
+                    }
                 }
             });
+
+            // Reward established Landmines (safe from quantum shadows)
+            if (landmineCount > 0) {
+                phScore += (landmineCount * 12000000);
+            }
 
             enP.forEach(p => {
                 if (p.type === 'king') return; 
@@ -666,7 +680,6 @@
                     let primaryAttackerV = primaryAttacker.attackerValue;
                     
                     const pieceTrueValue = baseVal + (p.value * pipVal);
-                    
                     let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
 
                     if (attackers.length > defenders || primaryAttackerV < pVal) {
@@ -681,7 +694,7 @@
             return phScore;
         }
 
-        function heuristic(node, aiOwner, opponentCaptured, startInCheck) {
+        function heuristic(node, aiOwner, opponentCaptured, startInCheck, fullMoveCount) {
             const b = node.board; let score = 0; const myP = [], enP = []; 
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
@@ -692,14 +705,10 @@
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -500000000;
 
-            // v62: Flee vs Swat (Counter-Strike Protocol)
             let currentlyInCheck = getAttackers(myK.r, myK.c, 7, enP, b).length > 0;
             if (startInCheck && !currentlyInCheck) {
-                if (node.captured) {
-                    score += 80000000; // SWATTED the threat! Much better than fleeing.
-                } else {
-                    score += 10000000; // Just fled the check. 
-                }
+                if (node.captured) score += 80000000; 
+                else score += 10000000; 
             }
 
             const baseValue = 25000000;
@@ -711,6 +720,32 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
+            // --- v63 OPENING ARCHITECT (Turns 1 and 2) ---
+            if (fullMoveCount <= 2) {
+                const forwardDir = (aiOwner === 'white') ? -1 : 1;
+                const isKingOnBaseRow = (aiOwner === 'white' && myK.r === BOARD_SIZE - 1) || (aiOwner === 'black' && myK.r === 0);
+                
+                // 1. The Remora Fish
+                let remoraCount = 0;
+                const remoraSquares = [ {r: myK.r + forwardDir, c: myK.c - 1}, {r: myK.r + forwardDir, c: myK.c}, {r: myK.r + forwardDir, c: myK.c + 1} ];
+                remoraSquares.forEach(sq => {
+                    if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE && b[sq.r][sq.c] && b[sq.r][sq.c].owner === aiOwner) {
+                        remoraCount++;
+                    }
+                });
+                score += (remoraCount * 5000000);
+
+                // 2. The Cave (Inverted U)
+                if (isKingOnBaseRow) {
+                    const leftFlank = (myK.c - 1 >= 0) ? b[myK.r][myK.c - 1] : null;
+                    const rightFlank = (myK.c + 1 < BOARD_SIZE) ? b[myK.r][myK.c + 1] : null;
+                    if (leftFlank && leftFlank.owner === aiOwner && rightFlank && rightFlank.owner === aiOwner && remoraCount >= 2) {
+                        score += 20000000; // Massive reward for sealing The Cave
+                        if (aiOwner === 'black' && window.updateLogForCave) window.updateLogForCave();
+                    }
+                }
+            }
+            
             let KSM = 0;
             let shieldCount = 0;
             let threatCount = 0;
@@ -725,78 +760,62 @@
                 }
             });
 
-            if (threatCount >= 3) {
-                KSM -= (threatCount * 10000000);
-            }
+            if (threatCount >= 3) KSM -= (threatCount * 10000000);
 
+            // v63: Disable Glacier if board is open (Turn > 2)
             if (BOARD_SIZE === 10) {
                 const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
                 const isKingSafe = getAttackers(myK.r, myK.c, 7, enP, b).length === 0;
 
                 if (kingAdvance === 1 || kingAdvance === 2) {
-                    if (isKingSafe && threatCount <= 2 && shieldCount >= 2) {
-                        score += (kingAdvance * 8000000); 
+                    if (fullMoveCount <= 2 && isKingSafe && threatCount <= 2 && shieldCount >= 2) {
+                        score += (kingAdvance * 8000000); // Glacier reward
                     } else {
-                        score -= 15000000; 
+                        score -= 15000000; // Punish late or naked Glacier
                     }
                 } else if (kingAdvance > 2) {
                     score -= (kingAdvance * 20000000); 
                 }
-            } else {
-                const kingAdvance = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : (myK.r);
-                if (kingAdvance > 0) score -= (kingAdvance * 20000000); 
-                else score += 5000000; 
-                
-                const forwardDir = (aiOwner === 'white') ? -1 : 1;
-                const remoraSquares = [
-                    {r: myK.r + forwardDir, c: myK.c - 1},
-                    {r: myK.r + forwardDir, c: myK.c},
-                    {r: myK.r + forwardDir, c: myK.c + 1}
-                ];
-                
-                remoraSquares.forEach(sq => {
-                    if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE) {
-                        const p = b[sq.r][sq.c];
-                        if (p && p.owner === aiOwner) score += 3000000; 
-                        else {
-                            if (currentlyInCheck) score -= 25000000; 
-                            else score -= 1000000; 
-                        }
-                    }
-                });
             }
 
             score += KSM;
 
             const diff = myP.length - enP.length;
-            score += evaluateTensions(b, aiOwner, myP, enP, diff);
+            score += evaluateTensions(b, aiOwner, myP, enP, diff, node.captured);
 
             if (opponentCaptured) {
                 if (node.captured) score += 300000000; 
                 else score -= 300000000;
             }
 
-            // v62: The AP-Starvation Master Protocol
             let enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
             if (enemyCheckers.length > 0) {
-                score += 50000000; // Base reward for checking the enemy (AP Bankruptcy)
-                
-                // Double Check Check
-                if (enemyCheckers.length > 1) {
-                    score += 100000000; // Massive reward for Double Check
-                    if (aiOwner === 'black' && window.updateLogForDoubleCheck) window.updateLogForDoubleCheck();
-                }
-
-                // Phantom Fork Check
-                let loosePiecesThreatened = 0;
-                enP.forEach(ep => {
-                    if (ep.type === 'king') return;
-                    let epAttackers = getAttackers(ep.r, ep.c, ep.value, myP, b);
-                    if (epAttackers.length > 0) loosePiecesThreatened++;
+                // Determine if this is a Kamikaze Check
+                let isKamikaze = false;
+                enemyCheckers.forEach(c => {
+                    let cAttackersFromEnemy = getAttackers(c.r, c.c, c.attackerValue, enP, b).length;
+                    let cDefendersFromMe = getAttackers(c.r, c.c, c.attackerValue, myP, b).length;
+                    if (cAttackersFromEnemy > cDefendersFromMe) isKamikaze = true;
                 });
-                
-                if (loosePiecesThreatened > 0) {
-                    score += 40000000 * loosePiecesThreatened; // Phantom Fork Reward
+
+                // Only reward AP-Starvation heavily if it's NOT a Kamikaze OR if it resulted in a capture
+                if (!isKamikaze || node.captured) {
+                    score += 50000000; 
+                    
+                    if (enemyCheckers.length > 1) {
+                        score += 100000000; // Double check
+                    }
+
+                    let loosePiecesThreatened = 0;
+                    enP.forEach(ep => {
+                        if (ep.type === 'king') return;
+                        let epAttackers = getAttackers(ep.r, ep.c, ep.value, myP, b);
+                        if (epAttackers.length > 0) loosePiecesThreatened++;
+                    });
+                    
+                    if (loosePiecesThreatened > 0) {
+                        score += 40000000 * loosePiecesThreatened; // Phantom Fork Reward
+                    }
                 }
             }
 
@@ -828,31 +847,33 @@
             if (strengthSetting === 'medium') { baseWidth = 12000; kickWidth = 15000; }
             else if (strengthSetting === 'strong') { baseWidth = 20000; kickWidth = 30000; }
 
-            const targetWidth = (isBehindInMaterial || startInCheck) ? kickWidth : baseWidth;
+            // v63: ABSOLUTE PANIC OVERRIDE
+            const targetWidth = isBehindInMaterial ? 30000 : (startInCheck ? kickWidth : baseWidth);
             const opponentCaptured = didOpponentJustCapture(turn);
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v62): Width ${targetWidth}...`;
-            if (targetWidth === kickWidth) statusText = `PH ENGINE (v62): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            if (opponentCaptured) statusText = `PH ENGINE (v62): MRP Active! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v63): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v63): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v63): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v63): MRP Active! Width ${targetWidth}...`;
             
-            let didDoubleCheckLog = false;
-            window.updateLogForDoubleCheck = () => { didDoubleCheckLog = true; };
+            let didLogCave = false;
+            window.updateLogForCave = () => { didLogCave = true; };
 
-            log(statusText, targetWidth === kickWidth ? "text-red-400 italic font-bold uppercase" : "text-slate-500 italic uppercase");
+            log(statusText, targetWidth === 30000 && isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
-            let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck);
+            let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount);
 
             if(!bestTurn || bestTurn.h <= -600000000) {
                 log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
             }
             
-            if (didDoubleCheckLog) {
-                log("PH ENGINE (v62): AP-STARVATION PROTOCOL INITIATED.", "text-purple-400 font-black italic uppercase");
+            if (didLogCave && fullMoveCount <= 2) {
+                log("PH ENGINE (v63): THE CAVE BUNKER ESTABLISHED.", "text-emerald-400 font-black italic uppercase");
             }
 
             for(let a of bestTurn.actions) {
@@ -864,7 +885,7 @@
             aiThinking = false; if(turn === 'black') endTurn(); render();
         }
 
-        async function performSearchAsync(root, width, aiOwner, opponentCaptured, startInCheck) {
+        async function performSearchAsync(root, width, aiOwner, opponentCaptured, startInCheck, fullMoveCount) {
             let beam = [root];
             for(let step=0; step<6; step++) {
                 let next = [];
@@ -897,7 +918,7 @@
                     }
                 }
                 if(next.length === 0) break;
-                next.forEach(n => n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck));
+                next.forEach(n => n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount));
                 next.sort((a,b) => b.h - a.h);
                 beam = next.slice(0, width); 
                 await new Promise(r => setTimeout(r, 1));
@@ -1012,7 +1033,7 @@
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE); };
 
-        initGame(10);
+        initGame(9);
         checkSavedGame();
     </script>
 </body>
