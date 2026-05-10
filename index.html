@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: UI Fixed, Anti-Crash Memory Matrix & Strict Remora AI</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: Quantum Tension Analysis Active</p>
                 </div>
             </div>
 
@@ -618,12 +618,22 @@
 
             if (enemyInCheck) {
                 enemyCheckers.forEach(c => {
-                    let cAttackersFromEnemy = getAttackers(c.r, c.c, c.attackerValue, enP, b).length;
-                    let cDefendersFromMe = getAttackers(c.r, c.c, c.attackerValue, myP, b).length;
-                    if (cDefendersFromMe >= cAttackersFromEnemy || cAttackersFromEnemy === 0) {
-                        safeCheckers++;
+                    let cAttackersFromEnemy = getAttackers(c.r, c.c, c.value, enP, b);
+                    if (cAttackersFromEnemy.length > 0) {
+                        cAttackersFromEnemy.sort((a,b) => a.attackerValue - b.attackerValue);
+                        let primaryClearer = cAttackersFromEnemy[0];
+                        
+                        // Quantum Tension Analysis: Enemy drops value with remaining AP
+                        let postCaptureClearerVal = Math.max(1, primaryClearer.attackerValue - (6 - primaryClearer.apCost));
+                        let cDefendersFromMe = getAttackers(c.r, c.c, postCaptureClearerVal, myP, b).length;
+                        
+                        if (cDefendersFromMe >= cAttackersFromEnemy.length) {
+                            safeCheckers++;
+                        } else {
+                            unsafeCheckers++;
+                        }
                     } else {
-                        unsafeCheckers++;
+                        safeCheckers++;
                     }
                 });
                 
@@ -648,8 +658,12 @@
                         phScore -= 1000000000; 
                     } else {
                         attackers.sort((a,b) => a.attackerValue - b.attackerValue);
-                        let primaryAttackerV = attackers[0].attackerValue;
-                        let defenders = getAttackers(p.r, p.c, primaryAttackerV, myP, b).length;
+                        let primaryAttacker = attackers[0];
+                        let primaryAttackerV = primaryAttacker.attackerValue;
+                        
+                        // Quantum Tension Analysis: Simulate attacker dropping its value
+                        let postCaptureValue = Math.max(1, primaryAttackerV - (6 - primaryAttacker.apCost));
+                        let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b).length;
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
@@ -682,9 +696,12 @@
                     let primaryAttacker = attackers[0];
                     let primaryAttackerV = primaryAttacker.attackerValue;
                     
-                    const pieceTrueValue = baseVal + (p.value * pipVal);
-                    let defenders = getAttackers(p.r, p.c, primaryAttackerV, enP, b).length;
+                    // Quantum Tension Analysis: Simulate attacker dropping its value
+                    let postCaptureValue = Math.max(1, primaryAttackerV - (6 - primaryAttacker.apCost));
+                    let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b).length;
 
+                    const pieceTrueValue = baseVal + (p.value * pipVal);
+                    
                     if (attackers.length > defenders || primaryAttackerV < pVal) {
                         phScore += pieceTrueValue * 3.0; 
                     } else {
