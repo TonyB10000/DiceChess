@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: UI De-Duplication Fix & Strict Remora AI</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: UI Fixed, Anti-Crash Memory Matrix & Strict Remora AI</p>
                 </div>
             </div>
 
@@ -370,7 +370,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v66 Init. Structural Bugs Fixed.`, "text-blue-400 font-black uppercase");
+            if (isReset) log(`v66 Init. Anti-Crash Matrix Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -580,7 +580,7 @@
                 if (!clear) continue;
 
                 if (p.type === 'king') {
-                    if (dist === 1) attackers.push({ ...p, attackerValue: 7, apCost: 5 });
+                    if (dist === 1) attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: 7, apCost: 5 });
                 } else {
                     let minCost = Infinity;
                     let bestVal = -1;
@@ -593,7 +593,7 @@
                         }
                     }
                     if (minCost <= 6) {
-                        attackers.push({ ...p, attackerValue: bestVal, apCost: minCost });
+                        attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: bestVal, apCost: minCost });
                     }
                 }
             }
@@ -654,12 +654,12 @@
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
                         if (pVal === 1 && defenders < attackers.length) {
-                            phScore -= 45000000; myDeadPieces.add(`${p.r},${p.c}`);
+                            phScore -= 45000000; myDeadPieces.add(p.r * 100 + p.c);
                         } else if (defenders < attackers.length) {
                             const penaltyMult = (isBehind && pVal !== 1) ? 4.0 : (pVal === 1 ? 1.0 : 2.5); 
                             phScore -= pieceTrueValue * penaltyMult; 
                             if (isExcursion && pVal > 1) phScore -= 80000000; 
-                            myDeadPieces.add(`${p.r},${p.c}`); 
+                            myDeadPieces.add(p.r * 100 + p.c); 
                         } else {
                             if (isBehind) phScore -= 2000000; else phScore -= 100000; 
                         }
@@ -675,7 +675,7 @@
                 if (p.type === 'king') return; 
                 const pVal = p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, myP, b);
-                attackers = attackers.filter(a => !myDeadPieces.has(`${a.r},${a.c}`));
+                attackers = attackers.filter(a => !myDeadPieces.has(a.r * 100 + a.c));
                 
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
@@ -844,20 +844,43 @@
             aiThinking = false; if(turn === 'black') endTurn(); render();
         }
 
+        // Fast board copy to prevent CPU overload & Garbage Collection stutter
+        function copyBoardFast(b) {
+            let nb = new Array(BOARD_SIZE);
+            for(let r=0; r<BOARD_SIZE; r++) {
+                nb[r] = new Array(BOARD_SIZE);
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    nb[r][c] = p ? { type: p.type, value: p.value, owner: p.owner } : null;
+                }
+            }
+            return nb;
+        }
+
         async function performSearchAsync(root, width, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial) {
             let beam = [root];
             for(let step=0; step<6; step++) {
                 let next = [];
+                let lastYield = performance.now();
+                
                 for(let node of beam) {
+                    // Yield to browser every 40ms to prevent "Page Unresponsive" freezing
+                    if (performance.now() - lastYield > 40) {
+                        await new Promise(r => setTimeout(r, 0));
+                        lastYield = performance.now();
+                    }
+
                     if(node.ap === 0) { next.push(node); continue; }
                     const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
-                    if (asPass) next.push({ ...node, ap: 0 });
+                    if (asPass) next.push({ board: node.board, ap: 0, actions: node.actions, captured: node.captured, startScore: node.startScore });
+                    
                     const myP = [];
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
+                    
                     for(let p of myP) {
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
-                            if(p.value < 6) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value++; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
-                            if(p.value > 1) { let nb = JSON.parse(JSON.stringify(node.board)); nb[p.r][p.c].value--; next.push({...node, board: nb, ap: node.ap-1, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
+                            if(p.value < 6) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value++; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
+                            if(p.value > 1) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value--; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
                         }
                         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
                         for(let d of dirs) {
@@ -868,19 +891,25 @@
                                 if(!v.valid) { if(node.board[tr][tc]) break; continue; }
                                 const cost = node.board[tr][tc] ? 5 : 3;
                                 if(node.ap >= cost) {
-                                    let nb = JSON.parse(JSON.stringify(node.board)); nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
-                                    next.push({ ...node, board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
+                                    let nb = copyBoardFast(node.board); nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
+                                    next.push({ board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], startScore: node.startScore, actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
                                 }
                                 if(node.board[tr][tc]) break;
                             }
                         }
                     }
+                    
+                    // Periodic memory pruning to prevent Chrome "Aw Snap" (Out of Memory) crash
+                    if (next.length > width * 1.5) {
+                        next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial); });
+                        next.sort((a,b) => b.h - a.h);
+                        next = next.slice(0, width);
+                    }
                 }
                 if(next.length === 0) break;
-                next.forEach(n => n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial));
+                next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial); });
                 next.sort((a,b) => b.h - a.h);
                 beam = next.slice(0, width); 
-                await new Promise(r => setTimeout(r, 1));
             }
             const legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
             return legal.length > 0 ? legal[0] : null;
