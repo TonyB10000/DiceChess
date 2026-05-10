@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: Quantum Tension Analysis Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: Grandmaster Tension Array & Ghost Pins</p>
                 </div>
             </div>
 
@@ -173,7 +173,6 @@
                     <button id="new-game-btn" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-[9px] font-black text-slate-500 hover:text-white uppercase transition-all">New Game</button>
                 </div>
                 
-                <!-- Social & Support Links Restored -->
                 <div class="mt-1 flex justify-center gap-1.5">
                     <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-blue-900/30 hover:bg-blue-800/50 border border-blue-800/50 rounded text-[9px] font-black text-blue-400 hover:text-white uppercase transition-all flex items-center gap-1">
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Group
@@ -189,7 +188,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -370,7 +368,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v66 Init. Anti-Crash Matrix Active.`, "text-blue-400 font-black uppercase");
+            if (isReset) log(`v66 Init. Advanced Tensor Engine Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -567,6 +565,33 @@
             return false;
         }
 
+        // --- V66 IMPROVEMENT 3: GHOST PINS (X-RAY TENSION) ---
+        function getGhostAttackers(kR, kC, potentialAttackers, b) {
+            let ghosts = 0;
+            for (let p of potentialAttackers) {
+                if (p.type === 'king') continue;
+                const dr = Math.abs(kR - p.r), dc = Math.abs(kC - p.c), dist = Math.max(dr, dc);
+                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
+                
+                let blockers = 0;
+                const sr = (kR - p.r) === 0 ? 0 : (kR - p.r) / dist, sc = (kC - p.c) === 0 ? 0 : (kC - p.c) / dist;
+                for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) blockers++;
+                
+                if (blockers === 1) {
+                    let minCost = Infinity;
+                    for (let mod = -5; mod <= 5; mod++) {
+                        let val = p.value + mod;
+                        if (val >= dist && (val === 1 || val >= 7)) {
+                            let cost = 5 + Math.abs(mod);
+                            if (cost <= 6) minCost = Math.min(minCost, cost);
+                        }
+                    }
+                    if (minCost <= 6) ghosts++;
+                }
+            }
+            return ghosts;
+        }
+
         function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
             let attackers = [];
             for (let p of potentialAttackers) {
@@ -616,6 +641,10 @@
             let safeCheckers = 0;
             let unsafeCheckers = 0;
 
+            // --- V66 IMPROVEMENT 2: DEFENDER ALLOCATION ARRAY ---
+            let myDefenderUsage = {};
+            let enDefenderUsage = {};
+
             if (enemyInCheck) {
                 enemyCheckers.forEach(c => {
                     let cAttackersFromEnemy = getAttackers(c.r, c.c, c.value, enP, b);
@@ -623,11 +652,13 @@
                         cAttackersFromEnemy.sort((a,b) => a.attackerValue - b.attackerValue);
                         let primaryClearer = cAttackersFromEnemy[0];
                         
-                        // Quantum Tension Analysis: Enemy drops value with remaining AP
                         let postCaptureClearerVal = Math.max(1, primaryClearer.attackerValue - (6 - primaryClearer.apCost));
-                        let cDefendersFromMe = getAttackers(c.r, c.c, postCaptureClearerVal, myP, b).length;
+                        let cDefendersFromMe = getAttackers(c.r, c.c, postCaptureClearerVal, myP, b);
                         
-                        if (cDefendersFromMe >= cAttackersFromEnemy.length) {
+                        cDefendersFromMe.forEach(d => { let k = d.r*100+d.c; myDefenderUsage[k] = (myDefenderUsage[k] || 0) + 1; });
+
+                        // --- V66 IMPROVEMENT 1: MULTI-ATTACKER STACK ---
+                        if (cDefendersFromMe.length >= cAttackersFromEnemy.length) {
                             safeCheckers++;
                         } else {
                             unsafeCheckers++;
@@ -661,15 +692,16 @@
                         let primaryAttacker = attackers[0];
                         let primaryAttackerV = primaryAttacker.attackerValue;
                         
-                        // Quantum Tension Analysis: Simulate attacker dropping its value
                         let postCaptureValue = Math.max(1, primaryAttackerV - (6 - primaryAttacker.apCost));
-                        let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b).length;
+                        let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b);
+                        
+                        defenders.forEach(d => { let k = d.r*100+d.c; myDefenderUsage[k] = (myDefenderUsage[k] || 0) + 1; });
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
-                        if (pVal === 1 && defenders < attackers.length) {
+                        if (pVal === 1 && defenders.length < attackers.length) {
                             phScore -= 45000000; myDeadPieces.add(p.r * 100 + p.c);
-                        } else if (defenders < attackers.length) {
+                        } else if (defenders.length < attackers.length) {
                             const penaltyMult = (isBehind && pVal !== 1) ? 4.0 : (pVal === 1 ? 1.0 : 2.5); 
                             phScore -= pieceTrueValue * penaltyMult; 
                             if (isExcursion && pVal > 1) phScore -= 80000000; 
@@ -696,19 +728,28 @@
                     let primaryAttacker = attackers[0];
                     let primaryAttackerV = primaryAttacker.attackerValue;
                     
-                    // Quantum Tension Analysis: Simulate attacker dropping its value
                     let postCaptureValue = Math.max(1, primaryAttackerV - (6 - primaryAttacker.apCost));
-                    let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b).length;
+                    let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b);
+
+                    defenders.forEach(d => { let k = d.r*100+d.c; enDefenderUsage[k] = (enDefenderUsage[k] || 0) + 1; });
 
                     const pieceTrueValue = baseVal + (p.value * pipVal);
                     
-                    if (attackers.length > defenders || primaryAttackerV < pVal) {
+                    if (attackers.length > defenders.length || primaryAttackerV < pVal) {
                         phScore += pieceTrueValue * 3.0; 
                     } else {
                         if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
                     }
                 }
             });
+
+            // APPLY OVERLOADED DEFENDER PENALTIES
+            for (let k in myDefenderUsage) {
+                if (myDefenderUsage[k] > 1) phScore -= 10000000 * (myDefenderUsage[k] - 1);
+            }
+            for (let k in enDefenderUsage) {
+                if (enDefenderUsage[k] > 1) phScore += 10000000 * (enDefenderUsage[k] - 1);
+            }
 
             return phScore;
         }
@@ -748,19 +789,24 @@
                 }
             });
             
-            // --- v66 Strict Remora Enforcement ---
+            // --- V66 Ghost Pins Check (Chapter 15) ---
+            let myGhostPins = getGhostAttackers(myK.r, myK.c, enP, b);
+            score -= myGhostPins * 30000000;
+            
+            let enGhostPins = getGhostAttackers(enK.r, enK.c, myP, b);
+            score += enGhostPins * 30000000;
+
+            // Strict Remora Enforcement
             if (isKingOnBaseRow && fullMoveCount <= 10) {
                 if (remoraCount < 3) {
-                    // Massive penalty if ANY of the 3 Remora pieces are missing at the end of the turn
                     score -= 50000000 * (3 - remoraCount); 
                 } else {
-                    score += 20000000; // Bonus for keeping it intact
+                    score += 20000000; 
                     const leftFlank = (myK.c - 1 >= 0) ? b[myK.r][myK.c - 1] : null;
                     const rightFlank = (myK.c + 1 < BOARD_SIZE) ? b[myK.r][myK.c + 1] : null;
                     if (leftFlank && leftFlank.owner === aiOwner && rightFlank && rightFlank.owner === aiOwner) score += 10000000;
                 }
             } else if (isKingOnBaseRow && fullMoveCount > 10) {
-                // After opening, transition to KSM/Node logic. Still values Remora, but less absolutely
                 score += (remoraCount * 5000000);
             }
             
