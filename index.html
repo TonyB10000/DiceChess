@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v66 - Tony Berard</title>
+    <title>Dice Chess Ultra v67 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v66</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v67</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v66: Grandmaster Tension Array & Ghost Pins</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v67: Quiescence Search & Paranoia Fix Active</p>
                 </div>
             </div>
 
@@ -172,22 +172,11 @@
                 <div class="mt-1 flex justify-center">
                     <button id="new-game-btn" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-[9px] font-black text-slate-500 hover:text-white uppercase transition-all">New Game</button>
                 </div>
-                
-                <div class="mt-1 flex justify-center gap-1.5">
-                    <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-blue-900/30 hover:bg-blue-800/50 border border-blue-800/50 rounded text-[9px] font-black text-blue-400 hover:text-white uppercase transition-all flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Group
-                    </a>
-                    <a href="https://www.youtube.com/@TranscendentThinking1" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-red-900/30 hover:bg-red-800/50 border border-red-800/50 rounded text-[9px] font-black text-red-400 hover:text-white uppercase transition-all flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> YT
-                    </a>
-                    <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-900/30 hover:bg-emerald-800/50 border border-emerald-800/50 rounded text-[9px] font-black text-emerald-400 hover:text-white uppercase transition-all flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Support
-                    </a>
-                </div>
             </div>
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -316,7 +305,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV66';
+        const SAVE_KEY = 'diceChessUltraV67';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -368,7 +357,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v66 Init. Advanced Tensor Engine Active.`, "text-blue-400 font-black uppercase");
+            if (isReset) log(`v67 Init. Q-Search Horizon Fix Active.`, "text-blue-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -565,7 +554,6 @@
             return false;
         }
 
-        // --- V66 IMPROVEMENT 3: GHOST PINS (X-RAY TENSION) ---
         function getGhostAttackers(kR, kC, potentialAttackers, b) {
             let ghosts = 0;
             for (let p of potentialAttackers) {
@@ -625,6 +613,42 @@
             return attackers;
         }
 
+        // --- V67: TRUE QUIESCENCE EVALUATION (Static Exchange Penalty) ---
+        function quiescencePenalty(b, aiOwner) {
+            let maxLoss = 0;
+            const myP = [], enP = [];
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    if(b[r][c]) {
+                        if(b[r][c].owner === aiOwner) myP.push({r,c,...b[r][c]});
+                        else enP.push({r,c,...b[r][c]});
+                    }
+                }
+            }
+
+            for (let p of myP) {
+                let attackers = getAttackers(p.r, p.c, p.type === 'king' ? 7 : p.value, enP, b);
+                if (attackers.length > 0) {
+                    if (p.type === 'king') return 1000000000; // Cure for the Horizon Snipe
+                    
+                    attackers.sort((a,b) => a.attackerValue - b.attackerValue);
+                    let primary = attackers[0];
+                    let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
+                    let pieceVal = 25000000 + (p.value * 1000000);
+                    
+                    let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
+                    if (defenders.length === 0) {
+                        maxLoss = Math.max(maxLoss, pieceVal);
+                    } else {
+                        let enemyLoss = 25000000 + (primary.value * 1000000);
+                        let netLoss = pieceVal - enemyLoss;
+                        if (netLoss > 0) maxLoss = Math.max(maxLoss, netLoss);
+                    }
+                }
+            }
+            return maxLoss;
+        }
+
         function evaluateTensions(b, aiOwner, myP, enP, diff, nodeCaptured) {
             let phScore = 0;
             const isBehind = diff < 0;
@@ -633,44 +657,29 @@
 
             const enK = enP.find(p => p.type === 'king');
             let enemyCheckers = [];
-            if (enK) {
-                enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
-            }
+            if (enK) { enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b); }
             const enemyInCheck = enemyCheckers.length > 0;
             
-            let safeCheckers = 0;
-            let unsafeCheckers = 0;
-
-            // --- V66 IMPROVEMENT 2: DEFENDER ALLOCATION ARRAY ---
             let myDefenderUsage = {};
             let enDefenderUsage = {};
 
             if (enemyInCheck) {
+                let unsafeCheckers = 0;
                 enemyCheckers.forEach(c => {
                     let cAttackersFromEnemy = getAttackers(c.r, c.c, c.value, enP, b);
                     if (cAttackersFromEnemy.length > 0) {
                         cAttackersFromEnemy.sort((a,b) => a.attackerValue - b.attackerValue);
                         let primaryClearer = cAttackersFromEnemy[0];
-                        
                         let postCaptureClearerVal = Math.max(1, primaryClearer.attackerValue - (6 - primaryClearer.apCost));
                         let cDefendersFromMe = getAttackers(c.r, c.c, postCaptureClearerVal, myP, b);
-                        
                         cDefendersFromMe.forEach(d => { let k = d.r*100+d.c; myDefenderUsage[k] = (myDefenderUsage[k] || 0) + 1; });
 
-                        // --- V66 IMPROVEMENT 1: MULTI-ATTACKER STACK ---
-                        if (cDefendersFromMe.length >= cAttackersFromEnemy.length) {
-                            safeCheckers++;
-                        } else {
-                            unsafeCheckers++;
-                        }
-                    } else {
-                        safeCheckers++;
+                        if (cDefendersFromMe.length < cAttackersFromEnemy.length) unsafeCheckers++;
                     }
                 });
-                
                 if (unsafeCheckers > 0) {
                     if (nodeCaptured) phScore -= 5000000 * unsafeCheckers; 
-                    else phScore -= 50000000 * unsafeCheckers; 
+                    else phScore -= 20000000 * unsafeCheckers; // Reduced to balance Q-Search
                 }
             }
 
@@ -690,21 +699,17 @@
                     } else {
                         attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                         let primaryAttacker = attackers[0];
-                        let primaryAttackerV = primaryAttacker.attackerValue;
-                        
-                        let postCaptureValue = Math.max(1, primaryAttackerV - (6 - primaryAttacker.apCost));
+                        let postCaptureValue = Math.max(1, primaryAttacker.attackerValue - (6 - primaryAttacker.apCost));
                         let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b);
-                        
                         defenders.forEach(d => { let k = d.r*100+d.c; myDefenderUsage[k] = (myDefenderUsage[k] || 0) + 1; });
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
-                        if (pVal === 1 && defenders.length < attackers.length) {
-                            phScore -= 45000000; myDeadPieces.add(p.r * 100 + p.c);
-                        } else if (defenders.length < attackers.length) {
-                            const penaltyMult = (isBehind && pVal !== 1) ? 4.0 : (pVal === 1 ? 1.0 : 2.5); 
+                        if (defenders.length < attackers.length) {
+                            // V67 Paranoia Cure: Reduced multipliers so AI doesn't flee unnecessarily
+                            const penaltyMult = (isBehind && pVal !== 1) ? 1.5 : 1.1; 
                             phScore -= pieceTrueValue * penaltyMult; 
-                            if (isExcursion && pVal > 1) phScore -= 80000000; 
+                            if (isExcursion && pVal > 1) phScore -= 10000000; // Significantly reduced from 80M
                             myDeadPieces.add(p.r * 100 + p.c); 
                         } else {
                             if (isBehind) phScore -= 2000000; else phScore -= 100000; 
@@ -726,30 +731,23 @@
                 if (attackers.length > 0) {
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primaryAttacker = attackers[0];
-                    let primaryAttackerV = primaryAttacker.attackerValue;
-                    
-                    let postCaptureValue = Math.max(1, primaryAttackerV - (6 - primaryAttacker.apCost));
+                    let postCaptureValue = Math.max(1, primaryAttacker.attackerValue - (6 - primaryAttacker.apCost));
                     let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b);
 
                     defenders.forEach(d => { let k = d.r*100+d.c; enDefenderUsage[k] = (enDefenderUsage[k] || 0) + 1; });
 
                     const pieceTrueValue = baseVal + (p.value * pipVal);
                     
-                    if (attackers.length > defenders.length || primaryAttackerV < pVal) {
-                        phScore += pieceTrueValue * 3.0; 
+                    if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
+                        phScore += pieceTrueValue * 1.0; // Normalized weight
                     } else {
                         if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
                     }
                 }
             });
 
-            // APPLY OVERLOADED DEFENDER PENALTIES
-            for (let k in myDefenderUsage) {
-                if (myDefenderUsage[k] > 1) phScore -= 10000000 * (myDefenderUsage[k] - 1);
-            }
-            for (let k in enDefenderUsage) {
-                if (enDefenderUsage[k] > 1) phScore += 10000000 * (enDefenderUsage[k] - 1);
-            }
+            for (let k in myDefenderUsage) if (myDefenderUsage[k] > 1) phScore -= 10000000 * (myDefenderUsage[k] - 1);
+            for (let k in enDefenderUsage) if (enDefenderUsage[k] > 1) phScore += 10000000 * (enDefenderUsage[k] - 1);
 
             return phScore;
         }
@@ -773,7 +771,6 @@
             enP.forEach(p => { enMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') enPhysicalCount++; });
             
             const diffPhysical = myPhysicalCount - enPhysicalCount;
-            const isCurrentlyBehind = diffPhysical < 0;
 
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
@@ -784,41 +781,30 @@
             let remoraCount = 0;
             const remoraSquares = [ {r: myK.r + forwardDir, c: myK.c - 1}, {r: myK.r + forwardDir, c: myK.c}, {r: myK.r + forwardDir, c: myK.c + 1} ];
             remoraSquares.forEach(sq => { 
-                if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE && b[sq.r][sq.c] && b[sq.r][sq.c].owner === aiOwner) {
-                    remoraCount++; 
-                }
+                if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE && b[sq.r][sq.c] && b[sq.r][sq.c].owner === aiOwner) remoraCount++; 
             });
             
-            // --- V66 Ghost Pins Check (Chapter 15) ---
             let myGhostPins = getGhostAttackers(myK.r, myK.c, enP, b);
             score -= myGhostPins * 30000000;
-            
             let enGhostPins = getGhostAttackers(enK.r, enK.c, myP, b);
             score += enGhostPins * 30000000;
 
-            // Strict Remora Enforcement
             if (isKingOnBaseRow && fullMoveCount <= 10) {
-                if (remoraCount < 3) {
-                    score -= 50000000 * (3 - remoraCount); 
-                } else {
+                if (remoraCount < 3) { score -= 50000000 * (3 - remoraCount); } 
+                else {
                     score += 20000000; 
                     const leftFlank = (myK.c - 1 >= 0) ? b[myK.r][myK.c - 1] : null;
                     const rightFlank = (myK.c + 1 < BOARD_SIZE) ? b[myK.r][myK.c + 1] : null;
                     if (leftFlank && leftFlank.owner === aiOwner && rightFlank && rightFlank.owner === aiOwner) score += 10000000;
                 }
-            } else if (isKingOnBaseRow && fullMoveCount > 10) {
-                score += (remoraCount * 5000000);
-            }
+            } else if (isKingOnBaseRow && fullMoveCount > 10) { score += (remoraCount * 5000000); }
             
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
 
             if (opponentCaptured) {
                 if (node.captured) {
-                    if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) {
-                        score -= 50000000;
-                    } else {
-                        score += 300000000; 
-                    }
+                    if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000;
+                    else score += 300000000; 
                 } else {
                     score -= 300000000;
                 }
@@ -828,33 +814,25 @@
             if (enemyCheckers.length > 0) {
                 let isKamikaze = false;
                 enemyCheckers.forEach(c => {
-                    let cAttackersFromEnemy = getAttackers(c.r, c.c, c.attackerValue, enP, b).length;
-                    let cDefendersFromMe = getAttackers(c.r, c.c, c.attackerValue, myP, b).length;
-                    if (cAttackersFromEnemy > cDefendersFromMe) isKamikaze = true;
+                    if (getAttackers(c.r, c.c, c.attackerValue, enP, b).length > getAttackers(c.r, c.c, c.attackerValue, myP, b).length) isKamikaze = true;
                 });
 
                 if (!isKamikaze || node.captured) {
                     if (enemyCheckers.length >= 2) {
                         let asDiff = calcAS(b, aiOwner) - calcAS(b, turn === 'white' ? 'black' : 'white');
-                        if (diffPhysical >= 1) {
-                            score += 400000000; 
-                        } else if (diffPhysical === 0) {
-                            if (asDiff > 0) score += 250000000; else score -= 100000000;
-                        } else {
-                            if (asDiff > 5) score += 50000000; else score -= 200000000;
-                        }
+                        if (diffPhysical >= 1) score += 400000000; 
+                        else if (diffPhysical === 0) { if (asDiff > 0) score += 250000000; else score -= 100000000; } 
+                        else { if (asDiff > 5) score += 50000000; else score -= 200000000; }
                     } else {
                         score += 50000000; 
                     }
                 }
             }
-
             return score;
         }
 
         async function runAI() {
-            let myPhysicalCount = 0, enPhysicalCount = 0;
-            let myK = null;
+            let myPhysicalCount = 0, enPhysicalCount = 0, myK = null;
             const myP = [], enP = [];
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
@@ -883,17 +861,18 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v66): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v66): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v66): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v66): MRP Active! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v67): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v67): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v67): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v67): MRP Active! Width ${targetWidth}...`;
 
             log(statusText, targetWidth === 30000 && isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
 
-            if(!bestTurn || bestTurn.h <= -600000000) {
+            // V67 FIX: Checking finalScore instead of h to ensure Q-Penalty triggers resignations
+            if(!bestTurn || bestTurn.finalScore <= -600000000) {
                 log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
             }
@@ -907,7 +886,6 @@
             aiThinking = false; if(turn === 'black') endTurn(); render();
         }
 
-        // Fast board copy to prevent CPU overload & Garbage Collection stutter
         function copyBoardFast(b) {
             let nb = new Array(BOARD_SIZE);
             for(let r=0; r<BOARD_SIZE; r++) {
@@ -927,11 +905,7 @@
                 let lastYield = performance.now();
                 
                 for(let node of beam) {
-                    // Yield to browser every 40ms to prevent "Page Unresponsive" freezing
-                    if (performance.now() - lastYield > 40) {
-                        await new Promise(r => setTimeout(r, 0));
-                        lastYield = performance.now();
-                    }
+                    if (performance.now() - lastYield > 40) { await new Promise(r => setTimeout(r, 0)); lastYield = performance.now(); }
 
                     if(node.ap === 0) { next.push(node); continue; }
                     const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
@@ -961,8 +935,6 @@
                             }
                         }
                     }
-                    
-                    // Periodic memory pruning to prevent Chrome "Aw Snap" (Out of Memory) crash
                     if (next.length > width * 1.5) {
                         next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial); });
                         next.sort((a,b) => b.h - a.h);
@@ -974,11 +946,24 @@
                 next.sort((a,b) => b.h - a.h);
                 beam = next.slice(0, width); 
             }
-            const legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
-            return legal.length > 0 ? legal[0] : null;
+            
+            let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
+            
+            // --- V67: QUIESCENCE SEARCH EXECUTION ---
+            if (legal.length > 0) {
+                legal.sort((a,b) => b.h - a.h);
+                let topCandidates = legal.slice(0, Math.min(30, legal.length));
+                for (let c of topCandidates) {
+                    c.qPenalty = quiescencePenalty(c.board, aiOwner);
+                    c.finalScore = c.h - c.qPenalty;
+                }
+                topCandidates.sort((a,b) => b.finalScore - a.finalScore);
+                return topCandidates[0];
+            }
+            return null;
         }
 
-        // --- RESTORED RENDER FUNCTION (What If UI fix) ---
+        // --- RESTORED RENDER & UTILITIES ---
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
@@ -1027,8 +1012,7 @@
             const etb = document.getElementById('end-turn-btn');
             if (currentAP === 0 && !(capturedThisTurn || calcAS(board, turn) > turnStartScore) && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
 
-            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display');
-            const wic = document.getElementById('what-if-controls');
+            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display'), wic = document.getElementById('what-if-controls');
             if (whatIfOriginalSnapshots !== null) {
                 wic.classList.remove('hidden');
                 if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `WHAT IF STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; } 
@@ -1040,15 +1024,13 @@
             }
         }
 
-        // --- RESTORED UTILITIES & EVENT LISTENERS ---
         function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
         
         function getMoveHistoryStr() { 
             let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); 
             if (gameOver) {
                 const wText = document.getElementById('winner-text').innerText;
-                if (wText.includes('WHITE')) str += '\n1-0';
-                else if (wText.includes('BLACK')) str += '\n0-1';
+                if (wText.includes('WHITE')) str += '\n1-0'; else if (wText.includes('BLACK')) str += '\n0-1';
             }
             return str;
         }
