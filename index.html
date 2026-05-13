@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v67 - Tony Berard</title>
+    <title>Dice Chess Ultra v68 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase">Ultra AI v67</span>
+            <span class="bg-red-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v68</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center">v67: Quiescence Search & Paranoia Fix Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-red-400">v68: Vengeance & Cave Logic Active</p>
                 </div>
             </div>
 
@@ -176,7 +176,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -305,7 +304,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV67';
+        const SAVE_KEY = 'diceChessUltraV68';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -357,7 +356,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v67 Init. Q-Search Horizon Fix Active.`, "text-blue-400 font-black uppercase");
+            if (isReset) log(`v68 Init. Vengeance Protocol Active.`, "text-red-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -432,7 +431,7 @@
 
         function validateMove(b, fr, fc, tr, tc, checkAP = false) {
             const p = b[fr][fc]; if(!p) return {valid: false};
-            const dr = Math.abs(tr - fr), dc = Math.abs(tc - fc), dist = Math.max(dr, dc);
+            const dr = Math.abs(tr - fr), dc = Math.abs(tc - tc), dist = Math.max(dr, dc);
             if(dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return {valid: false};
             if(dist > (p.type === 'king' ? 1 : p.value)) return {valid: false};
             const sr = (tr - fr) === 0 ? 0 : (tr - fr) / dist, sc = (tc - fc) === 0 ? 0 : (tc - fc) / dist;
@@ -613,7 +612,6 @@
             return attackers;
         }
 
-        // --- V67: TRUE QUIESCENCE EVALUATION (Static Exchange Penalty) ---
         function quiescencePenalty(b, aiOwner) {
             let maxLoss = 0;
             const myP = [], enP = [];
@@ -629,18 +627,19 @@
             for (let p of myP) {
                 let attackers = getAttackers(p.r, p.c, p.type === 'king' ? 7 : p.value, enP, b);
                 if (attackers.length > 0) {
-                    if (p.type === 'king') return 1000000000; // Cure for the Horizon Snipe
+                    if (p.type === 'king') return 1000000000; 
                     
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primary = attackers[0];
                     let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
-                    let pieceVal = 25000000 + (p.value * 1000000);
+                    // V68: Increase base value to ensure material loss triggers severe Q-Penalty
+                    let pieceVal = 100000000 + (p.value * 1000000); 
                     
                     let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
                     if (defenders.length === 0) {
                         maxLoss = Math.max(maxLoss, pieceVal);
                     } else {
-                        let enemyLoss = 25000000 + (primary.value * 1000000);
+                        let enemyLoss = 100000000 + (primary.value * 1000000);
                         let netLoss = pieceVal - enemyLoss;
                         if (netLoss > 0) maxLoss = Math.max(maxLoss, netLoss);
                     }
@@ -652,7 +651,8 @@
         function evaluateTensions(b, aiOwner, myP, enP, diff, nodeCaptured) {
             let phScore = 0;
             const isBehind = diff < 0;
-            const baseVal = 25000000;
+            // V68: Massive base value to force material preservation
+            const baseVal = 100000000; 
             const pipVal = 1000000;
 
             const enK = enP.find(p => p.type === 'king');
@@ -679,7 +679,7 @@
                 });
                 if (unsafeCheckers > 0) {
                     if (nodeCaptured) phScore -= 5000000 * unsafeCheckers; 
-                    else phScore -= 20000000 * unsafeCheckers; // Reduced to balance Q-Search
+                    else phScore -= 20000000 * unsafeCheckers; 
                 }
             }
 
@@ -690,7 +690,10 @@
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
-                const isExcursion = (aiOwner === 'white') ? (p.r < Math.floor(BOARD_SIZE / 2)) : (p.r >= Math.floor(BOARD_SIZE / 2));
+                
+                // V68: Targeted Invasions (Distance to Enemy King)
+                const distToEnK = enK ? Math.max(Math.abs(p.r - enK.r), Math.abs(p.c - enK.c)) : 10;
+                const isExcursion = distToEnK <= 4 && p.type !== 'king'; 
 
                 if (attackers.length > 0) {
                     const isPrimary = p.type === 'king'; 
@@ -706,10 +709,9 @@
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
                         if (defenders.length < attackers.length) {
-                            // V67 Paranoia Cure: Reduced multipliers so AI doesn't flee unnecessarily
                             const penaltyMult = (isBehind && pVal !== 1) ? 1.5 : 1.1; 
                             phScore -= pieceTrueValue * penaltyMult; 
-                            if (isExcursion && pVal > 1) phScore -= 10000000; // Significantly reduced from 80M
+                            if (isExcursion && pVal > 1) phScore -= 10000000; 
                             myDeadPieces.add(p.r * 100 + p.c); 
                         } else {
                             if (isBehind) phScore -= 2000000; else phScore -= 100000; 
@@ -739,7 +741,7 @@
                     const pieceTrueValue = baseVal + (p.value * pipVal);
                     
                     if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
-                        phScore += pieceTrueValue * 1.0; // Normalized weight
+                        phScore += pieceTrueValue * 1.0; 
                     } else {
                         if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
                     }
@@ -763,7 +765,7 @@
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -500000000;
 
-            const baseValue = 25000000;
+            const baseValue = 100000000; // V68 Boost
             const pipValue = 1000000;
             let myMaterial = 0, enMaterial = 0;
             let myPhysicalCount = 0, enPhysicalCount = 0;
@@ -775,38 +777,30 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            const forwardDir = (aiOwner === 'white') ? -1 : 1;
-            const isKingOnBaseRow = (aiOwner === 'white' && myK.r === BOARD_SIZE - 1) || (aiOwner === 'black' && myK.r === 0);
-            
+            // V68: Dynamic Caves (Remoras anywhere on the board)
             let remoraCount = 0;
-            const remoraSquares = [ {r: myK.r + forwardDir, c: myK.c - 1}, {r: myK.r + forwardDir, c: myK.c}, {r: myK.r + forwardDir, c: myK.c + 1} ];
-            remoraSquares.forEach(sq => { 
-                if (sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE && b[sq.r][sq.c] && b[sq.r][sq.c].owner === aiOwner) remoraCount++; 
+            const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+            dirs.forEach(d => { 
+                let nr = myK.r + d[0], nc = myK.c + d[1];
+                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && b[nr][nc] && b[nr][nc].owner === aiOwner) remoraCount++; 
             });
+            
+            score += (remoraCount * 15000000); // Strong continuous bonus for King Safety
             
             let myGhostPins = getGhostAttackers(myK.r, myK.c, enP, b);
             score -= myGhostPins * 30000000;
             let enGhostPins = getGhostAttackers(enK.r, enK.c, myP, b);
             score += enGhostPins * 30000000;
 
-            if (isKingOnBaseRow && fullMoveCount <= 10) {
-                if (remoraCount < 3) { score -= 50000000 * (3 - remoraCount); } 
-                else {
-                    score += 20000000; 
-                    const leftFlank = (myK.c - 1 >= 0) ? b[myK.r][myK.c - 1] : null;
-                    const rightFlank = (myK.c + 1 < BOARD_SIZE) ? b[myK.r][myK.c + 1] : null;
-                    if (leftFlank && leftFlank.owner === aiOwner && rightFlank && rightFlank.owner === aiOwner) score += 10000000;
-                }
-            } else if (isKingOnBaseRow && fullMoveCount > 10) { score += (remoraCount * 5000000); }
-            
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
 
+            // V68: The Vengeance Protocol (Massive Recapture Penalty)
             if (opponentCaptured) {
                 if (node.captured) {
                     if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000;
                     else score += 300000000; 
                 } else {
-                    score -= 300000000;
+                    score -= 800000000; // Do not let them eat for free!
                 }
             }
 
@@ -861,17 +855,16 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v67): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v67): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v67): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v67): MRP Active! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v68): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v68): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v68): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v68): VENGEANCE ACTIVE! Width ${targetWidth}...`;
 
             log(statusText, targetWidth === 30000 && isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
 
-            // V67 FIX: Checking finalScore instead of h to ensure Q-Penalty triggers resignations
             if(!bestTurn || bestTurn.finalScore <= -600000000) {
                 log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
                 aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
@@ -949,7 +942,6 @@
             
             let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
             
-            // --- V67: QUIESCENCE SEARCH EXECUTION ---
             if (legal.length > 0) {
                 legal.sort((a,b) => b.h - a.h);
                 let topCandidates = legal.slice(0, Math.min(30, legal.length));
@@ -963,7 +955,7 @@
             return null;
         }
 
-        // --- RESTORED RENDER & UTILITIES ---
+        // --- RENDER & UTILITIES ---
         function render() {
             boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
