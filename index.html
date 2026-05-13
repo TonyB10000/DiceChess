@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v75 - Tony Berard</title>
+    <title>Dice Chess Ultra v73 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v75</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v73</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -74,13 +74,13 @@
                     <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
-                            <option value="standard">Standard (300 / 600 Kick)</option>
-                            <option value="medium">Medium (600 / 1.2k Kick)</option>
-                            <option value="strong" selected>Strong (1.2k / 2.4k Kick)</option>
+                            <option value="standard">Standard (900 / 1.8k Kick)</option>
+                            <option value="medium" selected>Medium (1.8k / 3.6k Kick)</option>
+                            <option value="strong">Strong (3.6k / 7.2k Kick)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v75: Engine Overhaul & Optimized Fast-Path</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v73: Sunk Cost Fix & 3x Width Active</p>
                 </div>
             </div>
 
@@ -122,8 +122,8 @@
                         <div class="bg-slate-800/40 p-1 rounded-md border border-slate-700 flex items-center justify-between px-2">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">GRID</span>
                             <select id="board-size-select">
-                                <option value="8" selected>8x8</option>
-                                <option value="9">9x9</option>
+                                <option value="8">8x8</option>
+                                <option value="9" selected>9x9</option>
                                 <option value="10">10x10</option>
                             </select>
                         </div>
@@ -302,7 +302,7 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        let BOARD_SIZE = 8;
+        let BOARD_SIZE = 9;
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
         let gameOver = false, aiThinking = false, analysisIndex = -1, historySnapshots = [];
@@ -313,7 +313,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV75';
+        const SAVE_KEY = 'diceChessUltraV73';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -343,7 +343,7 @@
             } catch (e) { log("Error resuming game.", "text-red-500"); initGame(); }
         }
 
-        function initGame(size = 8, isReset = false) {
+        function initGame(size = 9, isReset = false) {
             BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
@@ -365,7 +365,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v75 Init. Engine Overhaul & Optimized Search Active.`, "text-indigo-400 font-black uppercase");
+            if (isReset) log(`v73 Init. Sunk Cost Fix & Width 3x Active.`, "text-indigo-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -567,7 +567,7 @@
             for (let p of potentialAttackers) {
                 if (p.type === 'king') continue;
                 const dr = Math.abs(kR - p.r), dc = Math.abs(kC - p.c), dist = Math.max(dr, dc);
-                if (dist === 0 || dist > 6 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
+                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
                 
                 let blockers = 0;
                 const sr = (kR - p.r) === 0 ? 0 : (kR - p.r) / dist, sc = (kC - p.c) === 0 ? 0 : (kC - p.c) / dist;
@@ -594,7 +594,7 @@
                 let p = potentialAttackers[i];
                 if (p.r === tr && p.c === tc) continue;
                 const dr = Math.abs(tr - p.r), dc = Math.abs(tc - p.c), dist = Math.max(dr, dc);
-                if (dist === 0 || dist > 6 || (dr !== 0 && dc !== 0 && dr !== dc)) continue; // v75 optimization
+                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
                 
                 let clear = true;
                 const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
@@ -643,13 +643,13 @@
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primary = attackers[0];
                     let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
-                    let pieceVal = 100000000;
+                    let pieceVal = 100000000 + (p.value * 1000); // v73 Sunk Cost Pip Adjustment
                     
                     let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
                     if (defenders.length === 0) {
-                        maxLoss = Math.max(maxLoss, pieceVal * 1.5); // v75 Rationalized hanging penalty
+                        maxLoss = Math.max(maxLoss, pieceVal);
                     } else {
-                        let enemyLoss = 100000000;
+                        let enemyLoss = 100000000 + (primary.value * 1000);
                         let netLoss = pieceVal - enemyLoss;
                         if (netLoss > 0) maxLoss = Math.max(maxLoss, netLoss);
                     }
@@ -662,7 +662,7 @@
             let phScore = 0;
             const isBehind = diff < 0;
             const baseVal = 100000000; 
-            const pipVal = 1000; 
+            const pipVal = 1000; // v73: Massive reduction to penalize sunk cost AP waste
 
             const enK = enP.find(p => p.type === 'king');
             let enemyCheckers = [];
@@ -696,7 +696,6 @@
             let myDeadPieces = new Set();
             let landmineCount = 0;
 
-            // v75: Refined Anti-Free-Food
             for(let i=0; i<myP.length; i++) {
                 let p = myP[i];
                 const pVal = p.type === 'king' ? 7 : p.value;
@@ -719,15 +718,13 @@
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
-                        if (defenders.length === 0) {
-                            phScore -= pieceTrueValue * 1.5; // Actually hanging
+                        if (defenders.length < attackers.length) {
+                            const penaltyMult = (isBehind && pVal !== 1) ? 1.5 : 1.1; 
+                            phScore -= pieceTrueValue * penaltyMult; 
                             if (isExcursion && pVal > 1) phScore -= 10000000; 
-                            myDeadPieces.add(p.r * 100 + p.c);
-                        } else if (defenders.length < attackers.length) {
-                            phScore -= pieceTrueValue * 1.1; // Outnumbered
                             myDeadPieces.add(p.r * 100 + p.c); 
                         } else {
-                            phScore -= 5000000; // Defended pressure
+                            if (isBehind) phScore -= 2000000; else phScore -= 100000; 
                         }
                     }
                 } else {
@@ -751,14 +748,13 @@
                     let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b);
 
                     defenders.forEach(d => { let k = d.r*100+d.c; enDefenderUsage[k] = (enDefenderUsage[k] || 0) + 1; });
+
                     const pieceTrueValue = baseVal + (p.value * pipVal);
                     
-                    if (defenders.length === 0) {
-                        phScore += pieceTrueValue * 0.8; // Free food we can eat
-                    } else if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
-                        phScore += pieceTrueValue * 0.4; // Profitable trade
+                    if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
+                        phScore += pieceTrueValue * 1.0; 
                     } else {
-                        phScore += 2000000; // Applying pressure
+                        if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
                     }
                 }
             }
@@ -791,7 +787,7 @@
             }
 
             const baseValue = 100000000; 
-            const pipValue = 1000; 
+            const pipValue = 1000; // v73 Sunk Cost Fix: Pip value drastically reduced so AI doesn't burn AP for non-tactical static points
             let myMaterial = 0, enMaterial = 0;
             let myPhysicalCount = 0, enPhysicalCount = 0;
             myP.forEach(p => { myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') myPhysicalCount++; });
@@ -919,7 +915,8 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
-            const evasionWidth = 2000; // v75: Optimized Evasion Path
+            // v73: Evasion width doubled
+            const evasionWidth = 5000; 
             const pruneLimit = evasionWidth * 1.5; 
             
             for(let step=0; step<6; step++) {
@@ -999,10 +996,10 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            // v75: Mathematically Sane limits to prevent JS Memory Meltdown
-            let baseWidth = 1200, kickWidth = 2400; 
-            if (strengthSetting === 'standard') { baseWidth = 300; kickWidth = 600; }
-            else if (strengthSetting === 'medium') { baseWidth = 600; kickWidth = 1200; }
+            // v73: Tripled widths for massive deep search
+            let baseWidth = 1800, kickWidth = 3600; 
+            if (strengthSetting === 'standard') { baseWidth = 900; kickWidth = 1800; }
+            else if (strengthSetting === 'strong') { baseWidth = 3600; kickWidth = 7200; }
 
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
@@ -1012,10 +1009,10 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v75): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v75): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v75): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v75): VENGEANCE ACTIVE! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v73): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v73): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v73): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v73): VENGEANCE ACTIVE! Width ${targetWidth}...`;
 
             log(statusText, isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
 
@@ -1042,6 +1039,18 @@
                 render(); await new Promise(r => setTimeout(r, 400));
             }
             aiThinking = false; if(turn === 'black') endTurn(); render();
+        }
+
+        function copyBoardFast(b) {
+            let nb = new Array(BOARD_SIZE);
+            for(let r=0; r<BOARD_SIZE; r++) {
+                nb[r] = new Array(BOARD_SIZE);
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    nb[r][c] = p ? { type: p.type, value: p.value, owner: p.owner } : null;
+                }
+            }
+            return nb;
         }
 
         // --- RENDER & UTILITIES ---
@@ -1149,7 +1158,7 @@
         document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
         document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE, true); };
 
-        initGame(8, false); // Default to 8x8 per your testing preference
+        initGame(9, false);
         checkSavedGame();
     </script>
 </body>
