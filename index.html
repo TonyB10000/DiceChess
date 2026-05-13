@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v73 - Tony Berard</title>
+    <title>Dice Chess Ultra v74 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v73</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v74</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v73: Sunk Cost Fix & 3x Width Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v74: Anti-Free-Food Protocol Active</p>
                 </div>
             </div>
 
@@ -313,7 +313,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV73';
+        const SAVE_KEY = 'diceChessUltraV74';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -365,7 +365,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v73 Init. Sunk Cost Fix & Width 3x Active.`, "text-indigo-400 font-black uppercase");
+            if (isReset) log(`v74 Init. Anti-Free-Food Protocol Active.`, "text-indigo-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -643,13 +643,13 @@
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primary = attackers[0];
                     let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
-                    let pieceVal = 100000000 + (p.value * 1000); // v73 Sunk Cost Pip Adjustment
+                    let pieceVal = 100000000; // Standardized piece value
                     
                     let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
                     if (defenders.length === 0) {
-                        maxLoss = Math.max(maxLoss, pieceVal);
+                        maxLoss = Math.max(maxLoss, pieceVal * 2); // Heavy Q-Penalty for free food
                     } else {
-                        let enemyLoss = 100000000 + (primary.value * 1000);
+                        let enemyLoss = 100000000;
                         let netLoss = pieceVal - enemyLoss;
                         if (netLoss > 0) maxLoss = Math.max(maxLoss, netLoss);
                     }
@@ -662,7 +662,7 @@
             let phScore = 0;
             const isBehind = diff < 0;
             const baseVal = 100000000; 
-            const pipVal = 1000; // v73: Massive reduction to penalize sunk cost AP waste
+            const pipVal = 1000; 
 
             const enK = enP.find(p => p.type === 'king');
             let enemyCheckers = [];
@@ -696,6 +696,7 @@
             let myDeadPieces = new Set();
             let landmineCount = 0;
 
+            // v74: Anti-Free-Food Protocol (Self-Preservation)
             for(let i=0; i<myP.length; i++) {
                 let p = myP[i];
                 const pVal = p.type === 'king' ? 7 : p.value;
@@ -718,13 +719,14 @@
 
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
-                        if (defenders.length < attackers.length) {
-                            const penaltyMult = (isBehind && pVal !== 1) ? 1.5 : 1.1; 
-                            phScore -= pieceTrueValue * penaltyMult; 
+                        if (defenders.length === 0 || defenders.length < attackers.length) {
+                            // HANGING PIECE! Brutal penalty to enforce 1500 ELO basic competence.
+                            phScore -= 200000000; 
                             if (isExcursion && pVal > 1) phScore -= 10000000; 
                             myDeadPieces.add(p.r * 100 + p.c); 
                         } else {
-                            if (isBehind) phScore -= 2000000; else phScore -= 100000; 
+                            // It's defended. Small tension penalty just to encourage solid structure.
+                            phScore -= 5000000; 
                         }
                     }
                 } else {
@@ -734,6 +736,7 @@
 
             if (landmineCount > 0) phScore += (landmineCount * 12000000);
 
+            // v74: Anti-Free-Food Protocol (Taking Free Food realistically)
             for(let i=0; i<enP.length; i++) {
                 let p = enP[i];
                 if (p.type === 'king') continue; 
@@ -748,13 +751,13 @@
                     let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b);
 
                     defenders.forEach(d => { let k = d.r*100+d.c; enDefenderUsage[k] = (enDefenderUsage[k] || 0) + 1; });
-
-                    const pieceTrueValue = baseVal + (p.value * pipVal);
                     
-                    if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
-                        phScore += pieceTrueValue * 1.0; 
+                    if (defenders.length === 0 || attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
+                        // ENEMY IS HANGING! A mere threat is worth 25M. (Pulling the trigger is +100M).
+                        phScore += 25000000; 
                     } else {
-                        if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
+                        // Defended pressure.
+                        phScore += 2000000; 
                     }
                 }
             }
@@ -787,7 +790,7 @@
             }
 
             const baseValue = 100000000; 
-            const pipValue = 1000; // v73 Sunk Cost Fix: Pip value drastically reduced so AI doesn't burn AP for non-tactical static points
+            const pipValue = 1000; 
             let myMaterial = 0, enMaterial = 0;
             let myPhysicalCount = 0, enPhysicalCount = 0;
             myP.forEach(p => { myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') myPhysicalCount++; });
@@ -915,7 +918,6 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
-            // v73: Evasion width doubled
             const evasionWidth = 5000; 
             const pruneLimit = evasionWidth * 1.5; 
             
@@ -996,7 +998,6 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            // v73: Tripled widths for massive deep search
             let baseWidth = 1800, kickWidth = 3600; 
             if (strengthSetting === 'standard') { baseWidth = 900; kickWidth = 1800; }
             else if (strengthSetting === 'strong') { baseWidth = 3600; kickWidth = 7200; }
@@ -1009,10 +1010,10 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v73): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v73): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v73): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v73): VENGEANCE ACTIVE! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v74): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v74): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v74): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v74): VENGEANCE ACTIVE! Width ${targetWidth}...`;
 
             log(statusText, isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
 
@@ -1039,18 +1040,6 @@
                 render(); await new Promise(r => setTimeout(r, 400));
             }
             aiThinking = false; if(turn === 'black') endTurn(); render();
-        }
-
-        function copyBoardFast(b) {
-            let nb = new Array(BOARD_SIZE);
-            for(let r=0; r<BOARD_SIZE; r++) {
-                nb[r] = new Array(BOARD_SIZE);
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    const p = b[r][c];
-                    nb[r][c] = p ? { type: p.type, value: p.value, owner: p.owner } : null;
-                }
-            }
-            return nb;
         }
 
         // --- RENDER & UTILITIES ---
