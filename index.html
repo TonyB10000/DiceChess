@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v68 - Tony Berard</title>
+    <title>Dice Chess Ultra v69 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-red-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v68</span>
+            <span class="bg-red-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v69</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-red-400">v68: Vengeance & Cave Logic Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-red-400">v69: Deep Evasion Protocol Active</p>
                 </div>
             </div>
 
@@ -176,6 +176,7 @@
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -304,7 +305,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV68';
+        const SAVE_KEY = 'diceChessUltraV69';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -356,7 +357,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v68 Init. Vengeance Protocol Active.`, "text-red-400 font-black uppercase");
+            if (isReset) log(`v69 Init. Deep Evasion Protocol Active.`, "text-red-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -431,7 +432,8 @@
 
         function validateMove(b, fr, fc, tr, tc, checkAP = false) {
             const p = b[fr][fc]; if(!p) return {valid: false};
-            const dr = Math.abs(tr - fr), dc = Math.abs(tc - tc), dist = Math.max(dr, dc);
+            // v69 FIX: Math.abs(tc - fc) correctly implemented
+            const dr = Math.abs(tr - fr), dc = Math.abs(tc - fc), dist = Math.max(dr, dc);
             if(dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return {valid: false};
             if(dist > (p.type === 'king' ? 1 : p.value)) return {valid: false};
             const sr = (tr - fr) === 0 ? 0 : (tr - fr) / dist, sc = (tc - fc) === 0 ? 0 : (tc - fc) / dist;
@@ -632,7 +634,6 @@
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primary = attackers[0];
                     let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
-                    // V68: Increase base value to ensure material loss triggers severe Q-Penalty
                     let pieceVal = 100000000 + (p.value * 1000000); 
                     
                     let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
@@ -651,7 +652,6 @@
         function evaluateTensions(b, aiOwner, myP, enP, diff, nodeCaptured) {
             let phScore = 0;
             const isBehind = diff < 0;
-            // V68: Massive base value to force material preservation
             const baseVal = 100000000; 
             const pipVal = 1000000;
 
@@ -691,7 +691,6 @@
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
                 
-                // V68: Targeted Invasions (Distance to Enemy King)
                 const distToEnK = enK ? Math.max(Math.abs(p.r - enK.r), Math.abs(p.c - enK.c)) : 10;
                 const isExcursion = distToEnK <= 4 && p.type !== 'king'; 
 
@@ -754,7 +753,7 @@
             return phScore;
         }
 
-        function heuristic(node, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial_Start) {
+        function heuristic(node, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial_Start, isEvasionMode = false) {
             const b = node.board; let score = 0; const myP = [], enP = []; 
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
@@ -765,7 +764,20 @@
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -500000000;
 
-            const baseValue = 100000000; // V68 Boost
+            // v69: Pure Checkmate Evasion Logic
+            if (isEvasionMode) {
+                let enemyCheckers = getAttackers(myK.r, myK.c, 7, enP, b);
+                if (enemyCheckers.length > 0) return -1000000000; // Still dead natively
+                
+                // Ensure no immediate 1-step recapture of the King exists
+                let qPen = quiescencePenalty(b, aiOwner);
+                if (qPen >= 1000000000) return -1000000000; // Dead to an immediate follow-up sniper
+
+                // If King survives, return highly positive score prioritizing AS and AP retention
+                return (calcAS(b, aiOwner) * 10) + (node.ap * 5); 
+            }
+
+            const baseValue = 100000000; 
             const pipValue = 1000000;
             let myMaterial = 0, enMaterial = 0;
             let myPhysicalCount = 0, enPhysicalCount = 0;
@@ -777,7 +789,6 @@
             score += (myMaterial - enMaterial);
             score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
 
-            // V68: Dynamic Caves (Remoras anywhere on the board)
             let remoraCount = 0;
             const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
             dirs.forEach(d => { 
@@ -785,7 +796,7 @@
                 if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && b[nr][nc] && b[nr][nc].owner === aiOwner) remoraCount++; 
             });
             
-            score += (remoraCount * 15000000); // Strong continuous bonus for King Safety
+            score += (remoraCount * 15000000); 
             
             let myGhostPins = getGhostAttackers(myK.r, myK.c, enP, b);
             score -= myGhostPins * 30000000;
@@ -794,13 +805,12 @@
 
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
 
-            // V68: The Vengeance Protocol (Massive Recapture Penalty)
             if (opponentCaptured) {
                 if (node.captured) {
                     if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000;
                     else score += 300000000; 
                 } else {
-                    score -= 800000000; // Do not let them eat for free!
+                    score -= 800000000; 
                 }
             }
 
@@ -823,72 +833,6 @@
                 }
             }
             return score;
-        }
-
-        async function runAI() {
-            let myPhysicalCount = 0, enPhysicalCount = 0, myK = null;
-            const myP = [], enP = [];
-            for(let r=0; r<BOARD_SIZE; r++) {
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    const p = board[r][c];
-                    if(p) {
-                        if(p.owner === turn) { myP.push({r,c,...p}); if(p.type === 'king') myK = {r,c}; else myPhysicalCount++; }
-                        else { enP.push({r,c,...p}); if(p.type !== 'king') enPhysicalCount++; }
-                    }
-                }
-            }
-            
-            let isBehindInMaterial = myPhysicalCount < enPhysicalCount;
-            let startInCheck = false;
-            if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
-
-            const strengthSetting = document.getElementById('bot-strength-select').value;
-            let baseWidth = 8000, kickWidth = 10000;
-            if (strengthSetting === 'medium') { baseWidth = 12000; kickWidth = 15000; }
-            else if (strengthSetting === 'strong') { baseWidth = 20000; kickWidth = 30000; }
-
-            let opponentCaptured = didOpponentJustCapture(turn);
-            if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
-
-            const targetWidth = isBehindInMaterial ? 30000 : (startInCheck ? kickWidth : baseWidth);
-
-            aiThinking = true; turnEl.innerText = "CALCULATING...";
-            render(); 
-            
-            let statusText = `PH ENGINE (v68): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v68): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v68): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v68): VENGEANCE ACTIVE! Width ${targetWidth}...`;
-
-            log(statusText, targetWidth === 30000 && isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
-
-            let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
-            let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
-
-            if(!bestTurn || bestTurn.finalScore <= -600000000) {
-                log("AI: Checkmate / Freeze Out Detected. Resigning.", "text-red-500 font-bold uppercase");
-                aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
-            }
-
-            for(let a of bestTurn.actions) {
-                if(gameOver) break;
-                if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
-                else tryMove(a.fr, a.fc, a.tr, a.tc);
-                render(); await new Promise(r => setTimeout(r, 400));
-            }
-            aiThinking = false; if(turn === 'black') endTurn(); render();
-        }
-
-        function copyBoardFast(b) {
-            let nb = new Array(BOARD_SIZE);
-            for(let r=0; r<BOARD_SIZE; r++) {
-                nb[r] = new Array(BOARD_SIZE);
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    const p = b[r][c];
-                    nb[r][c] = p ? { type: p.type, value: p.value, owner: p.owner } : null;
-                }
-            }
-            return nb;
         }
 
         async function performSearchAsync(root, width, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial) {
@@ -953,6 +897,129 @@
                 return topCandidates[0];
             }
             return null;
+        }
+
+        // v69: Dedicated Evasion Protocol
+        async function performEvasionSearch(root, aiOwner) {
+            let beam = [root];
+            for(let step=0; step<6; step++) {
+                let next = [];
+                let lastYield = performance.now();
+                
+                for(let node of beam) {
+                    if (performance.now() - lastYield > 40) { await new Promise(r => setTimeout(r, 0)); lastYield = performance.now(); }
+
+                    if(node.ap === 0) { next.push(node); continue; }
+                    const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
+                    if (asPass) next.push({ board: node.board, ap: 0, actions: node.actions, captured: node.captured, startScore: node.startScore });
+                    
+                    const myP = [];
+                    for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
+                    
+                    for(let p of myP) {
+                        if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
+                            if(p.value < 6) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value++; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
+                            if(p.value > 1) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value--; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
+                        }
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
+                        for(let d of dirs) {
+                            for(let i=1; i<=range; i++) {
+                                let tr = p.r+d[0]*i, tc = p.c+d[1]*i;
+                                if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
+                                let v = validateMove(node.board, p.r, p.c, tr, tc, false);
+                                if(!v.valid) { if(node.board[tr][tc]) break; continue; }
+                                const cost = node.board[tr][tc] ? 5 : 3;
+                                if(node.ap >= cost) {
+                                    let nb = copyBoardFast(node.board); nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
+                                    next.push({ board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], startScore: node.startScore, actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
+                                }
+                                if(node.board[tr][tc]) break;
+                            }
+                        }
+                    }
+                    if (next.length > 20000) {
+                        next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, false, false, 0, false, true); });
+                        next.sort((a,b) => b.h - a.h);
+                        next = next.slice(0, 10000);
+                    }
+                }
+                if(next.length === 0) break;
+                next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, false, false, 0, false, true); });
+                next.sort((a,b) => b.h - a.h);
+                beam = next.slice(0, 10000); 
+            }
+            
+            let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
+            
+            if (legal.length > 0) {
+                legal.sort((a,b) => b.h - a.h);
+                // Return any valid route that leaves the King completely alive (score > -500M)
+                if (legal[0].h > -500000000) return legal[0];
+            }
+            return null;
+        }
+
+        async function runAI() {
+            let myPhysicalCount = 0, enPhysicalCount = 0, myK = null;
+            const myP = [], enP = [];
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = board[r][c];
+                    if(p) {
+                        if(p.owner === turn) { myP.push({r,c,...p}); if(p.type === 'king') myK = {r,c}; else myPhysicalCount++; }
+                        else { enP.push({r,c,...p}); if(p.type !== 'king') enPhysicalCount++; }
+                    }
+                }
+            }
+            
+            let isBehindInMaterial = myPhysicalCount < enPhysicalCount;
+            let startInCheck = false;
+            if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
+
+            const strengthSetting = document.getElementById('bot-strength-select').value;
+            let baseWidth = 8000, kickWidth = 10000;
+            if (strengthSetting === 'medium') { baseWidth = 12000; kickWidth = 15000; }
+            else if (strengthSetting === 'strong') { baseWidth = 20000; kickWidth = 30000; }
+
+            let opponentCaptured = didOpponentJustCapture(turn);
+            if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
+
+            const targetWidth = isBehindInMaterial ? 30000 : (startInCheck ? kickWidth : baseWidth);
+
+            aiThinking = true; turnEl.innerText = "CALCULATING...";
+            render(); 
+            
+            let statusText = `PH ENGINE (v69): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v69): ABSOLUTE PANIC OVERRIDE! Width 30000...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v69): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v69): VENGEANCE ACTIVE! Width ${targetWidth}...`;
+
+            log(statusText, targetWidth === 30000 && isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
+
+            let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
+            let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
+
+            // v69: Trigger Evasion Protocol if primary search indicates Checkmate
+            if(!bestTurn || bestTurn.finalScore <= -600000000) {
+                log("PH ENGINE: Critical Threat Detected. Executing Deep Evasion Protocol...", "text-orange-500 font-black uppercase");
+                let evasionTurn = await performEvasionSearch(root, turn);
+                
+                if (!evasionTurn) {
+                    log("AI: Evasion Failed. Absolute Checkmate Confirmed. Resigning.", "text-red-500 font-bold uppercase");
+                    aiThinking = false; endGame(turn === 'white' ? 'black' : 'white', "Checkmate / Freeze Out"); return;
+                } else {
+                    log("PH ENGINE: Evasion Route Found! Executing...", "text-green-400 font-black uppercase");
+                    bestTurn = evasionTurn;
+                }
+            }
+
+            for(let a of bestTurn.actions) {
+                if(gameOver) break;
+                if(a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
+                else tryMove(a.fr, a.fc, a.tr, a.tc);
+                render(); await new Promise(r => setTimeout(r, 400));
+            }
+            aiThinking = false; if(turn === 'black') endTurn(); render();
         }
 
         // --- RENDER & UTILITIES ---
