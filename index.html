@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v73 - Tony Berard</title>
+    <title>Dice Chess Ultra v74 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v73</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v74</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -80,7 +80,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v73: Sunk Cost Fix & 3x Width Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v74: Material Parity & Free Food Fix</p>
                 </div>
             </div>
 
@@ -173,7 +173,6 @@
                     <button id="new-game-btn" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-[9px] font-black text-slate-500 hover:text-white uppercase transition-all">New Game</button>
                 </div>
                 
-                <!-- Social Links -->
                 <div class="mt-2 flex flex-col gap-1 px-1">
                     <a href="https://www.patreon.com/c/TranscendentThinking" target="_blank" class="w-full py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded text-[10px] font-bold uppercase tracking-widest text-center transition-colors shadow-lg">Support on Patreon</a>
                     <div class="grid grid-cols-2 gap-1">
@@ -186,7 +185,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -296,7 +294,8 @@
                 o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
                 g.gain.setValueAtTime(0.05, this.ctx.currentTime);
                 g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + d);
-                o.connect(g); g.connect(this.ctx.destination);
+                o.connect(g);
+                g.connect(this.ctx.destination);
                 o.start(); o.stop(this.ctx.currentTime + d);
             }
         };
@@ -313,8 +312,8 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV73';
-
+        const SAVE_KEY = 'diceChessUltraV74';
+        
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
             if (saved) { document.getElementById('resume-game-btn').classList.remove('hidden'); }
@@ -332,7 +331,7 @@
                 BOARD_SIZE = state.BOARD_SIZE; document.getElementById('board-size-select').value = BOARD_SIZE;
                 board = state.board; turn = state.turn; currentAP = state.currentAP; fullMoveCount = state.fullMoveCount;
                 moveHistory = state.moveHistory; currentTurnActions = state.currentTurnActions; whiteTime = state.whiteTime;
-                blackTime = state.blackTime; useClock = state.useClock; gameActive = state.gameActive; 
+                blackTime = state.blackTime; useClock = state.useClock; gameActive = state.gameActive;
                 turnStartScore = state.turnStartScore; capturedThisTurn = state.capturedThisTurn; turnStartBoardSnapshot = state.turnStartBoardSnapshot;
                 
                 document.getElementById('start-overlay').style.display = 'none';
@@ -344,11 +343,14 @@
         }
 
         function initGame(size = 9, isReset = false) {
-            BOARD_SIZE = size; document.getElementById('board-size-select').value = BOARD_SIZE;
+            BOARD_SIZE = size;
+            document.getElementById('board-size-select').value = BOARD_SIZE;
             board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-            turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = []; currentTurnActions = []; 
+            turn = 'white'; currentAP = 3; fullMoveCount = 1; moveHistory = [];
+            currentTurnActions = []; 
             gameOver = false; selectedSquare = null; gameActive = false; 
-            analysisIndex = -1; historySnapshots = []; whatIfOriginalSnapshots = null; whatIfStartIndex = -1;
+            analysisIndex = -1; historySnapshots = [];
+            whatIfOriginalSnapshots = null; whatIfStartIndex = -1;
             
             if (isReset) {
                 localStorage.removeItem(SAVE_KEY);
@@ -362,30 +364,35 @@
                 board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
             }
             
-            clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
+            clearInterval(clockInterval);
+            clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v73 Init. Sunk Cost Fix & Width 3x Active.`, "text-indigo-400 font-black uppercase");
+            if (isReset) log(`v74 Init. Material Parity & Free Food Fix.`, "text-indigo-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
 
         function importGame(text, overrideSize) {
             try {
-                const turns = text.trim().split('\n'); if (turns.length === 0) return;
+                const turns = text.trim().split('\n');
+                if (turns.length === 0) return;
                 initGame(overrideSize || 10, true);
                 for (const line of turns) {
-                    const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/); if (!match) continue;
+                    const match = line.match(/^\d+\.\s*(.*?)\s*:\s*(.*)$/);
+                    if (!match) continue;
                     processActions(match[1].split(',').map(s => s.trim().replace('#', '')), 'white'); saveSnapshot();
                     if (match[2].trim() !== "") { processActions(match[2].split(',').map(s => s.trim().replace('#', '')), 'black'); saveSnapshot(); }
                 }
-                analysisIndex = 0; log("Import Successful. Accessing History at Start.");
+                analysisIndex = 0;
+                log("Import Successful. Accessing History at Start.");
                 document.getElementById('record-modal').classList.add('hidden'); applySnapshot(0);
             } catch (e) { log("Error: Invalid Game Notation.", "text-red-500"); }
         }
 
         function processActions(actions, player) {
-            turn = player; currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
+            turn = player;
+            currentAP = (fullMoveCount === 1 && player === 'white') ? 3 : 6;
             currentTurnActions = []; captureTurnState();
             for (const a of actions) {
                 if (!a) continue;
@@ -412,7 +419,7 @@
         }
 
         function startGame() {
-            localStorage.removeItem(SAVE_KEY); 
+            localStorage.removeItem(SAVE_KEY);
             gameActive = true; 
             document.getElementById('start-overlay').style.display = 'none';
             SoundEngine.play(800, 0.2, 'square'); log(`Battle Commenced.`, "text-green-400 font-bold uppercase");
@@ -420,7 +427,7 @@
         }
 
         function tickClock() {
-            if (gameOver || !gameActive || !useClock || analysisIndex !== -1) return; 
+            if (gameOver || !gameActive || !useClock || analysisIndex !== -1) return;
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
@@ -439,7 +446,8 @@
         function calcAS(b, p) { let s = 0; for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c] && b[r][c].owner === p) s += (p === 'white') ? (BOARD_SIZE - r) : (r + 1); return s; }
 
         function validateMove(b, fr, fc, tr, tc, checkAP = false) {
-            const p = b[fr][fc]; if(!p) return {valid: false};
+            const p = b[fr][fc];
+            if(!p) return {valid: false};
             const dr = Math.abs(tr - fr), dc = Math.abs(tc - fc), dist = Math.max(dr, dc);
             if(dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) return {valid: false};
             if(dist > (p.type === 'king' ? 1 : p.value)) return {valid: false};
@@ -456,17 +464,21 @@
         function tryMove(fr, fc, tr, tc) {
             const v = validateMove(board, fr, fc, tr, tc, true);
             if(!v.valid) { SoundEngine.play(150, 0.15, 'sawtooth'); return; }
-            const p = board[fr][fc], t = board[tr][tc]; if(t) capturedThisTurn = true;
+            const p = board[fr][fc], t = board[tr][tc];
+            if(t) capturedThisTurn = true;
             const coord = (r, c) => `${String.fromCharCode(97+c)}${BOARD_SIZE-r}`;
             currentTurnActions.push(t ? `${coord(fr,fc)}x${coord(tr,tc)}` : `${coord(fr,fc)}-${coord(tr,tc)}`);
-            board[tr][tc] = p; board[fr][fc] = null; currentAP -= t ? 5 : 3;
-            if(currentAP < 1) selectedSquare = null; else selectedSquare = {r: tr, c: tc};
+            board[tr][tc] = p;
+            board[fr][fc] = null; currentAP -= t ? 5 : 3;
+            if(currentAP < 1) selectedSquare = null;
+            else selectedSquare = {r: tr, c: tc};
             
             if(t && t.type === 'king') { 
                 const actStr = currentTurnActions.join(', ');
                 if (turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' });
-                else { if (moveHistory.length > 0 && moveHistory[moveHistory.length-1].n === fullMoveCount) moveHistory[moveHistory.length-1].b = actStr; else moveHistory.push({ n: fullMoveCount, w: '', b: actStr }); }
-                endGame(turn, "King Capture"); 
+                else { if (moveHistory.length > 0 && moveHistory[moveHistory.length-1].n === fullMoveCount) moveHistory[moveHistory.length-1].b = actStr;
+                else moveHistory.push({ n: fullMoveCount, w: '', b: actStr }); }
+                endGame(turn, "King Capture");
             } 
             else { SoundEngine.play(t ? 200 : 500); render(); checkAutoTurnEnd(); saveGameToStorage(); }
         }
@@ -509,15 +521,15 @@
         function applySnapshot(idx) { const s = historySnapshots[idx]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; moveHistory = JSON.parse(JSON.stringify(s.history)); render(); }
         
         function whatIf() { 
-            if (analysisIndex === -1) return; 
+            if (analysisIndex === -1) return;
             whatIfOriginalSnapshots = JSON.parse(JSON.stringify(historySnapshots)); 
             whatIfStartIndex = analysisIndex; 
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1); 
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history)); 
-            analysisIndex = -1; 
+            analysisIndex = -1;
             currentAP = 6; currentTurnActions = []; selectedSquare = null; captureTurnState();
             log("Branch Created. What If Active.", "text-purple-400 font-black uppercase"); 
-            render(); 
+            render();
         }
         function leaveWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)); analysisIndex = whatIfStartIndex; whatIfOriginalSnapshots = null; whatIfStartIndex = -1; log("Left What If Mode.", "text-yellow-400 font-bold uppercase"); applySnapshot(analysisIndex); }
         function freshWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history)); const s = historySnapshots[whatIfStartIndex]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = 6; fullMoveCount = s.fullMoveCount; currentTurnActions = []; selectedSquare = null; analysisIndex = -1; captureTurnState(); log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); render(); }
@@ -568,11 +580,9 @@
                 if (p.type === 'king') continue;
                 const dr = Math.abs(kR - p.r), dc = Math.abs(kC - p.c), dist = Math.max(dr, dc);
                 if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
-                
                 let blockers = 0;
                 const sr = (kR - p.r) === 0 ? 0 : (kR - p.r) / dist, sc = (kC - p.c) === 0 ? 0 : (kC - p.c) / dist;
                 for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) blockers++;
-                
                 if (blockers === 1) {
                     let minCost = Infinity;
                     for (let mod = -5; mod <= 5; mod++) {
@@ -595,12 +605,10 @@
                 if (p.r === tr && p.c === tc) continue;
                 const dr = Math.abs(tr - p.r), dc = Math.abs(tc - p.c), dist = Math.max(dr, dc);
                 if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
-                
                 let clear = true;
                 const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
                 for (let j = 1; j < dist; j++) if (b[p.r + j * sr][p.c + j * sc]) { clear = false; break; }
                 if (!clear) continue;
-
                 if (p.type === 'king') {
                     if (dist === 1) attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: 7, apCost: 5 });
                 } else {
@@ -622,8 +630,9 @@
             return attackers;
         }
 
+        // v74 FIX: Total Loss Quiescence (Eliminates Free Food Blindness)
         function quiescencePenalty(b, aiOwner) {
-            let maxLoss = 0;
+            let totalLoss = 0;
             const myP = [], enP = [];
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
@@ -638,37 +647,35 @@
                 let p = myP[i];
                 let attackers = getAttackers(p.r, p.c, p.type === 'king' ? 7 : p.value, enP, b);
                 if (attackers.length > 0) {
-                    if (p.type === 'king') return 1000000000; 
-                    
+                    if (p.type === 'king') return 1000000000;
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primary = attackers[0];
                     let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
-                    let pieceVal = 100000000 + (p.value * 1000); // v73 Sunk Cost Pip Adjustment
+                    let pieceVal = 100000000 + (p.value * 1000); 
                     
                     let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
                     if (defenders.length === 0) {
-                        maxLoss = Math.max(maxLoss, pieceVal);
+                        totalLoss += pieceVal; // FIX: Summing up all losses prevents giving away multi-piece free food
                     } else {
                         let enemyLoss = 100000000 + (primary.value * 1000);
                         let netLoss = pieceVal - enemyLoss;
-                        if (netLoss > 0) maxLoss = Math.max(maxLoss, netLoss);
+                        if (netLoss > 0) totalLoss += netLoss;
                     }
                 }
             }
-            return maxLoss;
+            return totalLoss;
         }
 
         function evaluateTensions(b, aiOwner, myP, enP, diff, nodeCaptured) {
             let phScore = 0;
             const isBehind = diff < 0;
             const baseVal = 100000000; 
-            const pipVal = 1000; // v73: Massive reduction to penalize sunk cost AP waste
+            const pipVal = 1000;
 
             const enK = enP.find(p => p.type === 'king');
             let enemyCheckers = [];
             if (enK) { enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b); }
             const enemyInCheck = enemyCheckers.length > 0;
-            
             let myDefenderUsage = {};
             let enDefenderUsage = {};
 
@@ -683,12 +690,11 @@
                         let postCaptureClearerVal = Math.max(1, primaryClearer.attackerValue - (6 - primaryClearer.apCost));
                         let cDefendersFromMe = getAttackers(c.r, c.c, postCaptureClearerVal, myP, b);
                         cDefendersFromMe.forEach(d => { let k = d.r*100+d.c; myDefenderUsage[k] = (myDefenderUsage[k] || 0) + 1; });
-
                         if (cDefendersFromMe.length < cAttackersFromEnemy.length) unsafeCheckers++;
                     }
                 }
                 if (unsafeCheckers > 0) {
-                    if (nodeCaptured) phScore -= 5000000 * unsafeCheckers; 
+                    if (nodeCaptured) phScore -= 5000000 * unsafeCheckers;
                     else phScore -= 20000000 * unsafeCheckers; 
                 }
             }
@@ -703,28 +709,27 @@
                 let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
                 
                 const distToEnK = enK ? Math.max(Math.abs(p.r - enK.r), Math.abs(p.c - enK.c)) : 10;
-                const isExcursion = distToEnK <= 4 && p.type !== 'king'; 
-
+                const isExcursion = distToEnK <= 4 && p.type !== 'king';
                 if (attackers.length > 0) {
-                    const isPrimary = p.type === 'king'; 
+                    const isPrimary = p.type === 'king';
                     if (isPrimary) {
-                        phScore -= 1000000000; 
+                        phScore -= 1000000000;
                     } else {
                         attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                         let primaryAttacker = attackers[0];
                         let postCaptureValue = Math.max(1, primaryAttacker.attackerValue - (6 - primaryAttacker.apCost));
                         let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b);
                         defenders.forEach(d => { let k = d.r*100+d.c; myDefenderUsage[k] = (myDefenderUsage[k] || 0) + 1; });
-
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
                         if (defenders.length < attackers.length) {
                             const penaltyMult = (isBehind && pVal !== 1) ? 1.5 : 1.1; 
                             phScore -= pieceTrueValue * penaltyMult; 
-                            if (isExcursion && pVal > 1) phScore -= 10000000; 
+                            if (isExcursion && pVal > 1) phScore -= 10000000;
                             myDeadPieces.add(p.r * 100 + p.c); 
                         } else {
-                            if (isBehind) phScore -= 2000000; else phScore -= 100000; 
+                            if (isBehind) phScore -= 2000000;
+                            else phScore -= 100000; 
                         }
                     }
                 } else {
@@ -733,7 +738,6 @@
             }
 
             if (landmineCount > 0) phScore += (landmineCount * 12000000);
-
             for(let i=0; i<enP.length; i++) {
                 let p = enP[i];
                 if (p.type === 'king') continue; 
@@ -748,13 +752,13 @@
                     let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b);
 
                     defenders.forEach(d => { let k = d.r*100+d.c; enDefenderUsage[k] = (enDefenderUsage[k] || 0) + 1; });
-
                     const pieceTrueValue = baseVal + (p.value * pipVal);
                     
                     if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) {
-                        phScore += pieceTrueValue * 1.0; 
+                        phScore += pieceTrueValue * 1.0;
                     } else {
-                        if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
+                        if (!isBehind) phScore += 2000000;
+                        else phScore -= 2000000; 
                     }
                 }
             }
@@ -766,7 +770,8 @@
         }
 
         function heuristic(node, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial_Start, isEvasionMode = false) {
-            const b = node.board; let score = 0; const myP = [], enP = []; 
+            const b = node.board;
+            let score = 0; const myP = [], enP = [];
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             
@@ -775,28 +780,31 @@
             
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
             if (node.ap < 3 && !asPass) return -500000000;
-
             if (isEvasionMode) {
                 let enemyCheckers = getAttackers(myK.r, myK.c, 7, enP, b);
                 if (enemyCheckers.length > 0) return -1000000000; 
                 
                 let qPen = quiescencePenalty(b, aiOwner);
-                if (qPen >= 1000000000) return -1000000000; 
-
+                if (qPen >= 1000000000) return -1000000000;
                 return (calcAS(b, aiOwner) * 10) + (node.ap * 5); 
             }
 
-            const baseValue = 100000000; 
-            const pipValue = 1000; // v73 Sunk Cost Fix: Pip value drastically reduced so AI doesn't burn AP for non-tactical static points
+            const baseValue = 100000000;
+            const pipValue = 1000; 
             let myMaterial = 0, enMaterial = 0;
             let myPhysicalCount = 0, enPhysicalCount = 0;
             myP.forEach(p => { myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') myPhysicalCount++; });
             enP.forEach(p => { enMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') enPhysicalCount++; });
-            
             const diffPhysical = myPhysicalCount - enPhysicalCount;
 
-            score += (myMaterial - enMaterial);
-            score += calcAS(b, aiOwner) * 1000; if (asPass) score += 1000000;
+            // v74 FIX: The Material Parity Protocol
+            // Calculates material difference and scales the weight based on the closeness to the turn limit goal
+            const targetParity = BOARD_SIZE === 8 ? 15 : (BOARD_SIZE === 9 ? 20 : 25);
+            const urgencyMult = Math.max(1.0, Math.min(5.0, fullMoveCount / (targetParity * 0.75)));
+            
+            score += ((myMaterial - enMaterial) * urgencyMult);
+            score += calcAS(b, aiOwner) * 1000;
+            if (asPass) score += 1000000;
 
             let remoraCount = 0;
             const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
@@ -804,7 +812,6 @@
                 let nr = myK.r + d[0], nc = myK.c + d[1];
                 if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && b[nr][nc] && b[nr][nc].owner === aiOwner) remoraCount++; 
             });
-            
             score += (remoraCount * 15000000); 
             
             let myGhostPins = getGhostAttackers(myK.r, myK.c, enP, b);
@@ -813,13 +820,12 @@
             score += enGhostPins * 30000000;
 
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
-
             if (opponentCaptured) {
                 if (node.captured) {
                     if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000;
                     else score += 300000000; 
                 } else {
-                    score -= 800000000; 
+                    score -= 800000000;
                 }
             }
 
@@ -829,15 +835,16 @@
                 enemyCheckers.forEach(c => {
                     if (getAttackers(c.r, c.c, c.attackerValue, enP, b).length > getAttackers(c.r, c.c, c.attackerValue, myP, b).length) isKamikaze = true;
                 });
-
                 if (!isKamikaze || node.captured) {
                     if (enemyCheckers.length >= 2) {
                         let asDiff = calcAS(b, aiOwner) - calcAS(b, turn === 'white' ? 'black' : 'white');
                         if (diffPhysical >= 1) score += 400000000; 
-                        else if (diffPhysical === 0) { if (asDiff > 0) score += 250000000; else score -= 100000000; } 
-                        else { if (asDiff > 5) score += 50000000; else score -= 200000000; }
+                        else if (diffPhysical === 0) { if (asDiff > 0) score += 250000000;
+                        else score -= 100000000; } 
+                        else { if (asDiff > 5) score += 50000000;
+                        else score -= 200000000; }
                     } else {
-                        score += 50000000; 
+                        score += 50000000;
                     }
                 }
             }
@@ -859,10 +866,8 @@
                     if(node.ap === 0) { next.push(node); continue; }
                     const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
                     if (asPass) next.push({ board: node.board, ap: 0, actions: node.actions, captured: node.captured, startScore: node.startScore });
-                    
                     const myP = [];
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
-                    
                     for(let j=0; j<myP.length; j++) {
                         let p = myP[j];
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
@@ -899,7 +904,6 @@
             }
             
             let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
-            
             if (legal.length > 0) {
                 legal.sort((a,b) => b.h - a.h);
                 let topCandidates = legal.slice(0, Math.min(30, legal.length));
@@ -915,8 +919,7 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
-            // v73: Evasion width doubled
-            const evasionWidth = 5000; 
+            const evasionWidth = 5000;
             const pruneLimit = evasionWidth * 1.5; 
             
             for(let step=0; step<6; step++) {
@@ -930,10 +933,8 @@
                     if(node.ap === 0) { next.push(node); continue; }
                     const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
                     if (asPass) next.push({ board: node.board, ap: 0, actions: node.actions, captured: node.captured, startScore: node.startScore });
-                    
                     const myP = [];
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
-                    
                     for(let j=0; j<myP.length; j++) {
                         let p = myP[j];
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
@@ -970,7 +971,6 @@
             }
             
             let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
-            
             if (legal.length > 0) {
                 legal.sort((a,b) => b.h - a.h);
                 if (legal[0].h > -500000000) return legal[0];
@@ -985,8 +985,10 @@
                 for(let c=0; c<BOARD_SIZE; c++) {
                     const p = board[r][c];
                     if(p) {
-                        if(p.owner === turn) { myP.push({r,c,...p}); if(p.type === 'king') myK = {r,c}; else myPhysicalCount++; }
-                        else { enP.push({r,c,...p}); if(p.type !== 'king') enPhysicalCount++; }
+                        if(p.owner === turn) { myP.push({r,c,...p});
+                        if(p.type === 'king') myK = {r,c}; else myPhysicalCount++; }
+                        else { enP.push({r,c,...p});
+                        if(p.type !== 'king') enPhysicalCount++; }
                     }
                 }
             }
@@ -996,8 +998,7 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            // v73: Tripled widths for massive deep search
-            let baseWidth = 1800, kickWidth = 3600; 
+            let baseWidth = 1800, kickWidth = 3600;
             if (strengthSetting === 'standard') { baseWidth = 900; kickWidth = 1800; }
             else if (strengthSetting === 'strong') { baseWidth = 3600; kickWidth = 7200; }
 
@@ -1005,20 +1006,18 @@
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
             const targetWidth = isBehindInMaterial ? kickWidth : (startInCheck ? kickWidth : baseWidth);
-
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v73): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v73): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v73): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v73): VENGEANCE ACTIVE! Width ${targetWidth}...`;
-
+            let statusText = `PH ENGINE (v74): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v74): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v74): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v74): VENGEANCE ACTIVE! Width ${targetWidth}...`;
             log(statusText, isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
-
+            
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
-
+            
             if(!bestTurn || bestTurn.finalScore <= -600000000) {
                 log("PH ENGINE: Critical Threat Detected. Executing Deep Evasion Protocol...", "text-orange-500 font-black uppercase");
                 let evasionTurn = await performEvasionSearch(root, turn);
@@ -1038,7 +1037,8 @@
                 else tryMove(a.fr, a.fc, a.tr, a.tc);
                 render(); await new Promise(r => setTimeout(r, 400));
             }
-            aiThinking = false; if(turn === 'black') endTurn(); render();
+            aiThinking = false;
+            if(turn === 'black') endTurn(); render();
         }
 
         function copyBoardFast(b) {
@@ -1055,7 +1055,8 @@
 
         // --- RENDER & UTILITIES ---
         function render() {
-            boardEl.innerHTML = ''; boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
             let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
             if(selectedSquare && showThreatVision) {
                 const p = board[selectedSquare.r][selectedSquare.c];
@@ -1077,17 +1078,20 @@
             }
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
-                    const sq = document.createElement('div'); sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
+                    const sq = document.createElement('div');
+                    sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
                     if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
                     if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
                     if(showThreatVision) { if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current'); else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected'); }
                     sq.onclick = () => selectSquare(r, c);
                     const p = board[r][c];
                     if(p) {
-                        const die = document.createElement('div'); die.className = `die ${p.owner}`;
+                        const die = document.createElement('div');
+                        die.className = `die ${p.owner}`;
                         if(p.type === 'king') { const k = document.createElement('div'); k.className = 'king-symbol'; k.innerText = '♔'; die.appendChild(k); }
                         else {
-                            const face = document.createElement('div'); face.className = 'die-face';
+                            const face = document.createElement('div');
+                            face.className = 'die-face';
                             const pips = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[p.value] || [];
                             for(let i=0; i<9; i++) { const pc = document.createElement('div'); pc.className = 'pip-container'; if(pips.includes(i)) { const dot = document.createElement('div'); dot.className = 'pip'; pc.appendChild(dot); } face.appendChild(pc); }
                             die.appendChild(face);
@@ -1101,7 +1105,6 @@
             apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
             const etb = document.getElementById('end-turn-btn');
             if (currentAP === 0 && !(capturedThisTurn || calcAS(board, turn) > turnStartScore) && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
-
             const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display'), wic = document.getElementById('what-if-controls');
             if (whatIfOriginalSnapshots !== null) {
                 wic.classList.remove('hidden');
@@ -1117,7 +1120,7 @@
         function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
         
         function getMoveHistoryStr() { 
-            let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n'); 
+            let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n');
             if (gameOver) {
                 const wText = document.getElementById('winner-text').innerText;
                 if (wText.includes('WHITE')) str += '\n1-0'; else if (wText.includes('BLACK')) str += '\n0-1';
@@ -1144,8 +1147,10 @@
         document.getElementById('no-clock-btn').onclick = () => { useClock = false; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); };
         
         document.getElementById('enable-clock-btn').onclick = () => { 
-            whiteTime = parseInt(document.getElementById('white-input').value) * 60; blackTime = parseInt(document.getElementById('black-input').value) * 60;
-            if (isNaN(whiteTime) || whiteTime <= 0) whiteTime = 900; if (isNaN(blackTime) || blackTime <= 0) blackTime = 900;
+            whiteTime = parseInt(document.getElementById('white-input').value) * 60;
+            blackTime = parseInt(document.getElementById('black-input').value) * 60;
+            if (isNaN(whiteTime) || whiteTime <= 0) whiteTime = 900;
+            if (isNaN(blackTime) || blackTime <= 0) blackTime = 900;
             useClock = true; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); 
         };
 
