@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v70 - Tony Berard</title>
+    <title>Dice Chess Ultra v72 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-red-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v70</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v72</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -74,13 +74,13 @@
                     <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
-                            <option value="standard">Standard (1k / 2k Kick)</option>
-                            <option value="medium" selected>Medium (3k / 5k Kick)</option>
-                            <option value="strong">Strong (6k / 10k Kick)</option>
+                            <option value="standard">Standard (300 / 600 Kick)</option>
+                            <option value="medium" selected>Medium (600 / 1200 Kick)</option>
+                            <option value="strong">Strong (1200 / 2400 Kick)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-red-400">v70: Engine Optimization & Deep Evasion Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v72: Combinatorial Triple-Width Active</p>
                 </div>
             </div>
 
@@ -292,8 +292,6 @@
         };
         document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 
-        const AI_BASELINE_WIDTH = 10000;
-
         let BOARD_SIZE = 9;
         let board = [], turn = 'white', currentAP = 3, selectedSquare = null;
         let moveHistory = [], currentTurnActions = [], fullMoveCount = 1;
@@ -305,7 +303,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV70';
+        const SAVE_KEY = 'diceChessUltraV72';
 
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -357,7 +355,7 @@
             clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v70 Init. Engine Optimization & Evasion Active.`, "text-red-400 font-black uppercase");
+            if (isReset) log(`v72 Init. Combinatorial Triple-Width Active.`, "text-indigo-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -582,14 +580,15 @@
 
         function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
             let attackers = [];
-            for (let p of potentialAttackers) {
+            for (let i = 0; i < potentialAttackers.length; i++) {
+                let p = potentialAttackers[i];
                 if (p.r === tr && p.c === tc) continue;
                 const dr = Math.abs(tr - p.r), dc = Math.abs(tc - p.c), dist = Math.max(dr, dc);
                 if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
                 
                 let clear = true;
                 const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
-                for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) { clear = false; break; }
+                for (let j = 1; j < dist; j++) if (b[p.r + j * sr][p.c + j * sc]) { clear = false; break; }
                 if (!clear) continue;
 
                 if (p.type === 'king') {
@@ -625,7 +624,8 @@
                 }
             }
 
-            for (let p of myP) {
+            for (let i = 0; i < myP.length; i++) {
+                let p = myP[i];
                 let attackers = getAttackers(p.r, p.c, p.type === 'king' ? 7 : p.value, enP, b);
                 if (attackers.length > 0) {
                     if (p.type === 'king') return 1000000000; 
@@ -664,7 +664,8 @@
 
             if (enemyInCheck) {
                 let unsafeCheckers = 0;
-                enemyCheckers.forEach(c => {
+                for(let i=0; i<enemyCheckers.length; i++) {
+                    let c = enemyCheckers[i];
                     let cAttackersFromEnemy = getAttackers(c.r, c.c, c.value, enP, b);
                     if (cAttackersFromEnemy.length > 0) {
                         cAttackersFromEnemy.sort((a,b) => a.attackerValue - b.attackerValue);
@@ -675,7 +676,7 @@
 
                         if (cDefendersFromMe.length < cAttackersFromEnemy.length) unsafeCheckers++;
                     }
-                });
+                }
                 if (unsafeCheckers > 0) {
                     if (nodeCaptured) phScore -= 5000000 * unsafeCheckers; 
                     else phScore -= 20000000 * unsafeCheckers; 
@@ -685,7 +686,8 @@
             let myDeadPieces = new Set();
             let landmineCount = 0;
 
-            myP.forEach(p => {
+            for(let i=0; i<myP.length; i++) {
+                let p = myP[i];
                 const pVal = p.type === 'king' ? 7 : p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 let isChecker = enemyCheckers.some(c => c.r === p.r && c.c === p.c);
@@ -718,12 +720,13 @@
                 } else {
                     if (isExcursion && pVal <= 3 && !isChecker) landmineCount++;
                 }
-            });
+            }
 
             if (landmineCount > 0) phScore += (landmineCount * 12000000);
 
-            enP.forEach(p => {
-                if (p.type === 'king') return; 
+            for(let i=0; i<enP.length; i++) {
+                let p = enP[i];
+                if (p.type === 'king') continue; 
                 const pVal = p.value;
                 let attackers = getAttackers(p.r, p.c, pVal, myP, b);
                 attackers = attackers.filter(a => !myDeadPieces.has(a.r * 100 + a.c));
@@ -744,7 +747,7 @@
                         if (!isBehind) phScore += 2000000; else phScore -= 2000000; 
                     }
                 }
-            });
+            }
 
             for (let k in myDefenderUsage) if (myDefenderUsage[k] > 1) phScore -= 10000000 * (myDefenderUsage[k] - 1);
             for (let k in enDefenderUsage) if (enDefenderUsage[k] > 1) phScore += 10000000 * (enDefenderUsage[k] - 1);
@@ -833,11 +836,14 @@
 
         async function performSearchAsync(root, width, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial) {
             let beam = [root];
+            const pruneLimit = width * 1.5;
+            
             for(let step=0; step<6; step++) {
                 let next = [];
                 let lastYield = performance.now();
                 
-                for(let node of beam) {
+                for(let i=0; i<beam.length; i++) {
+                    let node = beam[i];
                     if (performance.now() - lastYield > 40) { await new Promise(r => setTimeout(r, 0)); lastYield = performance.now(); }
 
                     if(node.ap === 0) { next.push(node); continue; }
@@ -847,15 +853,17 @@
                     const myP = [];
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
                     
-                    for(let p of myP) {
+                    for(let j=0; j<myP.length; j++) {
+                        let p = myP[j];
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
                             if(p.value < 6) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value++; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
                             if(p.value > 1) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value--; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
                         }
                         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
-                        for(let d of dirs) {
-                            for(let i=1; i<=range; i++) {
-                                let tr = p.r+d[0]*i, tc = p.c+d[1]*i;
+                        for(let dIdx=0; dIdx<dirs.length; dIdx++) {
+                            let d = dirs[dIdx];
+                            for(let dist=1; dist<=range; dist++) {
+                                let tr = p.r+d[0]*dist, tc = p.c+d[1]*dist;
                                 if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
                                 let v = validateMove(node.board, p.r, p.c, tr, tc, false);
                                 if(!v.valid) { if(node.board[tr][tc]) break; continue; }
@@ -868,7 +876,7 @@
                             }
                         }
                     }
-                    if (next.length > width * 1.5) {
+                    if (next.length > pruneLimit) {
                         next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial); });
                         next.sort((a,b) => b.h - a.h);
                         next = next.slice(0, width);
@@ -897,11 +905,16 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
+            // v72: Increased evasion width significantly
+            const evasionWidth = 2500; 
+            const pruneLimit = evasionWidth * 1.5; 
+            
             for(let step=0; step<6; step++) {
                 let next = [];
                 let lastYield = performance.now();
                 
-                for(let node of beam) {
+                for(let i=0; i<beam.length; i++) {
+                    let node = beam[i];
                     if (performance.now() - lastYield > 40) { await new Promise(r => setTimeout(r, 0)); lastYield = performance.now(); }
 
                     if(node.ap === 0) { next.push(node); continue; }
@@ -911,15 +924,17 @@
                     const myP = [];
                     for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
                     
-                    for(let p of myP) {
+                    for(let j=0; j<myP.length; j++) {
+                        let p = myP[j];
                         if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
                             if(p.value < 6) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value++; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
                             if(p.value > 1) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value--; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
                         }
                         const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
-                        for(let d of dirs) {
-                            for(let i=1; i<=range; i++) {
-                                let tr = p.r+d[0]*i, tc = p.c+d[1]*i;
+                        for(let dIdx=0; dIdx<dirs.length; dIdx++) {
+                            let d = dirs[dIdx];
+                            for(let dist=1; dist<=range; dist++) {
+                                let tr = p.r+d[0]*dist, tc = p.c+d[1]*dist;
                                 if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
                                 let v = validateMove(node.board, p.r, p.c, tr, tc, false);
                                 if(!v.valid) { if(node.board[tr][tc]) break; continue; }
@@ -932,16 +947,16 @@
                             }
                         }
                     }
-                    if (next.length > 8000) {
+                    if (next.length > pruneLimit) {
                         next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, false, false, 0, false, true); });
                         next.sort((a,b) => b.h - a.h);
-                        next = next.slice(0, 5000);
+                        next = next.slice(0, evasionWidth);
                     }
                 }
                 if(next.length === 0) break;
                 next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, false, false, 0, false, true); });
                 next.sort((a,b) => b.h - a.h);
-                beam = next.slice(0, 5000); 
+                beam = next.slice(0, evasionWidth); 
             }
             
             let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
@@ -971,24 +986,25 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            let baseWidth = 3000, kickWidth = 5000;
-            if (strengthSetting === 'standard') { baseWidth = 1000; kickWidth = 2000; }
-            else if (strengthSetting === 'strong') { baseWidth = 6000; kickWidth = 10000; }
+            // v72: Tripled widths for increased foresight
+            let baseWidth = 600, kickWidth = 1200; 
+            if (strengthSetting === 'standard') { baseWidth = 300; kickWidth = 600; }
+            else if (strengthSetting === 'strong') { baseWidth = 1200; kickWidth = 2400; }
 
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
-            const targetWidth = isBehindInMaterial ? 10000 : (startInCheck ? kickWidth : baseWidth);
+            const targetWidth = isBehindInMaterial ? kickWidth : (startInCheck ? kickWidth : baseWidth);
 
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v70): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v70): ABSOLUTE PANIC OVERRIDE! Width 10000...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v70): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v70): VENGEANCE ACTIVE! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v72): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v72): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v72): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v72): VENGEANCE ACTIVE! Width ${targetWidth}...`;
 
-            log(statusText, targetWidth === 10000 && isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
+            log(statusText, isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
 
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
@@ -1013,6 +1029,18 @@
                 render(); await new Promise(r => setTimeout(r, 400));
             }
             aiThinking = false; if(turn === 'black') endTurn(); render();
+        }
+
+        function copyBoardFast(b) {
+            let nb = new Array(BOARD_SIZE);
+            for(let r=0; r<BOARD_SIZE; r++) {
+                nb[r] = new Array(BOARD_SIZE);
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    nb[r][c] = p ? { type: p.type, value: p.value, owner: p.owner } : null;
+                }
+            }
+            return nb;
         }
 
         // --- RENDER & UTILITIES ---
