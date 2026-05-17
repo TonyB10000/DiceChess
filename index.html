@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v75 - Tony Berard</title>
+    <title>Dice Chess Ultra v77 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -60,7 +60,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v75</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v77</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -74,13 +74,13 @@
                     <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
-                            <option value="standard">Standard (1.8k / 3.6k Kick)</option>
-                            <option value="medium" selected>Medium (3.6k / 7.2k Kick)</option>
-                            <option value="strong">Strong (7.2k / 14.4k Kick)</option>
+                            <option value="standard">Standard (3.6k / 7.2k Kick)</option>
+                            <option value="medium" selected>Medium (7.2k / 14.4k Kick)</option>
+                            <option value="strong">Strong (14.4k / 28.8k Kick)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v75: Bloodthirst Override & Check Bonus</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-indigo-400">v77: Reinforced Phalanx Active</p>
                 </div>
             </div>
 
@@ -185,6 +185,7 @@
         </div>
     </main>
 
+    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -312,7 +313,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV75';
+        const SAVE_KEY = 'diceChessUltraV77';
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -368,7 +369,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v75 Init. Bloodthirst Override & Check Bonus active.`, "text-indigo-400 font-black uppercase");
+            if (isReset) log(`v77 Init. Reinforced Phalanx Active.`, "text-indigo-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -633,11 +634,16 @@
         function quiescencePenalty(b, aiOwner) {
             let totalLoss = 0;
             const myP = [], enP = [];
+            let myK = null;
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
                     if(b[r][c]) {
-                        if(b[r][c].owner === aiOwner) myP.push({r,c,...b[r][c]});
-                        else enP.push({r,c,...b[r][c]});
+                        if(b[r][c].owner === aiOwner) { 
+                            myP.push({r,c,...b[r][c]});
+                            if(b[r][c].type === 'king') myK = {r,c,...b[r][c]};
+                        } else {
+                            enP.push({r,c,...b[r][c]});
+                        }
                     }
                 }
             }
@@ -653,12 +659,54 @@
                     let pieceVal = 100000000 + (p.value * 1000); 
                     
                     let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
+                    
+                    // v77: Reinforced Phalanx Check (Is this piece an Active Shield?)
+                    let isShield = false;
+                    if (myK && p.type !== 'king') {
+                        const drK = Math.abs(p.r - myK.r), dcK = Math.abs(p.c - myK.c);
+                        if (drK === 0 || dcK === 0 || drK === dcK) {
+                            const distK = Math.max(drK, dcK);
+                            let blockersK = 0;
+                            const srK = (p.r - myK.r) === 0 ? 0 : (p.r - myK.r) / distK;
+                            const scK = (p.c - myK.c) === 0 ? 0 : (p.c - myK.c) / distK;
+                            for (let j = 1; j < distK; j++) {
+                                if (b[myK.r + j * srK][myK.c + j * scK]) blockersK++;
+                            }
+                            if (blockersK === 0) {
+                                let distRay = 1;
+                                while (true) {
+                                    let nr = p.r + srK * distRay, nc = p.c + scK * distRay;
+                                    if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
+                                    let rayP = b[nr][nc];
+                                    if (rayP) {
+                                        if (rayP.owner !== aiOwner && rayP.type !== 'king') {
+                                            // Enemy piece is aiming right at the shield and King
+                                            let totalDist = distK + distRay;
+                                            if (rayP.value >= totalDist || rayP.value === 1) isShield = true;
+                                        }
+                                        break;
+                                    }
+                                    distRay++;
+                                }
+                            }
+                        }
+                    }
+
                     if (defenders.length === 0) {
-                        totalLoss += pieceVal; 
+                        if (isShield) {
+                            totalLoss += (pieceVal * 0.4); // Undefended shield: partial penalty waived to prevent King run panic
+                        } else {
+                            totalLoss += pieceVal; 
+                        }
                     } else {
-                        let enemyLoss = 100000000 + (primary.value * 1000);
-                        let netLoss = pieceVal - enemyLoss;
-                        if (netLoss > 0) totalLoss += netLoss;
+                        if (isShield) {
+                            // v77: Reinforced Phalanx active! Defended shield incurs zero fear.
+                            totalLoss += 0; 
+                        } else {
+                            let enemyLoss = 100000000 + (primary.value * 1000);
+                            let netLoss = pieceVal - enemyLoss;
+                            if (netLoss > 0) totalLoss += netLoss;
+                        }
                     }
                 }
             }
@@ -799,19 +847,72 @@
             const targetParity = BOARD_SIZE === 8 ? 15 : (BOARD_SIZE === 9 ? 20 : 25);
             const urgencyMult = Math.max(1.0, Math.min(5.0, fullMoveCount / (targetParity * 0.75)));
             
-            // Double the weight of actual material held
             score += ((myMaterial - enMaterial) * urgencyMult * 2);
             score += calcAS(b, aiOwner) * 1000;
             if (asPass) score += 1000000;
 
-            let remoraCount = 0;
+            // v76/v77: King Safety Metric (KSM) & Glacier Protocol
+            let myGlacierScore = 0;
+            let enGlacierScore = 0;
             const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-            dirs.forEach(d => { 
-                let nr = myK.r + d[0], nc = myK.c + d[1];
-                if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && b[nr][nc] && b[nr][nc].owner === aiOwner) remoraCount++; 
-            });
-            score += (remoraCount * 15000000); 
             
+            // Scan LOS for AI's King
+            dirs.forEach(d => {
+                let dist = 1;
+                while(true) {
+                    let nr = myK.r + d[0]*dist, nc = myK.c + d[1]*dist;
+                    if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) {
+                        if (dist > 2) myGlacierScore -= 8000000; // Open Draft Penalty
+                        break; 
+                    }
+                    const p = b[nr][nc];
+                    if(p) {
+                        if(p.owner === aiOwner) {
+                            let defBonus = 10000000; // Found a block
+                            if (dist <= 2) defBonus += 8000000; // Close block (Bunker)
+                            if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; // King Morton's Tax! Huge bonus for a low-mobility anchor
+                            myGlacierScore += defBonus;
+                        } else {
+                            let threatPen = 15000000;
+                            if (dist <= 3) threatPen += 15000000; // Enemy sniper in the LOS
+                            myGlacierScore -= threatPen;
+                        }
+                        break;
+                    }
+                    dist++;
+                }
+            });
+
+            // Scan LOS for Enemy's King (Offensive KSM logic)
+            dirs.forEach(d => {
+                let dist = 1;
+                while(true) {
+                    let nr = enK.r + d[0]*dist, nc = enK.c + d[1]*dist;
+                    if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) {
+                        if (dist > 2) enGlacierScore -= 8000000; 
+                        break; 
+                    }
+                    const p = b[nr][nc];
+                    if(p) {
+                        if(p.owner === (aiOwner === 'white' ? 'black' : 'white')) {
+                            let defBonus = 10000000;
+                            if (dist <= 2) defBonus += 8000000;
+                            if (p.value <= 3 && p.type !== 'king') defBonus += 15000000;
+                            enGlacierScore += defBonus;
+                        } else {
+                            let threatPen = 15000000;
+                            if (dist <= 3) threatPen += 15000000;
+                            enGlacierScore -= threatPen;
+                        }
+                        break;
+                    }
+                    dist++;
+                }
+            });
+            
+            score += myGlacierScore;
+            score -= enGlacierScore; 
+
             let myGhostPins = getGhostAttackers(myK.r, myK.c, enP, b);
             score -= myGhostPins * 30000000;
             let enGhostPins = getGhostAttackers(enK.r, enK.c, myP, b);
@@ -827,8 +928,6 @@
                     score -= 800000000;
                 }
             } else {
-                // v75: Bloodthirst Override!
-                // If opponent didn't capture, but WE did, grant a massive bonus to cure cowardice and encourage taking free food.
                 if (node.captured) {
                     score += 300000000; 
                 }
@@ -849,8 +948,6 @@
                         else { if (asDiff > 5) score += 50000000;
                         else score -= 200000000; }
                     } else {
-                        // v75: Check Bonus
-                        // Force the bot to inherently value hunting the King
                         score += 150000000; 
                     }
                 }
@@ -926,7 +1023,7 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
-            const evasionWidth = 10000;
+            const evasionWidth = 20000;
             const pruneLimit = evasionWidth * 1.5; 
             
             for(let step=0; step<6; step++) {
@@ -1005,10 +1102,9 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            // v75: Double Beam Width logic
-            let baseWidth = 3600, kickWidth = 7200;
-            if (strengthSetting === 'standard') { baseWidth = 1800; kickWidth = 3600; }
-            else if (strengthSetting === 'strong') { baseWidth = 7200; kickWidth = 14400; }
+            let baseWidth = 7200, kickWidth = 14400;
+            if (strengthSetting === 'standard') { baseWidth = 3600; kickWidth = 7200; }
+            else if (strengthSetting === 'strong') { baseWidth = 14400; kickWidth = 28800; }
 
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
@@ -1017,10 +1113,10 @@
             aiThinking = true; turnEl.innerText = "CALCULATING...";
             render(); 
             
-            let statusText = `PH ENGINE (v75): Width ${targetWidth}...`;
-            if (isBehindInMaterial) statusText = `PH ENGINE (v75): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
-            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v75): PANIC KICK ACTIVE! Width ${targetWidth}...`;
-            else if (opponentCaptured) statusText = `PH ENGINE (v75): VENGEANCE ACTIVE! Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v77): Width ${targetWidth}...`;
+            if (isBehindInMaterial) statusText = `PH ENGINE (v77): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+            else if (startInCheck && targetWidth === kickWidth) statusText = `PH ENGINE (v77): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+            else if (opponentCaptured) statusText = `PH ENGINE (v77): VENGEANCE ACTIVE! Width ${targetWidth}...`;
             log(statusText, isBehindInMaterial ? "text-red-500 font-black italic uppercase" : "text-slate-500 italic uppercase");
             
             let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
