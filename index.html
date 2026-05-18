@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v82 - Tony Berard</title>
+    <title>Dice Chess Ultra v83 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -62,7 +62,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v82</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v83</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -82,7 +82,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-fuchsia-400">v82: Remora & Cave Bunker Synergy Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-fuchsia-400">v83: Remora & Cave Bunker Synergy Active</p>
                 </div>
             </div>
 
@@ -176,10 +176,10 @@
                 </div>
                 
                 <div class="mt-2 flex flex-col gap-1 px-1">
-                    <a href="https://www.patreon.com/c/TranscendentThinking" target="_blank" class="w-full py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded text-[10px] font-bold uppercase tracking-widest text-center transition-colors shadow-lg">Support on Patreon</a>
+                    <a href="https://buy.stripe.com/dRm9AN8IgcrieVbbOT9EI00" target="_blank" class="w-full py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded text-[10px] font-bold uppercase tracking-widest text-center transition-colors shadow-lg">Support on Stripe</a>
                     <div class="grid grid-cols-2 gap-1">
                         <a href="https://www.youtube.com/@TranscendentThinking1" target="_blank" class="w-full py-1.5 bg-red-600 hover:bg-red-500 text-white rounded text-[10px] font-bold uppercase tracking-widest text-center transition-colors shadow-lg">YouTube</a>
-                        <a href="https://www.facebook.com/tony.berard.71" target="_blank" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[10px] font-bold uppercase tracking-widest text-center transition-colors shadow-lg">Facebook</a>
+                        <a href="https://www.facebook.com/groups/1747360393316932" target="_blank" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[10px] font-bold uppercase tracking-widest text-center transition-colors shadow-lg">Facebook Group</a>
                     </div>
                 </div>
 
@@ -187,7 +187,6 @@
         </div>
     </main>
 
-    <!-- Modals -->
     <div id="settings-modal" class="modal hidden">
         <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-sm mx-4 shadow-2xl text-center">
             <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Chronos Engine</h3>
@@ -273,7 +272,7 @@
                 <h4 class="text-white font-bold uppercase tracking-widest text-xs mt-4">3. The Advancement Score (AS)</h4>
                 <p>Prevents stalling by forcing board progression.</p>
                 <ul class="list-disc pl-5 space-y-1">
-                    <li>AS is the sum of how far pieces have moved.</li>
+                    <li>AS is the sum of how far pieces have moved in terms of ranks.</li>
                     <li>Net AS at turn end <strong>must be strictly higher</strong> than turn start.</li>
                     <li><strong>Exception:</strong> Captures suspend AS rule for that turn.</li>
                     <li>If actions don't satisfy AS or capture, turn is illegal.</li>
@@ -316,7 +315,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV82';
+        const SAVE_KEY = 'diceChessUltraV83';
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -374,7 +373,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v82 Init. Remora & Cave Bunker Synergy Active.`, "text-fuchsia-400 font-black uppercase");
+            if (isReset) log(`v83 Init. Remora & Cave Bunker Synergy Active.`, "text-fuchsia-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -1184,7 +1183,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v82): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v83): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1224,16 +1223,16 @@
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v82): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v83): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v82): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v83): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v82): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v83): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
