@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v83 - Tony Berard</title>
+    <title>Dice Chess Ultra v84 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -62,7 +62,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v83</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v84</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -82,7 +82,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-fuchsia-400">v83: Remora & Cave Bunker Synergy Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-fuchsia-400">v84: Acceptance Patch Deployed</p>
                 </div>
             </div>
 
@@ -315,7 +315,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV83';
+        const SAVE_KEY = 'diceChessUltraV84';
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -373,7 +373,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v83 Init. Remora & Cave Bunker Synergy Active.`, "text-fuchsia-400 font-black uppercase");
+            if (isReset) log(`v84 Init. Acceptance Patch Deployed.`, "text-fuchsia-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -842,7 +842,9 @@
             if (node.ap < 3 && !asPass) return -50000000000; // -50 Billion
             
             let checkersOnMe = getAttackers(myK.r, myK.c, 7, enP, b);
-            if (checkersOnMe.length > 0) {
+            let kingInImmediateDanger = (checkersOnMe.length > 0);
+
+            if (kingInImmediateDanger) {
                 return -50000000000; // -50 Billion
             }
             
@@ -863,9 +865,6 @@
             score += ((myMaterial - enMaterial) * urgencyMult * 2);
             score += calcAS(b, aiOwner) * 1000;
             if (asPass) score += 1000000;
-
-            let kingInImmediateDanger = false;
-            if (checkersOnMe.length > 0) kingInImmediateDanger = true;
 
             if (!kingInImmediateDanger) {
                 const isEnemyTerritory = (r, owner) => owner === 'white' ? r < Math.floor(BOARD_SIZE/2) : r >= Math.ceil(BOARD_SIZE/2);
@@ -1031,10 +1030,20 @@
 
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
             
+            // v84 Acceptance Patch
             if (opponentCaptured) {
-                if (node.captured) { if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000; else score += 300000000; } 
-                else score -= 800000000;
-            } else { if (node.captured) score += 300000000; }
+                if (node.captured) { 
+                    if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000; else score += 300000000; 
+                } else { 
+                    if (!kingInImmediateDanger) {
+                        score -= 50000000; // Sigh, accept material loss without throwing cheese curls.
+                    } else {
+                        score -= 800000000; // King is in danger and we can't strike back. Panic!
+                    }
+                }
+            } else { 
+                if (node.captured) score += 300000000; 
+            }
 
             let enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
             if (enemyCheckers.length > 0) {
@@ -1183,7 +1192,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v83): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v84): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1223,16 +1232,16 @@
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v83): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v84): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v83): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v84): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v83): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v84): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
