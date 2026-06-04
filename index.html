@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v84 - Tony Berard</title>
+    <title>Dice Chess Ultra v85 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -12,6 +12,7 @@
         header { flex-shrink: 0; background-color: #020617; padding: 0.5rem; text-align: center; border-bottom: 1px solid #1e293b; z-index: 10; }
         main { flex-grow: 1; display: flex; overflow: hidden; position: relative; width: 100%; height: 100%; }
         .layout-container { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; padding: 0.5rem; gap: 0.5rem; overflow-y: auto; }
+        
         #board-wrapper { position: relative; width: 90vmin; height: 90vmin; max-width: 580px; max-height: 580px; aspect-ratio: 1/1; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
         .sidebar { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 0.5rem; }
         @media (orientation: landscape) {
@@ -20,6 +21,7 @@
             #board-wrapper { height: 88vh; width: 88vh; max-width: none; max-height: none; }
             .sidebar { width: 320px; height: 88vh; overflow-y: auto; }
         }
+        
         .board-container { display: grid; width: 100%; height: 100%; border: 6px solid #334155; border-radius: 8px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6); background-color: #334155; gap: 2px; padding: 1px; }
         #start-overlay { position: absolute; inset: 0; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); z-index: 50; display: none; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; gap: 1rem; }
         .square { display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; transition: background-color 0.1s ease; aspect-ratio: 1/1; }
@@ -29,6 +31,7 @@
         .square.valid-capture { background-color: #ef4444 !important; }
         .square.threat-current { background-color: rgba(239,68,68,0.5) !important; }
         .square.threat-projected { background-color: rgba(245,158,11,0.4) !important; }
+        
         .die { width: 86%; height: 86%; border-radius: 18%; box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; position: relative; }
         .die.white { background: linear-gradient(135deg, #ffffff, #e2e8f0); border: 1px solid #94a3b8; }
         .die.black { background: linear-gradient(135deg, #1e293b, #020617); border: 1px solid #334155; }
@@ -39,6 +42,7 @@
         .king-symbol { font-size: 6vmin; font-weight: bold; display: flex; justify-content: center; align-items: center; }
         .die.white .king-symbol { color: #475569; } .die.black .king-symbol { color: #f1f5f9; }
         @media (min-width: 600px) { .king-symbol { font-size: 2.8rem; } }
+        
         .panel { background-color: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); }
         .btn { @apply flex justify-center items-center font-bold transition-all duration-200 active:scale-95; border-radius: 0.5rem; }
         .btn-action { @apply bg-blue-600 hover:bg-blue-500 text-white shadow-lg disabled:opacity-20 disabled:cursor-not-allowed; }
@@ -49,6 +53,7 @@
         @keyframes flashRed { 0%, 100% { background-color: #dc2626; } 50% { background-color: #7f1d1d; } }
         .under-watch { color: #7dd3fc !important; text-shadow: 0 0 8px #0ea5e9; animation: pulse-icy 1.5s infinite; }
         @keyframes pulse-icy { 0%, 100% { opacity: 1; text-shadow: 0 0 8px #0ea5e9; } 50% { opacity: 0.6; text-shadow: 0 0 2px #0ea5e9; } }
+        
         .log-container { height: 70px; overflow-y: auto; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; background: #020617; border-radius: 0.5rem; padding: 0.4rem; color: #94a3b8; border: 1px solid #1e293b; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); }
         .ai-thinking { animation: pulse-blue 1.5s infinite; } .predator-thinking { animation: pulse-red 0.8s infinite; }
@@ -62,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v84</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v85</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -82,7 +87,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-fuchsia-400">v84: Acceptance Patch Deployed</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v85: Freefall Protocol & Tax Capacity Active</p>
                 </div>
             </div>
 
@@ -315,7 +320,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV84';
+        const SAVE_KEY = 'diceChessUltraV85';
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -373,7 +378,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v84 Init. Acceptance Patch Deployed.`, "text-fuchsia-400 font-black uppercase");
+            if (isReset) log(`v85 Init. Freefall Protocol & Tax Capacity Active.`, "text-amber-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -557,7 +562,10 @@
             render(); checkAutoTurnEnd(); saveGameToStorage();
         }
 
-        function checkAutoTurnEnd() { if(!aiThinking && currentAP === 0 && (capturedThisTurn || calcAS(board, turn) > turnStartScore)) setTimeout(endTurn, 400); }
+        function checkAutoTurnEnd() { 
+            // V85 FIX: Prevent the ghost UI error race condition by gating with !aiThinking!
+            if(!aiThinking && currentAP === 0 && (capturedThisTurn || calcAS(board, turn) > turnStartScore)) setTimeout(endTurn, 400); 
+        }
 
         function endTurn() {
             if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
@@ -719,7 +727,7 @@
                 let p = myP[i];
                 let attackers = getAttackers(p.r, p.c, p.type === 'king' ? 7 : p.value, enP, b);
                 if (attackers.length > 0) {
-                    if (p.type === 'king') return 100000000000; // v81 Absolute King Fallback
+                    if (p.type === 'king') return 100000000000; 
                     attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                     let primary = attackers[0];
                     let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
@@ -791,7 +799,7 @@
                 let attackers = getAttackers(p.r, p.c, pVal, enP, b);
                 
                 if (attackers.length > 0) {
-                    if (p.type === 'king') phScore -= 100000000000; // v81 Absolute King Fallback
+                    if (p.type === 'king') phScore -= 100000000000; 
                     else {
                         attackers.sort((a,b) => a.attackerValue - b.attackerValue);
                         let primaryAttacker = attackers[0];
@@ -834,18 +842,166 @@
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
             const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
             
-            // v81: Absolute King Valuation.
-            if(!enK) return 100000000000; // 100 Billion
-            if(!myK) return -100000000000; // -100 Billion
+            if(!enK) return 100000000000; 
+            if(!myK) return -100000000000; 
             
             const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
-            if (node.ap < 3 && !asPass) return -50000000000; // -50 Billion
+            if (node.ap < 3 && !asPass) return -50000000000; 
             
             let checkersOnMe = getAttackers(myK.r, myK.c, 7, enP, b);
             let kingInImmediateDanger = (checkersOnMe.length > 0);
+            if (kingInImmediateDanger) return -50000000000; 
+            
+            const myPhysicalCount = myP.length - 1; 
+            const enPhysicalCount = enP.length - 1;
+            
+            // v85: FREEFALL TRIGGER LOGIC (Tax Capacity, Stasis Oasis, Trailing Protocol)
+            let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || (myPhysicalCount <= 3);
 
-            if (kingInImmediateDanger) {
-                return -50000000000; // -50 Billion
+            if (isFreefall && !isEvasionMode) {
+                // v85: FREEFALL PARADIGM
+                let myTaxCapacity = 0, enTaxCapacity = 0;
+                myP.forEach(p => { myTaxCapacity += (aiOwner === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
+                enP.forEach(p => { enTaxCapacity += (aiOwner === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
+                
+                score += myTaxCapacity * 5000000; // Hoard Runway
+                score -= enTaxCapacity * 5000000; // Strip Enemy Tax Capacity
+                
+                // Stasis Oasis Bonus
+                let oasisBonus = 0;
+                myP.forEach(p => {
+                    let safe = true;
+                    for (let eP of enP) {
+                        if (eP.type === 'king') { if (Math.max(Math.abs(eP.r - p.r), Math.abs(eP.c - p.c)) <= 1) { safe = false; break; } continue; }
+                        const dr = Math.abs(eP.r - p.r), dc = Math.abs(eP.c - p.c), dist = Math.max(dr, dc);
+                        if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
+                        let blocked = false;
+                        const sr = dr === 0 ? 0 : (p.r - eP.r) / dist, sc = dc === 0 ? 0 : (p.c - eP.c) / dist;
+                        for (let i = 1; i < dist; i++) if (b[eP.r + i * sr][eP.c + i * sc]) { blocked = true; break; }
+                        if (!blocked && dist <= Math.min(6, eP.value + 1)) { safe = false; break; } // Inside outer shadow ring
+                    }
+                    if (safe) oasisBonus += 20000000;
+                });
+                score += oasisBonus;
+
+                // Trailing Protocol
+                let enemyFrontLine = aiOwner === 'white' ? 0 : BOARD_SIZE - 1; 
+                if (enP.length > 0) {
+                    enemyFrontLine = enP[0].r;
+                    enP.forEach(eP => {
+                        if (aiOwner === 'white') {
+                            if (eP.r > enemyFrontLine) enemyFrontLine = eP.r; // Black's front line is highest r
+                        } else {
+                            if (eP.r < enemyFrontLine) enemyFrontLine = eP.r; // White's front line is lowest r
+                        }
+                    });
+                    // Massive reward for slipping King completely behind enemy executioners!
+                    if (aiOwner === 'white' && myK.r > enemyFrontLine) score += 40000000;
+                    if (aiOwner === 'black' && myK.r < enemyFrontLine) score += 40000000;
+                }
+            } else if (!isFreefall && !isEvasionMode) {
+                // STANDARD MIDGAME PARADIGM
+                let myGlacierScore = 0, enGlacierScore = 0;
+                const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                
+                dirs.forEach(d => {
+                    let dist = 1;
+                    while(true) {
+                        let nr = myK.r + d[0]*dist, nc = myK.c + d[1]*dist;
+                        if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) { if (dist > 2) myGlacierScore -= 8000000; break; }
+                        const p = b[nr][nc];
+                        if(p) {
+                            if(p.owner === aiOwner) {
+                                let isFatalSteppingStone = false;
+                                let fDist = 1;
+                                while(true) {
+                                    let eR = nr + d[0]*fDist, eC = nc + d[1]*fDist;
+                                    if(eR < 0 || eR >= BOARD_SIZE || eC < 0 || eC >= BOARD_SIZE) break;
+                                    let eP = b[eR][eC];
+                                    if(eP) {
+                                        if(eP.owner !== aiOwner) {
+                                            let canReach = false;
+                                            if (eP.type === 'king') canReach = (fDist === 1);
+                                            else if (fDist <= eP.value && (eP.value <= p.value || eP.value === 1)) canReach = true;
+                                            if (canReach && p.type !== 'king') isFatalSteppingStone = true;
+                                        }
+                                        break;
+                                    }
+                                    fDist++;
+                                }
+                                if (isFatalSteppingStone) myGlacierScore -= 15000000;
+                                else { let defBonus = 10000000; if (dist <= 2) defBonus += 8000000; if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; myGlacierScore += defBonus; }
+                            } 
+                            else { let threatPen = 15000000; if (dist <= 3) threatPen += 15000000; myGlacierScore -= threatPen; }
+                            break;
+                        }
+                        dist++;
+                    }
+                });
+
+                dirs.forEach(d => {
+                    let dist = 1;
+                    while(true) {
+                        let nr = enK.r + d[0]*dist, nc = enK.c + d[1]*dist;
+                        if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) { if (dist > 2) enGlacierScore -= 8000000; break; }
+                        const p = b[nr][nc];
+                        if(p) {
+                            if(p.owner === (aiOwner === 'white' ? 'black' : 'white')) { 
+                                let isFatalSteppingStone = false;
+                                let fDist = 1;
+                                while(true) {
+                                    let eR = nr + d[0]*fDist, eC = nc + d[1]*fDist;
+                                    if(eR < 0 || eR >= BOARD_SIZE || eC < 0 || eC >= BOARD_SIZE) break;
+                                    let eP = b[eR][eC];
+                                    if(eP) {
+                                        if(eP.owner === aiOwner) {
+                                            let canReach = false;
+                                            if (eP.type === 'king') canReach = (fDist === 1);
+                                            else if (fDist <= eP.value && (eP.value <= p.value || eP.value === 1)) canReach = true;
+                                            if (canReach && p.type !== 'king') isFatalSteppingStone = true;
+                                        }
+                                        break;
+                                    }
+                                    fDist++;
+                                }
+                                if (isFatalSteppingStone) enGlacierScore -= 15000000;
+                                else { let defBonus = 10000000; if (dist <= 2) defBonus += 8000000; if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; enGlacierScore += defBonus; }
+                            } 
+                            else { let threatPen = 15000000; if (dist <= 3) threatPen += 15000000; enGlacierScore -= threatPen; }
+                            break;
+                        }
+                        dist++;
+                    }
+                });
+                score += myGlacierScore; score -= enGlacierScore; 
+
+                // Structural Bunker Integrity
+                let myBunkerScore = 0, enBunkerScore = 0;
+                const myFrontDir = aiOwner === 'white' ? -1 : 1;
+                const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+                let myRemoraCount = 0;
+                myRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') { myRemoraCount++; myBunkerScore += 12000000; } });
+                if (myRemoraCount === myRemoraSquares.length && myRemoraSquares.length > 0) {
+                    myBunkerScore += 45000000; 
+                    const mySideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+                    let myCaveCount = 0;
+                    mySideSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') myCaveCount++; });
+                    if (myCaveCount === mySideSquares.length && mySideSquares.length > 0) myBunkerScore += 60000000; 
+                }
+
+                const enOwner = aiOwner === 'white' ? 'black' : 'white';
+                const enFrontDir = enOwner === 'white' ? -1 : 1;
+                const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+                let enRemoraCount = 0;
+                enRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') { enRemoraCount++; enBunkerScore += 12000000; } });
+                if (enRemoraCount === enRemoraSquares.length && enRemoraSquares.length > 0) {
+                    enBunkerScore += 45000000; 
+                    const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+                    let enCaveCount = 0;
+                    enSideSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enCaveCount++; });
+                    if (enCaveCount === enSideSquares.length && enSideSquares.length > 0) enBunkerScore += 60000000; 
+                }
+                score += myBunkerScore; score -= enBunkerScore;
             }
             
             if (isEvasionMode) {
@@ -855,9 +1011,9 @@
             }
 
             const baseValue = 100000000, pipValue = 1000; 
-            let myMaterial = 0, enMaterial = 0, myPhysicalCount = 0, enPhysicalCount = 0;
-            myP.forEach(p => { myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') myPhysicalCount++; });
-            enP.forEach(p => { enMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); if(p.type !== 'king') enPhysicalCount++; });
+            let myMaterial = 0, enMaterial = 0;
+            myP.forEach(p => { myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); });
+            enP.forEach(p => { enMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); });
             const diffPhysical = myPhysicalCount - enPhysicalCount;
             const targetParity = BOARD_SIZE === 8 ? 15 : (BOARD_SIZE === 9 ? 20 : 25);
             const urgencyMult = Math.max(1.0, Math.min(5.0, fullMoveCount / (targetParity * 0.75)));
@@ -866,7 +1022,7 @@
             score += calcAS(b, aiOwner) * 1000;
             if (asPass) score += 1000000;
 
-            if (!kingInImmediateDanger) {
+            if (!kingInImmediateDanger && !isFreefall) {
                 const isEnemyTerritory = (r, owner) => owner === 'white' ? r < Math.floor(BOARD_SIZE/2) : r >= Math.ceil(BOARD_SIZE/2);
                 let iowBonus = 0;
                 myP.forEach(p => {
@@ -888,158 +1044,14 @@
                 score += iowBonus;
             }
 
-            let myGlacierScore = 0, enGlacierScore = 0;
-            const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-            
-            dirs.forEach(d => {
-                let dist = 1;
-                while(true) {
-                    let nr = myK.r + d[0]*dist, nc = myK.c + d[1]*dist;
-                    if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) { if (dist > 2) myGlacierScore -= 8000000; break; }
-                    const p = b[nr][nc];
-                    if(p) {
-                        if(p.owner === aiOwner) {
-                            let isFatalSteppingStone = false;
-                            let fDist = 1;
-                            while(true) {
-                                let eR = nr + d[0]*fDist, eC = nc + d[1]*fDist;
-                                if(eR < 0 || eR >= BOARD_SIZE || eC < 0 || eC >= BOARD_SIZE) break;
-                                let eP = b[eR][eC];
-                                if(eP) {
-                                    if(eP.owner !== aiOwner) {
-                                        let canReach = false;
-                                        if (eP.type === 'king') canReach = (fDist === 1);
-                                        else if (fDist <= eP.value && (eP.value <= p.value || eP.value === 1)) canReach = true;
-                                        if (canReach && p.type !== 'king') isFatalSteppingStone = true;
-                                    }
-                                    break;
-                                }
-                                fDist++;
-                            }
-                            
-                            if (isFatalSteppingStone) {
-                                myGlacierScore -= 15000000;
-                            } else {
-                                let defBonus = 10000000; if (dist <= 2) defBonus += 8000000; if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; myGlacierScore += defBonus; 
-                            }
-                        } 
-                        else { let threatPen = 15000000; if (dist <= 3) threatPen += 15000000; myGlacierScore -= threatPen; }
-                        break;
-                    }
-                    dist++;
-                }
-            });
-
-            dirs.forEach(d => {
-                let dist = 1;
-                while(true) {
-                    let nr = enK.r + d[0]*dist, nc = enK.c + d[1]*dist;
-                    if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) { if (dist > 2) enGlacierScore -= 8000000; break; }
-                    const p = b[nr][nc];
-                    if(p) {
-                        if(p.owner === (aiOwner === 'white' ? 'black' : 'white')) { 
-                            let isFatalSteppingStone = false;
-                            let fDist = 1;
-                            while(true) {
-                                let eR = nr + d[0]*fDist, eC = nc + d[1]*fDist;
-                                if(eR < 0 || eR >= BOARD_SIZE || eC < 0 || eC >= BOARD_SIZE) break;
-                                let eP = b[eR][eC];
-                                if(eP) {
-                                    if(eP.owner === aiOwner) {
-                                        let canReach = false;
-                                        if (eP.type === 'king') canReach = (fDist === 1);
-                                        else if (fDist <= eP.value && (eP.value <= p.value || eP.value === 1)) canReach = true;
-                                        if (canReach && p.type !== 'king') isFatalSteppingStone = true;
-                                    }
-                                    break;
-                                }
-                                fDist++;
-                            }
-
-                            if (isFatalSteppingStone) {
-                                enGlacierScore -= 15000000;
-                            } else {
-                                let defBonus = 10000000; if (dist <= 2) defBonus += 8000000; if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; enGlacierScore += defBonus;
-                            }
-                        } 
-                        else { let threatPen = 15000000; if (dist <= 3) threatPen += 15000000; enGlacierScore -= threatPen; }
-                        break;
-                    }
-                    dist++;
-                }
-            });
-            score += myGlacierScore; score -= enGlacierScore; 
-
-            // v82: Structural Bunker Integrity (Remora Fish & Cave)
-            let myBunkerScore = 0, enBunkerScore = 0;
-            
-            // My Bunker Evaluation
-            const myFrontDir = aiOwner === 'white' ? -1 : 1;
-            const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-            let myRemoraCount = 0;
-            myRemoraSquares.forEach(sq => {
-                const p = b[sq.r][sq.c];
-                if (p && p.owner === aiOwner && p.type !== 'king') {
-                    myRemoraCount++;
-                    myBunkerScore += 12000000; // Base presence in Remora zone
-                }
-            });
-            if (myRemoraCount === myRemoraSquares.length && myRemoraSquares.length > 0) {
-                myBunkerScore += 45000000; // Massive Remora Synergy Bonus
-                
-                const mySideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                let myCaveCount = 0;
-                mySideSquares.forEach(sq => {
-                    const p = b[sq.r][sq.c];
-                    if (p && p.owner === aiOwner && p.type !== 'king') myCaveCount++;
-                });
-                if (myCaveCount === mySideSquares.length && mySideSquares.length > 0) {
-                    myBunkerScore += 60000000; // Massive Cave Synergy Bonus
-                }
-            }
-
-            // Enemy Bunker Evaluation
-            const enOwner = aiOwner === 'white' ? 'black' : 'white';
-            const enFrontDir = enOwner === 'white' ? -1 : 1;
-            const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-            let enRemoraCount = 0;
-            enRemoraSquares.forEach(sq => {
-                const p = b[sq.r][sq.c];
-                if (p && p.owner === enOwner && p.type !== 'king') {
-                    enRemoraCount++;
-                    enBunkerScore += 12000000;
-                }
-            });
-            if (enRemoraCount === enRemoraSquares.length && enRemoraSquares.length > 0) {
-                enBunkerScore += 45000000; // Remora Synergy
-                
-                const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                let enCaveCount = 0;
-                enSideSquares.forEach(sq => {
-                    const p = b[sq.r][sq.c];
-                    if (p && p.owner === enOwner && p.type !== 'king') enCaveCount++;
-                });
-                if (enCaveCount === enSideSquares.length && enSideSquares.length > 0) {
-                    enBunkerScore += 60000000; // Cave Synergy
-                }
-            }
-
-            score += myBunkerScore;
-            score -= enBunkerScore;
-            // End v82 Bunker Eval
-
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
             
-            // v84 Acceptance Patch
             if (opponentCaptured) {
                 if (node.captured) { 
                     if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000; else score += 300000000; 
                 } else { 
-                    if (!kingInImmediateDanger) {
-                        score -= 50000000; // Sigh, accept material loss without throwing cheese curls.
-                    } else {
-                        score -= 800000000; // King is in danger and we can't strike back. Panic!
-                    }
+                    if (!kingInImmediateDanger) score -= 50000000; 
+                    else score -= 800000000; 
                 }
             } else { 
                 if (node.captured) score += 300000000; 
@@ -1192,7 +1204,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v84): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v85): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1232,16 +1244,16 @@
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v84): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v85): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v84): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v85): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v84): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v85): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
