@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v85 - Tony Berard</title>
+    <title>Dice Chess Ultra v86 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v85</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v86</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -87,7 +87,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v85: Freefall Protocol & Tax Capacity Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v86: Structural Freefall & Tax Capacity Logic Active</p>
                 </div>
             </div>
 
@@ -320,7 +320,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV85';
+        const SAVE_KEY = 'diceChessUltraV85'; // Kept key consistent to allow loading
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -378,7 +378,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v85 Init. Freefall Protocol & Tax Capacity Active.`, "text-amber-400 font-black uppercase");
+            if (isReset) log(`v86 Init. Structural Freefall Protocol Active.`, "text-sky-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -563,7 +563,6 @@
         }
 
         function checkAutoTurnEnd() { 
-            // V85 FIX: Prevent the ghost UI error race condition by gating with !aiThinking!
             if(!aiThinking && currentAP === 0 && (capturedThisTurn || calcAS(board, turn) > turnStartScore)) setTimeout(endTurn, 400); 
         }
 
@@ -854,20 +853,40 @@
             
             const myPhysicalCount = myP.length - 1; 
             const enPhysicalCount = enP.length - 1;
+
+            // --- V86: STRUCTURAL FREEFALL TRIGGER ---
+            let myTaxCapacity = 0, enTaxCapacity = 0;
+            myP.forEach(p => { myTaxCapacity += (aiOwner === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
+            enP.forEach(p => { enTaxCapacity += (aiOwner === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
+
+            const myFrontDir = aiOwner === 'white' ? -1 : 1;
+            const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            let myRemoraCount = 0;
+            myRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') myRemoraCount++; });
             
-            // v85: FREEFALL TRIGGER LOGIC (Tax Capacity, Stasis Oasis, Trailing Protocol)
-            let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || (myPhysicalCount <= 3);
+            const enOwner = aiOwner === 'white' ? 'black' : 'white';
+            const enFrontDir = enOwner === 'white' ? -1 : 1;
+            const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            let enRemoraCount = 0;
+            enRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enRemoraCount++; });
+
+            let bunkerCollapsed = (myRemoraCount === 0);
+            let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
+            let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
+            let isMaterialDown = (myPhysicalCount < enPhysicalCount);
+
+            let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
+                             (myPhysicalCount <= 3) || 
+                             (bunkerCollapsed && isMaterialDown) || 
+                             (bothBunkersCollapsed && lowTaxCapacity);
+            // ----------------------------------------
 
             if (isFreefall && !isEvasionMode) {
-                // v85: FREEFALL PARADIGM
-                let myTaxCapacity = 0, enTaxCapacity = 0;
-                myP.forEach(p => { myTaxCapacity += (aiOwner === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
-                enP.forEach(p => { enTaxCapacity += (aiOwner === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
-                
+                // v86: FREEFALL PARADIGM
                 score += myTaxCapacity * 5000000; // Hoard Runway
                 score -= enTaxCapacity * 5000000; // Strip Enemy Tax Capacity
                 
-                // Stasis Oasis Bonus
+                // Stasis Oasis Bonus (V86: Amplified for King)
                 let oasisBonus = 0;
                 myP.forEach(p => {
                     let safe = true;
@@ -880,7 +899,7 @@
                         for (let i = 1; i < dist; i++) if (b[eP.r + i * sr][eP.c + i * sc]) { blocked = true; break; }
                         if (!blocked && dist <= Math.min(6, eP.value + 1)) { safe = false; break; } // Inside outer shadow ring
                     }
-                    if (safe) oasisBonus += 20000000;
+                    if (safe) oasisBonus += (p.type === 'king' ? 40000000 : 20000000); // Massive multiplier if King is safe
                 });
                 score += oasisBonus;
 
@@ -977,10 +996,7 @@
 
                 // Structural Bunker Integrity
                 let myBunkerScore = 0, enBunkerScore = 0;
-                const myFrontDir = aiOwner === 'white' ? -1 : 1;
-                const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                let myRemoraCount = 0;
-                myRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') { myRemoraCount++; myBunkerScore += 12000000; } });
+                if (myRemoraCount > 0) myBunkerScore += (myRemoraCount * 4000000);
                 if (myRemoraCount === myRemoraSquares.length && myRemoraSquares.length > 0) {
                     myBunkerScore += 45000000; 
                     const mySideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
@@ -989,11 +1005,7 @@
                     if (myCaveCount === mySideSquares.length && mySideSquares.length > 0) myBunkerScore += 60000000; 
                 }
 
-                const enOwner = aiOwner === 'white' ? 'black' : 'white';
-                const enFrontDir = enOwner === 'white' ? -1 : 1;
-                const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                let enRemoraCount = 0;
-                enRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') { enRemoraCount++; enBunkerScore += 12000000; } });
+                if (enRemoraCount > 0) enBunkerScore += (enRemoraCount * 4000000);
                 if (enRemoraCount === enRemoraSquares.length && enRemoraSquares.length > 0) {
                     enBunkerScore += 45000000; 
                     const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
@@ -1204,7 +1216,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v85): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v86): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1216,7 +1228,7 @@
                 return;
             }
 
-            let myPhysicalCount = 0, enPhysicalCount = 0, myK = null;
+            let myPhysicalCount = 0, enPhysicalCount = 0, myK = null, enK = null;
             const myP = [], enP = [];
             for(let r=0; r<BOARD_SIZE; r++) {
                 for(let c=0; c<BOARD_SIZE; c++) {
@@ -1225,7 +1237,7 @@
                         if(p.owner === turn) { myP.push({r,c,...p});
                         if(p.type === 'king') myK = {r,c}; else myPhysicalCount++; }
                         else { enP.push({r,c,...p});
-                        if(p.type !== 'king') enPhysicalCount++; }
+                        if(p.type === 'king') enK = {r,c}; else enPhysicalCount++; }
                     }
                 }
             }
@@ -1243,17 +1255,45 @@
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
+            // v86: Pre-calculate Structural Freefall Trigger for accurate console logging
+            let myTaxCapacity = 0, enTaxCapacity = 0;
+            myP.forEach(p => { myTaxCapacity += (turn === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
+            enP.forEach(p => { enTaxCapacity += (turn === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
+
+            const myFrontDir = turn === 'white' ? -1 : 1;
+            const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            let myRemoraCount = 0;
+            myRemoraSquares.forEach(sq => { const p = board[sq.r][sq.c]; if (p && p.owner === turn && p.type !== 'king') myRemoraCount++; });
+            
+            const enOwner = turn === 'white' ? 'black' : 'white';
+            const enFrontDir = enOwner === 'white' ? -1 : 1;
+            const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            let enRemoraCount = 0;
+            enRemoraSquares.forEach(sq => { const p = board[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enRemoraCount++; });
+
+            let bunkerCollapsed = (myRemoraCount === 0);
+            let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
+            let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
+            
+            let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
+                             (myPhysicalCount <= 3) || 
+                             (bunkerCollapsed && isBehindInMaterial) || 
+                             (bothBunkersCollapsed && lowTaxCapacity);
+
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v85): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v86): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v85): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v86): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
+            } else if (isFreefall) {
+                statusText = `PH ENGINE (v86): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v85): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v86): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
