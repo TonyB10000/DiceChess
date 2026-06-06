@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v86 - Tony Berard</title>
+    <title>Dice Chess Ultra v87 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v86</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v87</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -81,13 +81,13 @@
                     <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
-                            <option value="standard">Standard (3.6k / 7.2k Kick)</option>
-                            <option value="medium" selected>Medium (7.2k / 14.4k Kick)</option>
-                            <option value="strong">Strong (14.4k / 28.8k Kick)</option>
+                            <option value="standard">Standard (7.2k / 14.4k Kick)</option>
+                            <option value="medium" selected>Medium (14.4k / 28.8k Kick)</option>
+                            <option value="strong">Strong (28.8k / 57.6k Kick)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v86: Structural Freefall & Tax Capacity Logic Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v87: Structural Freefall & Horizon Doubled</p>
                 </div>
             </div>
 
@@ -320,7 +320,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV85'; // Kept key consistent to allow loading
+        const SAVE_KEY = 'diceChessUltraV87'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -378,7 +378,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v86 Init. Structural Freefall Protocol Active.`, "text-sky-400 font-black uppercase");
+            if (isReset) log(`v87 Init. Structural Freefall & Horizon Doubled.`, "text-fuchsia-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -854,7 +854,7 @@
             const myPhysicalCount = myP.length - 1; 
             const enPhysicalCount = enP.length - 1;
 
-            // --- V86: STRUCTURAL FREEFALL TRIGGER ---
+            // --- V87: STRUCTURAL FREEFALL TRIGGER ---
             let myTaxCapacity = 0, enTaxCapacity = 0;
             myP.forEach(p => { myTaxCapacity += (aiOwner === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
             enP.forEach(p => { enTaxCapacity += (aiOwner === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
@@ -882,11 +882,11 @@
             // ----------------------------------------
 
             if (isFreefall && !isEvasionMode) {
-                // v86: FREEFALL PARADIGM
+                // v87: FREEFALL PARADIGM
                 score += myTaxCapacity * 5000000; // Hoard Runway
                 score -= enTaxCapacity * 5000000; // Strip Enemy Tax Capacity
                 
-                // Stasis Oasis Bonus (V86: Amplified for King)
+                // Stasis Oasis Bonus (Amplified for King)
                 let oasisBonus = 0;
                 myP.forEach(p => {
                     let safe = true;
@@ -1154,7 +1154,7 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
-            const evasionWidth = 20000;
+            const evasionWidth = 40000;
             const pruneLimit = evasionWidth * 1.5; 
             
             for(let step=0; step<6; step++) {
@@ -1216,7 +1216,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v86): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v87): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1248,14 +1248,14 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            let baseWidth = 7200, kickWidth = 14400, panicWidth = 28800;
-            if (strengthSetting === 'standard') { baseWidth = 3600; kickWidth = 7200; panicWidth = 14400; }
-            else if (strengthSetting === 'strong') { baseWidth = 14400; kickWidth = 28800; panicWidth = 57600; }
+            let baseWidth = 14400, kickWidth = 28800, panicWidth = 57600;
+            if (strengthSetting === 'standard') { baseWidth = 7200; kickWidth = 14400; panicWidth = 28800; }
+            else if (strengthSetting === 'strong') { baseWidth = 28800; kickWidth = 57600; panicWidth = 115200; }
 
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
-            // v86: Pre-calculate Structural Freefall Trigger for accurate console logging
+            // v87: Pre-calculate Structural Freefall Trigger for accurate console logging
             let myTaxCapacity = 0, enTaxCapacity = 0;
             myP.forEach(p => { myTaxCapacity += (turn === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
             enP.forEach(p => { enTaxCapacity += (turn === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
@@ -1281,19 +1281,19 @@
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v86): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v87): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v86): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v87): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v86): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v87): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
                 logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v86): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v87): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
