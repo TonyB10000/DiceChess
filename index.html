@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v87 - Tony Berard</title>
+    <title>Dice Chess Ultra v88 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v87</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v88</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -81,13 +81,13 @@
                     <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
-                            <option value="standard">Standard (7.2k / 14.4k Kick)</option>
-                            <option value="medium" selected>Medium (14.4k / 28.8k Kick)</option>
-                            <option value="strong">Strong (28.8k / 57.6k Kick)</option>
+                            <option value="standard">Standard (3.6k / 7.2k Kick)</option>
+                            <option value="medium" selected>Medium (7.2k / 14.4k Kick)</option>
+                            <option value="strong">Strong (14.4k / 57.6k Kick)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v87: Structural Freefall & Horizon Doubled</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v88: Bunker Fluidity & Reserve Scanning Active</p>
                 </div>
             </div>
 
@@ -320,7 +320,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV87'; 
+        const SAVE_KEY = 'diceChessUltraV88'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -378,7 +378,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v87 Init. Structural Freefall & Horizon Doubled.`, "text-fuchsia-400 font-black uppercase");
+            if (isReset) log(`v88 Init. Bunker Fluidity & Reserve Scanning Active.`, "text-sky-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -854,19 +854,24 @@
             const myPhysicalCount = myP.length - 1; 
             const enPhysicalCount = enP.length - 1;
 
-            // --- V87: STRUCTURAL FREEFALL TRIGGER ---
             let myTaxCapacity = 0, enTaxCapacity = 0;
             myP.forEach(p => { myTaxCapacity += (aiOwner === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
             enP.forEach(p => { enTaxCapacity += (aiOwner === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
 
             const myFrontDir = aiOwner === 'white' ? -1 : 1;
             const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            const mySideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            const allMyBunkerSquares = [...myRemoraSquares, ...mySideSquares];
+            
             let myRemoraCount = 0;
             myRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') myRemoraCount++; });
             
             const enOwner = aiOwner === 'white' ? 'black' : 'white';
             const enFrontDir = enOwner === 'white' ? -1 : 1;
             const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+            const allEnBunkerSquares = [...enRemoraSquares, ...enSideSquares];
+
             let enRemoraCount = 0;
             enRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enRemoraCount++; });
 
@@ -879,14 +884,11 @@
                              (myPhysicalCount <= 3) || 
                              (bunkerCollapsed && isMaterialDown) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
-            // ----------------------------------------
 
             if (isFreefall && !isEvasionMode) {
-                // v87: FREEFALL PARADIGM
-                score += myTaxCapacity * 5000000; // Hoard Runway
-                score -= enTaxCapacity * 5000000; // Strip Enemy Tax Capacity
+                score += myTaxCapacity * 5000000; 
+                score -= enTaxCapacity * 5000000; 
                 
-                // Stasis Oasis Bonus (Amplified for King)
                 let oasisBonus = 0;
                 myP.forEach(p => {
                     let safe = true;
@@ -897,29 +899,26 @@
                         let blocked = false;
                         const sr = dr === 0 ? 0 : (p.r - eP.r) / dist, sc = dc === 0 ? 0 : (p.c - eP.c) / dist;
                         for (let i = 1; i < dist; i++) if (b[eP.r + i * sr][eP.c + i * sc]) { blocked = true; break; }
-                        if (!blocked && dist <= Math.min(6, eP.value + 1)) { safe = false; break; } // Inside outer shadow ring
+                        if (!blocked && dist <= Math.min(6, eP.value + 1)) { safe = false; break; } 
                     }
-                    if (safe) oasisBonus += (p.type === 'king' ? 40000000 : 20000000); // Massive multiplier if King is safe
+                    if (safe) oasisBonus += (p.type === 'king' ? 40000000 : 20000000); 
                 });
                 score += oasisBonus;
 
-                // Trailing Protocol
                 let enemyFrontLine = aiOwner === 'white' ? 0 : BOARD_SIZE - 1; 
                 if (enP.length > 0) {
                     enemyFrontLine = enP[0].r;
                     enP.forEach(eP => {
                         if (aiOwner === 'white') {
-                            if (eP.r > enemyFrontLine) enemyFrontLine = eP.r; // Black's front line is highest r
+                            if (eP.r > enemyFrontLine) enemyFrontLine = eP.r; 
                         } else {
-                            if (eP.r < enemyFrontLine) enemyFrontLine = eP.r; // White's front line is lowest r
+                            if (eP.r < enemyFrontLine) enemyFrontLine = eP.r; 
                         }
                     });
-                    // Massive reward for slipping King completely behind enemy executioners!
                     if (aiOwner === 'white' && myK.r > enemyFrontLine) score += 40000000;
                     if (aiOwner === 'black' && myK.r < enemyFrontLine) score += 40000000;
                 }
             } else if (!isFreefall && !isEvasionMode) {
-                // STANDARD MIDGAME PARADIGM
                 let myGlacierScore = 0, enGlacierScore = 0;
                 const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
                 
@@ -994,24 +993,58 @@
                 });
                 score += myGlacierScore; score -= enGlacierScore; 
 
-                // Structural Bunker Integrity
+                // V88: Structural Bunker Integrity with Reserve Scanning (Fluidity)
                 let myBunkerScore = 0, enBunkerScore = 0;
-                if (myRemoraCount > 0) myBunkerScore += (myRemoraCount * 4000000);
-                if (myRemoraCount === myRemoraSquares.length && myRemoraSquares.length > 0) {
+                let myVirtualRemoraCount = 0;
+                myRemoraSquares.forEach(sq => { 
+                    const p = b[sq.r][sq.c]; 
+                    if (p && p.owner === aiOwner && p.type !== 'king') { 
+                        myVirtualRemoraCount++; myBunkerScore += 12000000; 
+                    } else {
+                        let reserve = myP.find(rp => rp.type !== 'king' && !allMyBunkerSquares.some(bsq => bsq.r === rp.r && bsq.c === rp.c) && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
+                        if (reserve) { myVirtualRemoraCount++; myBunkerScore += 9000000; }
+                    }
+                });
+
+                if (myVirtualRemoraCount === myRemoraSquares.length && myRemoraSquares.length > 0) {
                     myBunkerScore += 45000000; 
-                    const mySideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                    let myCaveCount = 0;
-                    mySideSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') myCaveCount++; });
-                    if (myCaveCount === mySideSquares.length && mySideSquares.length > 0) myBunkerScore += 60000000; 
+                    let myVirtualCaveCount = 0;
+                    mySideSquares.forEach(sq => { 
+                        const p = b[sq.r][sq.c]; 
+                        if (p && p.owner === aiOwner && p.type !== 'king') {
+                            myVirtualCaveCount++;
+                        } else {
+                            let reserve = myP.find(rp => rp.type !== 'king' && !allMyBunkerSquares.some(bsq => bsq.r === rp.r && bsq.c === rp.c) && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
+                            if (reserve) { myVirtualCaveCount++; myBunkerScore += 9000000; }
+                        }
+                    });
+                    if (myVirtualCaveCount === mySideSquares.length && mySideSquares.length > 0) myBunkerScore += 60000000; 
                 }
 
-                if (enRemoraCount > 0) enBunkerScore += (enRemoraCount * 4000000);
-                if (enRemoraCount === enRemoraSquares.length && enRemoraSquares.length > 0) {
+                let enVirtualRemoraCount = 0;
+                enRemoraSquares.forEach(sq => { 
+                    const p = b[sq.r][sq.c]; 
+                    if (p && p.owner === enOwner && p.type !== 'king') { 
+                        enVirtualRemoraCount++; enBunkerScore += 12000000; 
+                    } else {
+                        let reserve = enP.find(rp => rp.type !== 'king' && !allEnBunkerSquares.some(bsq => bsq.r === rp.r && bsq.c === rp.c) && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
+                        if (reserve) { enVirtualRemoraCount++; enBunkerScore += 9000000; }
+                    }
+                });
+
+                if (enVirtualRemoraCount === enRemoraSquares.length && enRemoraSquares.length > 0) {
                     enBunkerScore += 45000000; 
-                    const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                    let enCaveCount = 0;
-                    enSideSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enCaveCount++; });
-                    if (enCaveCount === enSideSquares.length && enSideSquares.length > 0) enBunkerScore += 60000000; 
+                    let enVirtualCaveCount = 0;
+                    enSideSquares.forEach(sq => { 
+                        const p = b[sq.r][sq.c]; 
+                        if (p && p.owner === enOwner && p.type !== 'king') {
+                            enVirtualCaveCount++;
+                        } else {
+                            let reserve = enP.find(rp => rp.type !== 'king' && !allEnBunkerSquares.some(bsq => bsq.r === rp.r && bsq.c === rp.c) && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
+                            if (reserve) { enVirtualCaveCount++; enBunkerScore += 9000000; }
+                        }
+                    });
+                    if (enVirtualCaveCount === enSideSquares.length && enSideSquares.length > 0) enBunkerScore += 60000000; 
                 }
                 score += myBunkerScore; score -= enBunkerScore;
             }
@@ -1216,7 +1249,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v87): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v88): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1255,7 +1288,6 @@
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
 
-            // v87: Pre-calculate Structural Freefall Trigger for accurate console logging
             let myTaxCapacity = 0, enTaxCapacity = 0;
             myP.forEach(p => { myTaxCapacity += (turn === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
             enP.forEach(p => { enTaxCapacity += (turn === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
@@ -1281,19 +1313,19 @@
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v87): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v88): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v87): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v88): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v87): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v88): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
                 logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v87): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v88): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
@@ -1339,124 +1371,6 @@
             }
             return nb;
         }
-
-        // --- RENDER & UTILITIES ---
-        function render() {
-            boardEl.innerHTML = '';
-            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
-            let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
-            if(selectedSquare && showThreatVision) {
-                const p = board[selectedSquare.r][selectedSquare.c];
-                if(p) {
-                    const rMob = p.type === 'king' ? 1 : p.value, qMob = p.type === 'king' ? 1 : Math.min(6, p.value + 1);
-                    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                    dirs.forEach(d => {
-                        for(let i=1; i<=qMob; i++) {
-                            let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
-                            if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
-                            if (i <= rMob) currentInfluence.add(`${nr},${nc}`); else projectedInfluence.add(`${nr},${nc}`);
-                            if(board[nr][nc]) break;
-                        }
-                    });
-                }
-            }
-            if(selectedSquare && currentAP > 0 && gameActive && analysisIndex === -1 && !showThreatVision) {
-                for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
-            }
-            for(let r=0; r<BOARD_SIZE; r++) {
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    const sq = document.createElement('div');
-                    sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
-                    if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
-                    if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
-                    if(showThreatVision) { if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current'); else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected'); }
-                    sq.onclick = () => selectSquare(r, c);
-                    const p = board[r][c];
-                    if(p) {
-                        const die = document.createElement('div');
-                        die.className = `die ${p.owner}`;
-                        if(p.type === 'king') { const k = document.createElement('div'); k.className = 'king-symbol'; k.innerText = '♔'; die.appendChild(k); }
-                        else {
-                            const face = document.createElement('div');
-                            face.className = 'die-face';
-                            const pips = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[p.value] || [];
-                            for(let i=0; i<9; i++) { const pc = document.createElement('div'); pc.className = 'pip-container'; if(pips.includes(i)) { const dot = document.createElement('div'); dot.className = 'pip'; pc.appendChild(dot); } face.appendChild(pc); }
-                            die.appendChild(face);
-                        }
-                        sq.appendChild(die);
-                    }
-                    boardEl.appendChild(sq);
-                }
-            }
-            
-            if (playerUnderWatch && !aiThinking && gameActive) {
-                turnEl.innerText = `${turn.toUpperCase()} - UNDER WATCH`;
-                turnEl.classList.add('under-watch');
-            } else {
-                turnEl.innerText = aiThinking ? "CALCULATING..." : `${turn.toUpperCase()} TURN`;
-                turnEl.classList.remove('under-watch');
-            }
-            
-            apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
-            const etb = document.getElementById('end-turn-btn');
-            if (currentAP === 0 && !(capturedThisTurn || calcAS(board, turn) > turnStartScore) && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
-            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display'), wic = document.getElementById('what-if-controls');
-            if (whatIfOriginalSnapshots !== null) {
-                wic.classList.remove('hidden');
-                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `WHAT IF STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; } 
-                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "WHAT IF: SELECTION" : "WHAT IF: LIVE"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; }
-            } else {
-                wic.classList.add('hidden');
-                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `REPLAY STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-yellow-400"; } 
-                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-blue-400"; }
-            }
-        }
-
-        function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
-        
-        function getMoveHistoryStr() { 
-            let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n');
-            if (gameOver) {
-                const wText = document.getElementById('winner-text').innerText;
-                if (wText.includes('WHITE')) str += '\n1-0'; else if (wText.includes('BLACK')) str += '\n0-1';
-            }
-            return str;
-        }
-
-        document.getElementById('inc-btn').onclick = () => handleMod(true); document.getElementById('dec-btn').onclick = () => handleMod(false);
-        document.getElementById('end-turn-btn').onclick = endTurn;
-        document.getElementById('reset-turn-btn').onclick = () => { if(turnStartBoardSnapshot) { board = JSON.parse(turnStartBoardSnapshot); currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6; currentTurnActions = []; selectedSquare = null; render(); } };
-        document.getElementById('replay-back-btn').onclick = stepBack; document.getElementById('replay-forward-btn').onclick = stepForward;
-        document.getElementById('what-if-btn').onclick = whatIf; document.getElementById('leave-what-if-btn').onclick = leaveWhatIf; document.getElementById('fresh-what-if-btn').onclick = freshWhatIf;
-        document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
-        document.getElementById('analysis-btn').onclick = () => { if (analysisIndex === -1) { analysisIndex = 0; applySnapshot(0); log("Analysis Mode Entered."); } else { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length - 1); log("Exited Analysis Mode."); } };
-        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
-        document.getElementById('rules-btn').onclick = () => document.getElementById('rules-modal').classList.remove('hidden');
-        document.getElementById('close-rules-modal-btn').onclick = () => document.getElementById('rules-modal').classList.add('hidden');
-        document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
-        document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
-        document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value, parseInt(document.getElementById('import-size-select').value));
-        document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
-        document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
-        document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
-        document.getElementById('no-clock-btn').onclick = () => { useClock = false; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); };
-        
-        document.getElementById('enable-clock-btn').onclick = () => { 
-            whiteTime = parseInt(document.getElementById('white-input').value) * 60;
-            blackTime = parseInt(document.getElementById('black-input').value) * 60;
-            if (isNaN(whiteTime) || whiteTime <= 0) whiteTime = 900;
-            if (isNaN(blackTime) || blackTime <= 0) blackTime = 900;
-            useClock = true; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); 
-        };
-
-        document.getElementById('start-game-btn').onclick = startGame;
-        document.getElementById('resume-game-btn').onclick = resumeGame;
-        document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
-        document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE, true); };
-        document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE, true); };
-        document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
-        document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
-        document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE, true); };
 
         initGame(9, false);
         checkSavedGame();
