@@ -82,8 +82,8 @@
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
                             <option value="standard">Standard (3.6k / 7.2k Kick)</option>
-                            <option value="medium" selected>Medium (7.2k / 14.4k Kick)</option>
-                            <option value="strong">Strong (14.4k / 57.6k Kick)</option>
+                            <option value="medium" selected>Medium (14.4k / 28.8k Kick)</option>
+                            <option value="strong">Strong (28.8k / 115k Kick)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
@@ -615,8 +615,6 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE ---
-        
         function checkForImmediateLethal(b, aiOwner, ap) {
             const enK = null;
             let enKr = -1, enKc = -1;
@@ -1371,6 +1369,124 @@
             }
             return nb;
         }
+
+        function render() {
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
+            let targets = [], currentInfluence = new Set(), projectedInfluence = new Set();
+            if(selectedSquare && showThreatVision) {
+                const p = board[selectedSquare.r][selectedSquare.c];
+                if(p) {
+                    const rMob = p.type === 'king' ? 1 : p.value, qMob = p.type === 'king' ? 1 : Math.min(6, p.value + 1);
+                    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                    dirs.forEach(d => {
+                        for(let i=1; i<=qMob; i++) {
+                            let nr = selectedSquare.r+d[0]*i, nc = selectedSquare.c+d[1]*i;
+                            if(nr<0||nr>=BOARD_SIZE||nc<0||nc>=BOARD_SIZE) break;
+                            if (i <= rMob) currentInfluence.add(`${nr},${nc}`); else projectedInfluence.add(`${nr},${nc}`);
+                            if(board[nr][nc]) break;
+                        }
+                    });
+                }
+            }
+            if(selectedSquare && currentAP > 0 && gameActive && analysisIndex === -1 && !showThreatVision) {
+                for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(validateMove(board, selectedSquare.r, selectedSquare.c, r, c, true).valid) targets.push(`${r},${c}`);
+            }
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const sq = document.createElement('div');
+                    sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
+                    if(selectedSquare?.r === r && selectedSquare?.c === c) sq.classList.add('selected');
+                    if(targets.includes(`${r},${c}`)) sq.classList.add(board[r][c] ? 'valid-capture' : 'valid-move');
+                    if(showThreatVision) { if(currentInfluence.has(`${r},${c}`)) sq.classList.add('threat-current'); else if(projectedInfluence.has(`${r},${c}`)) sq.classList.add('threat-projected'); }
+                    sq.onclick = () => selectSquare(r, c);
+                    const p = board[r][c];
+                    if(p) {
+                        const die = document.createElement('div');
+                        die.className = `die ${p.owner}`;
+                        if(p.type === 'king') { const k = document.createElement('div'); k.className = 'king-symbol'; k.innerText = '♔'; die.appendChild(k); }
+                        else {
+                            const face = document.createElement('div');
+                            face.className = 'die-face';
+                            const pips = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[p.value] || [];
+                            for(let i=0; i<9; i++) { const pc = document.createElement('div'); pc.className = 'pip-container'; if(pips.includes(i)) { const dot = document.createElement('div'); dot.className = 'pip'; pc.appendChild(dot); } face.appendChild(pc); }
+                            die.appendChild(face);
+                        }
+                        sq.appendChild(die);
+                    }
+                    boardEl.appendChild(sq);
+                }
+            }
+            
+            if (playerUnderWatch && !aiThinking && gameActive) {
+                turnEl.innerText = `${turn.toUpperCase()} - UNDER WATCH`;
+                turnEl.classList.add('under-watch');
+            } else {
+                turnEl.innerText = aiThinking ? "CALCULATING..." : `${turn.toUpperCase()} TURN`;
+                turnEl.classList.remove('under-watch');
+            }
+            
+            apEl.innerText = currentAP; scoreEl.innerText = calcAS(board, turn);
+            const etb = document.getElementById('end-turn-btn');
+            if (currentAP === 0 && !(capturedThisTurn || calcAS(board, turn) > turnStartScore) && gameActive) etb.classList.add('flash-red'); else etb.classList.remove('flash-red');
+            const pc = document.getElementById('play-controls'), rc = document.getElementById('replay-controls'), spd = document.getElementById('selected-piece-display'), wic = document.getElementById('what-if-controls');
+            if (whatIfOriginalSnapshots !== null) {
+                wic.classList.remove('hidden');
+                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `WHAT IF STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; } 
+                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "WHAT IF: SELECTION" : "WHAT IF: LIVE"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-purple-400"; }
+            } else {
+                wic.classList.add('hidden');
+                if (analysisIndex !== -1) { pc.classList.add('hidden'); rc.classList.remove('hidden'); spd.innerText = `REPLAY STEP ${analysisIndex}`; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-yellow-400"; } 
+                else { pc.classList.remove('hidden'); rc.classList.add('hidden'); spd.innerText = selectedSquare ? "SELECTION ACTIVE" : "LIVE SESSION"; spd.className = "text-[8px] font-bold text-center mb-1 uppercase tracking-tighter text-blue-400"; }
+            }
+        }
+
+        function log(m, c) { const d = document.createElement('div'); d.innerText = `> ${m}`; if(c) d.className = c; logBox.appendChild(d); logBox.scrollTop = logBox.scrollHeight; }
+        
+        function getMoveHistoryStr() { 
+            let str = moveHistory.map(m => `${m.n}. ${m.w} : ${m.b}`).join('\n');
+            if (gameOver) {
+                const wText = document.getElementById('winner-text').innerText;
+                if (wText.includes('WHITE')) str += '\n1-0'; else if (wText.includes('BLACK')) str += '\n0-1';
+            }
+            return str;
+        }
+
+        document.getElementById('inc-btn').onclick = () => handleMod(true); document.getElementById('dec-btn').onclick = () => handleMod(false);
+        document.getElementById('end-turn-btn').onclick = endTurn;
+        document.getElementById('reset-turn-btn').onclick = () => { if(turnStartBoardSnapshot) { board = JSON.parse(turnStartBoardSnapshot); currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6; currentTurnActions = []; selectedSquare = null; render(); } };
+        document.getElementById('replay-back-btn').onclick = stepBack; document.getElementById('replay-forward-btn').onclick = stepForward;
+        document.getElementById('what-if-btn').onclick = whatIf; document.getElementById('leave-what-if-btn').onclick = leaveWhatIf; document.getElementById('fresh-what-if-btn').onclick = freshWhatIf;
+        document.getElementById('exit-analysis-btn').onclick = () => { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length-1); };
+        document.getElementById('analysis-btn').onclick = () => { if (analysisIndex === -1) { analysisIndex = 0; applySnapshot(0); log("Analysis Mode Entered."); } else { analysisIndex = -1; showThreatVision = false; applySnapshot(historySnapshots.length - 1); log("Exited Analysis Mode."); } };
+        document.getElementById('threats-btn').onclick = () => { showThreatVision = !showThreatVision; document.getElementById('threats-btn').classList.toggle('bg-red-600'); render(); };
+        document.getElementById('rules-btn').onclick = () => document.getElementById('rules-modal').classList.remove('hidden');
+        document.getElementById('close-rules-modal-btn').onclick = () => document.getElementById('rules-modal').classList.add('hidden');
+        document.getElementById('record-btn').onclick = () => { document.getElementById('record-text').value = getMoveHistoryStr(); document.getElementById('record-modal').classList.remove('hidden'); };
+        document.getElementById('copy-record-btn').onclick = (e) => copyToClipboard(document.getElementById('record-text').value, e.target);
+        document.getElementById('import-record-btn').onclick = () => importGame(document.getElementById('record-text').value, parseInt(document.getElementById('import-size-select').value));
+        document.getElementById('close-record-btn').onclick = () => document.getElementById('record-modal').classList.add('hidden');
+        document.getElementById('settings-btn').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
+        document.getElementById('cancel-settings-btn').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
+        document.getElementById('no-clock-btn').onclick = () => { useClock = false; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); };
+        document.getElementById('cancel-new-game').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
+        
+        document.getElementById('enable-clock-btn').onclick = () => { 
+            whiteTime = parseInt(document.getElementById('white-input').value) * 60;
+            blackTime = parseInt(document.getElementById('black-input').value) * 60;
+            if (isNaN(whiteTime) || whiteTime <= 0) whiteTime = 900;
+            if (isNaN(blackTime) || blackTime <= 0) blackTime = 900;
+            useClock = true; document.getElementById('settings-modal').classList.add('hidden'); updateClockDisplay(); 
+        };
+
+        document.getElementById('start-game-btn').onclick = startGame;
+        document.getElementById('resume-game-btn').onclick = resumeGame;
+        document.getElementById('new-game-btn').onclick = () => document.getElementById('confirm-modal').classList.remove('hidden');
+        document.getElementById('confirm-new-game').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); initGame(BOARD_SIZE, true); };
+        document.getElementById('board-size-select').onchange = (e) => { BOARD_SIZE = parseInt(e.target.value); initGame(BOARD_SIZE, true); };
+        document.getElementById('winner-view-board').onclick = () => document.getElementById('winner-modal').classList.add('hidden');
+        document.getElementById('winner-copy-record').onclick = (e) => copyToClipboard(getMoveHistoryStr(), e.target);
+        document.getElementById('new-campaign-btn').onclick = () => { document.getElementById('winner-modal').classList.add('hidden'); initGame(BOARD_SIZE, true); };
 
         initGame(9, false);
         checkSavedGame();
