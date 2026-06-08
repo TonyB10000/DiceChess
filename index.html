@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v90 - Tony Berard</title>
+    <title>Dice Chess Ultra v91 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v90</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v91</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -88,7 +88,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v90: Supreme 250K Tier Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v91: Supreme Tier & Shadow Guard Logic</p>
                 </div>
             </div>
 
@@ -321,7 +321,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV90'; 
+        const SAVE_KEY = 'diceChessUltraV91'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -373,16 +373,16 @@
                 board[1][c] = { type: 'die', value: 2, owner: 'black' };
                 board[BOARD_SIZE-2][c] = { type: 'die', value: 2, owner: 'white' };
                 board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
-            }
-            
-            clearInterval(clockInterval);
-            clockInterval = setInterval(tickClock, 1000);
-            document.getElementById('start-overlay').style.display = 'flex';
-            captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v90 Init. Supreme Tier Active.`, "text-purple-400 font-black uppercase");
         }
+            
+        clearInterval(clockInterval);
+        clockInterval = setInterval(tickClock, 1000);
+        document.getElementById('start-overlay').style.display = 'flex';
+        captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
+        if (isReset) log(`v91 Init. Shadow Guard Logic Active.`, "text-fuchsia-400 font-black uppercase");
+    }
 
-        function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
+    function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
 
         function importGame(text, overrideSize) {
             try {
@@ -812,6 +812,15 @@
                         let postCaptureValue = Math.max(1, primaryAttacker.attackerValue - (6 - primaryAttacker.apCost));
                         let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b);
                         const pieceTrueValue = baseVal + (p.value * pipVal);
+                        
+                        // --- V91: SHADOW GUARD HEURISTIC ---
+                        if (defenders.length > 0) {
+                            // If a piece is defended by a friendly piece sitting 3 or more squares away,
+                            // reward the bot for establishing a long-range Shadow Guard!
+                            let isShadowGuarded = defenders.some(d => Math.max(Math.abs(d.r - p.r), Math.abs(d.c - p.c)) >= 3);
+                            if (isShadowGuarded) phScore += 15000000; 
+                        }
+                        // -----------------------------------
                         
                         if (defenders.length < attackers.length) {
                             phScore -= pieceTrueValue * ((isBehind && pVal !== 1) ? 1.5 : 1.1); 
