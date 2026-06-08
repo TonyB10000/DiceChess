@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v91 - Tony Berard</title>
+    <title>Dice Chess Ultra v92 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v91</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v92</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -88,7 +88,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v91: Supreme Tier & Shadow Guard Logic</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v92: MRP Hierarchy & Sprint Detection Active</p>
                 </div>
             </div>
 
@@ -321,7 +321,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV91'; 
+        const SAVE_KEY = 'diceChessUltraV92'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -373,16 +373,16 @@
                 board[1][c] = { type: 'die', value: 2, owner: 'black' };
                 board[BOARD_SIZE-2][c] = { type: 'die', value: 2, owner: 'white' };
                 board[BOARD_SIZE-1][c] = { type: layout[c] === 0 ? 'king' : 'die', value: layout[c], owner: 'white' };
-        }
+            }
             
-        clearInterval(clockInterval);
-        clockInterval = setInterval(tickClock, 1000);
-        document.getElementById('start-overlay').style.display = 'flex';
-        captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-        if (isReset) log(`v91 Init. Shadow Guard Logic Active.`, "text-fuchsia-400 font-black uppercase");
-    }
+            clearInterval(clockInterval);
+            clockInterval = setInterval(tickClock, 1000);
+            document.getElementById('start-overlay').style.display = 'flex';
+            captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
+            if (isReset) log(`v92 Init. MRP Hierarchy & Sprint Detection Active.`, "text-rose-400 font-black uppercase");
+        }
 
-    function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
+        function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
 
         function importGame(text, overrideSize) {
             try {
@@ -815,8 +815,6 @@
                         
                         // --- V91: SHADOW GUARD HEURISTIC ---
                         if (defenders.length > 0) {
-                            // If a piece is defended by a friendly piece sitting 3 or more squares away,
-                            // reward the bot for establishing a long-range Shadow Guard!
                             let isShadowGuarded = defenders.some(d => Math.max(Math.abs(d.r - p.r), Math.abs(d.c - p.c)) >= 3);
                             if (isShadowGuarded) phScore += 15000000; 
                         }
@@ -866,6 +864,19 @@
             let checkersOnMe = getAttackers(myK.r, myK.c, 7, enP, b);
             let kingInImmediateDanger = (checkersOnMe.length > 0);
             if (kingInImmediateDanger) return -50000000000; 
+            
+            // --- V92: SPRINTING LANDMINE FEAR ---
+            let sprintPen = 0;
+            enP.forEach(eP => {
+                if (eP.type !== 'king' && eP.value <= 2) {
+                    const dr = Math.abs(eP.r - myK.r), dc = Math.abs(eP.c - myK.c), dist = Math.max(dr, dc);
+                    if (dist > 0 && dist <= (eP.value * 2)) {
+                        sprintPen += 150000000; 
+                    }
+                }
+            });
+            score -= sprintPen;
+            // ------------------------------------
             
             const myPhysicalCount = myP.length - 1; 
             const enPhysicalCount = enP.length - 1;
@@ -1193,6 +1204,21 @@
                         if (moveAct) capSq = {r: moveAct.tr, c: moveAct.tc};
                     }
                     c.qPenalty = quiescencePenalty(c.board, aiOwner, capSq);
+                    
+                    // --- V92: MRP Level 2 (Hanging Check) ---
+                    if (capSq) {
+                        let enKr = -1, enKc = -1;
+                        for(let r=0; r<BOARD_SIZE; r++) for(let cIdx=0; cIdx<BOARD_SIZE; cIdx++) {
+                             if (c.board[r][cIdx] && c.board[r][cIdx].owner !== aiOwner && c.board[r][cIdx].type === 'king') {
+                                  enKr = r; enKc = cIdx; break;
+                             }
+                        }
+                        if (enKr !== -1 && Math.max(Math.abs(capSq.r - enKr), Math.abs(capSq.c - enKc)) === 1) {
+                            c.qPenalty += 300000000; // Massive penalty for jumping into King's melee radius
+                        }
+                    }
+                    // ----------------------------------------
+                    
                     c.finalScore = c.h - c.qPenalty;
                 }
                 topCandidates.sort((a,b) => b.finalScore - a.finalScore);
@@ -1266,7 +1292,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v90): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v92): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1332,19 +1358,19 @@
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v90): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v92): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v90): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v92): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v90): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
-                logColor = "text-purple-400 font-bold italic uppercase";
+                statusText = `PH ENGINE (v92): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v90): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v92): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
