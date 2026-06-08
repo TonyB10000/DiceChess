@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v89 - Tony Berard</title>
+    <title>Dice Chess Ultra v90 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v89</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v90</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -81,13 +81,14 @@
                     <div id="ai-strength-container" class="flex flex-col items-center gap-1 mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700">
                         <label class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Bot Strength Engine</label>
                         <select id="bot-strength-select" class="bg-slate-800 text-white border border-slate-600 rounded px-4 py-1.5 text-xs font-bold outline-none cursor-pointer">
-                            <option value="standard">Standard (3.6k / 7.2k Kick)</option>
-                            <option value="medium" selected>Medium (14.4k / 28.8k Kick)</option>
-                            <option value="strong">Strong (28.8k / 115k Kick)</option>
+                            <option value="standard">Standard (7.2k / 14.4k Kick)</option>
+                            <option value="medium">Medium (14.4k / 28.8k Kick)</option>
+                            <option value="strong">Strong (28.8k / 57.6k Kick)</option>
+                            <option value="supreme" selected>Supreme (62.5k / 125k Kick / 250k Panic)</option>
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v89: Trade Expectation & Strict MRP Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v90: Supreme 250K Tier Active</p>
                 </div>
             </div>
 
@@ -320,7 +321,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV89'; 
+        const SAVE_KEY = 'diceChessUltraV90'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -378,7 +379,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v89 Init. Trade Expectation & Strict MRP Active.`, "text-sky-400 font-black uppercase");
+            if (isReset) log(`v90 Init. Supreme Tier Active.`, "text-purple-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -781,9 +782,8 @@
                         }
                     }
                     
-                    // V89: Trade Expectation (Vengeance) Logic!
                     if (capSq && p.r === capSq.r && p.c === capSq.c) {
-                        currentPieceLoss *= 0.05; // 95% discount. If it captured blood, expect it to be attacked!
+                        currentPieceLoss *= 0.05; 
                     }
                     totalLoss += currentPieceLoss;
                 }
@@ -1093,16 +1093,15 @@
 
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
             
-            // V89: STRICT MANDATORY RECAPTURE PROTOCOL (MRP) FIX
             if (opponentCaptured) {
                 if (node.captured) { 
-                    score += 500000000; // MUST RECAPTURE (Strike back!)
+                    score += 500000000; 
                 } else { 
-                    if (!kingInImmediateDanger) score -= 800000000; // Cowardice penalty!
+                    if (!kingInImmediateDanger) score -= 800000000; 
                     else score -= 1000000000; 
                 }
             } else { 
-                if (node.captured) score += 300000000; // Initiate trade/attack
+                if (node.captured) score += 300000000; 
             }
 
             let enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
@@ -1195,7 +1194,8 @@
 
         async function performEvasionSearch(root, aiOwner) {
             let beam = [root];
-            const evasionWidth = 40000;
+            const strengthSetting = document.getElementById('bot-strength-select').value;
+            const evasionWidth = strengthSetting === 'supreme' ? 80000 : (strengthSetting === 'strong' ? 40000 : 20000);
             const pruneLimit = evasionWidth * 1.5; 
             
             for(let step=0; step<6; step++) {
@@ -1257,7 +1257,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v89): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v90): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1292,6 +1292,7 @@
             let baseWidth = 14400, kickWidth = 28800, panicWidth = 57600;
             if (strengthSetting === 'standard') { baseWidth = 7200; kickWidth = 14400; panicWidth = 28800; }
             else if (strengthSetting === 'strong') { baseWidth = 28800; kickWidth = 57600; panicWidth = 115200; }
+            else if (strengthSetting === 'supreme') { baseWidth = 62500; kickWidth = 125000; panicWidth = 250000; }
 
             let opponentCaptured = didOpponentJustCapture(turn);
             if (opponentCaptured && didAIInitiateTrade(turn)) opponentCaptured = false;
@@ -1314,26 +1315,27 @@
             let bunkerCollapsed = (myRemoraCount === 0);
             let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
             let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
-            
+            let isMaterialDown = (myPhysicalCount < enPhysicalCount);
+
             let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
                              (myPhysicalCount <= 3) || 
-                             (bunkerCollapsed && isBehindInMaterial) || 
+                             (bunkerCollapsed && isMaterialDown) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v89): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v90): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v89): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v90): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v89): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
-                logColor = "text-sky-400 font-bold italic uppercase";
+                statusText = `PH ENGINE (v90): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                logColor = "text-purple-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v89): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v90): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
@@ -1380,6 +1382,7 @@
             return nb;
         }
 
+        // --- RENDER & UTILITIES ---
         function render() {
             boardEl.innerHTML = '';
             boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
