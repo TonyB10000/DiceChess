@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v92 - Tony Berard</title>
+    <title>Dice Chess Ultra v93 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v92</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v93</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -88,7 +88,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v92: MRP Hierarchy & Sprint Detection Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v93: Pregame Book & Cave Preservation Active</p>
                 </div>
             </div>
 
@@ -321,7 +321,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV92'; 
+        const SAVE_KEY = 'diceChessUltraV93'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -379,7 +379,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v92 Init. MRP Hierarchy & Sprint Detection Active.`, "text-rose-400 font-black uppercase");
+            if (isReset) log(`v93 Init. Pregame Book & Cave Preservation Active.`, "text-green-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -782,6 +782,7 @@
                         }
                     }
                     
+                    // V89 Trade Expectation Discount
                     if (capSq && p.r === capSq.r && p.c === capSq.c) {
                         currentPieceLoss *= 0.05; 
                     }
@@ -905,6 +906,51 @@
                              (myPhysicalCount <= 3) || 
                              (bunkerCollapsed && isMaterialDown) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
+
+            // --- V93: PREGAME / OPENING BOOK (Turns 1 - 4) ---
+            if (fullMoveCount <= 4 && !isEvasionMode && !isFreefall) {
+                let pregameScore = 0;
+                const caveSquares = [ 
+                    {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1},
+                    {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} 
+                ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+                
+                // 1. Cave Preservation & Mandatory Recapture
+                caveSquares.forEach(sq => {
+                    const p = b[sq.r][sq.c];
+                    if (p && p.owner === aiOwner) pregameScore += 300000000; // Massive weight to keep the cave filled!
+                });
+
+                myP.forEach(p => {
+                    if (p.type === 'king') return;
+                    
+                    // 2. The Frontier Line
+                    const crossedFrontier = aiOwner === 'white' ? p.r < Math.floor(BOARD_SIZE/2) : p.r >= Math.ceil(BOARD_SIZE/2);
+                    if (crossedFrontier) {
+                        let attackers = getAttackers(p.r, p.c, p.value, enP, b);
+                        pregameScore -= 100000000; // Penalize crossing early
+                    }
+
+                    // 3. Development of 2s
+                    if (p.value === 2) {
+                        let inCave = caveSquares.some(sq => sq.r === p.r && sq.c === p.c);
+                        if (!inCave && !crossedFrontier) {
+                            pregameScore += 80000000; // Reward moving 2s out into our own half
+                            
+                            // 4. Defending the 2s
+                            let attackers = getAttackers(p.r, p.c, 2, enP, b);
+                            if (attackers.length > 0) {
+                                let defenders = getAttackers(p.r, p.c, 7, myP, b);
+                                if (defenders.length < attackers.length) {
+                                    pregameScore -= 200000000; // Heavily penalize leaving the developed 2 undefended
+                                }
+                            }
+                        }
+                    }
+                });
+                score += pregameScore;
+            }
+            // -------------------------------------------------
 
             if (isFreefall && !isEvasionMode) {
                 score += myTaxCapacity * 5000000; 
@@ -1292,7 +1338,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v92): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v93): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1324,8 +1370,9 @@
             if (myK) { if (getAttackers(myK.r, myK.c, 7, enP, board).length > 0) startInCheck = true; }
 
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            let baseWidth = 14400, kickWidth = 28800, panicWidth = 57600;
+            let baseWidth = 7200, kickWidth = 14400, panicWidth = 28800;
             if (strengthSetting === 'standard') { baseWidth = 7200; kickWidth = 14400; panicWidth = 28800; }
+            else if (strengthSetting === 'medium') { baseWidth = 14400; kickWidth = 28800; panicWidth = 57600; }
             else if (strengthSetting === 'strong') { baseWidth = 28800; kickWidth = 57600; panicWidth = 115200; }
             else if (strengthSetting === 'supreme') { baseWidth = 62500; kickWidth = 125000; panicWidth = 250000; }
 
@@ -1350,27 +1397,26 @@
             let bunkerCollapsed = (myRemoraCount === 0);
             let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
             let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
-            let isMaterialDown = (myPhysicalCount < enPhysicalCount);
-
+            
             let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
                              (myPhysicalCount <= 3) || 
-                             (bunkerCollapsed && isMaterialDown) || 
+                             (bunkerCollapsed && isBehindInMaterial) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v92): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v93): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v92): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v93): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v92): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v93): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
                 logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v92): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v93): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
