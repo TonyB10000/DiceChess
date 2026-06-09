@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v93 - Tony Berard</title>
+    <title>Dice Chess Ultra v94 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v93</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v94</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -88,7 +88,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v93: Pregame Book & Cave Preservation Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v94: Dynamic KSM & '2's Bunker Logic Active</p>
                 </div>
             </div>
 
@@ -321,7 +321,7 @@
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV93'; 
+        const SAVE_KEY = 'diceChessUltraV94'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -379,7 +379,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v93 Init. Pregame Book & Cave Preservation Active.`, "text-green-400 font-black uppercase");
+            if (isReset) log(`v94 Init. Dynamic KSM & '2's Bunker Logic Active.`, "text-green-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -907,51 +907,6 @@
                              (bunkerCollapsed && isMaterialDown) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
 
-            // --- V93: PREGAME / OPENING BOOK (Turns 1 - 4) ---
-            if (fullMoveCount <= 4 && !isEvasionMode && !isFreefall) {
-                let pregameScore = 0;
-                const caveSquares = [ 
-                    {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1},
-                    {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} 
-                ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                
-                // 1. Cave Preservation & Mandatory Recapture
-                caveSquares.forEach(sq => {
-                    const p = b[sq.r][sq.c];
-                    if (p && p.owner === aiOwner) pregameScore += 300000000; // Massive weight to keep the cave filled!
-                });
-
-                myP.forEach(p => {
-                    if (p.type === 'king') return;
-                    
-                    // 2. The Frontier Line
-                    const crossedFrontier = aiOwner === 'white' ? p.r < Math.floor(BOARD_SIZE/2) : p.r >= Math.ceil(BOARD_SIZE/2);
-                    if (crossedFrontier) {
-                        let attackers = getAttackers(p.r, p.c, p.value, enP, b);
-                        pregameScore -= 100000000; // Penalize crossing early
-                    }
-
-                    // 3. Development of 2s
-                    if (p.value === 2) {
-                        let inCave = caveSquares.some(sq => sq.r === p.r && sq.c === p.c);
-                        if (!inCave && !crossedFrontier) {
-                            pregameScore += 80000000; // Reward moving 2s out into our own half
-                            
-                            // 4. Defending the 2s
-                            let attackers = getAttackers(p.r, p.c, 2, enP, b);
-                            if (attackers.length > 0) {
-                                let defenders = getAttackers(p.r, p.c, 7, myP, b);
-                                if (defenders.length < attackers.length) {
-                                    pregameScore -= 200000000; // Heavily penalize leaving the developed 2 undefended
-                                }
-                            }
-                        }
-                    }
-                });
-                score += pregameScore;
-            }
-            // -------------------------------------------------
-
             if (isFreefall && !isEvasionMode) {
                 score += myTaxCapacity * 5000000; 
                 score -= enTaxCapacity * 5000000; 
@@ -1060,61 +1015,77 @@
                 });
                 score += myGlacierScore; score -= enGlacierScore; 
 
-                let myBunkerScore = 0, enBunkerScore = 0;
-                let myVirtualRemoraCount = 0;
-                myRemoraSquares.forEach(sq => { 
-                    const p = b[sq.r][sq.c]; 
-                    if (p && p.owner === aiOwner && p.type !== 'king') { 
-                        myVirtualRemoraCount++; myBunkerScore += 12000000; 
-                    } else {
-                        let reserve = myP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                        if (reserve) { myVirtualRemoraCount++; myBunkerScore += 9000000; }
-                    }
-                });
+                // --- V94: DYNAMIC KSM (Rank-Based Bunker Logic) ---
+                let myK_relRank = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : myK.r;
+                let myBunkerScore = 0;
+                const sideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
 
-                if (myVirtualRemoraCount === myRemoraSquares.length && myRemoraSquares.length > 0) {
-                    myBunkerScore += 45000000; 
-                    const mySideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                    let myVirtualCaveCount = 0;
-                    mySideSquares.forEach(sq => { 
-                        const p = b[sq.r][sq.c]; 
+                if (myK_relRank <= 1) { 
+                    let caveCount = 0;
+                    [...myRemoraSquares, ...sideSquares].forEach(sq => {
+                        const p = b[sq.r][sq.c];
                         if (p && p.owner === aiOwner && p.type !== 'king') {
-                            myVirtualCaveCount++;
+                            caveCount++;
+                            myBunkerScore += 100000000; 
+                            if (p.value === 2) myBunkerScore += 50000000; // '2's Mandate
                         } else {
                             let reserve = myP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                            if (reserve) { myVirtualCaveCount++; myBunkerScore += 9000000; }
+                            if (reserve) { caveCount++; myBunkerScore += 40000000; }
                         }
                     });
-                    if (myVirtualCaveCount === mySideSquares.length && mySideSquares.length > 0) myBunkerScore += 60000000; 
+                    if (caveCount >= [...myRemoraSquares, ...sideSquares].length && [...myRemoraSquares, ...sideSquares].length > 0) myBunkerScore += 500000000; 
+                } else if (myK_relRank === 2) { 
+                    let remoraCount = 0;
+                    myRemoraSquares.forEach(sq => {
+                        const p = b[sq.r][sq.c];
+                        if (p && p.owner === aiOwner && p.type !== 'king') {
+                            remoraCount++;
+                            myBunkerScore += 100000000;
+                            if (p.value === 2) myBunkerScore += 50000000;
+                        } else {
+                            let reserve = myP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
+                            if (reserve) { remoraCount++; myBunkerScore += 40000000; }
+                        }
+                    });
+                    if (remoraCount >= myRemoraSquares.length && myRemoraSquares.length > 0) myBunkerScore += 300000000;
                 }
 
-                let enVirtualRemoraCount = 0;
-                enRemoraSquares.forEach(sq => { 
-                    const p = b[sq.r][sq.c]; 
-                    if (p && p.owner === enOwner && p.type !== 'king') { 
-                        enVirtualRemoraCount++; enBunkerScore += 12000000; 
-                    } else {
-                        let reserve = enP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                        if (reserve) { enVirtualRemoraCount++; enBunkerScore += 9000000; }
-                    }
-                });
-
-                if (enVirtualRemoraCount === enRemoraSquares.length && enRemoraSquares.length > 0) {
-                    enBunkerScore += 45000000; 
-                    const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                    let enVirtualCaveCount = 0;
-                    enSideSquares.forEach(sq => { 
-                        const p = b[sq.r][sq.c]; 
-                        if (p && p.owner === enOwner && p.type !== 'king') {
-                            enVirtualCaveCount++;
+                let enK_relRank = (aiOwner === 'white') ? enK.r : (BOARD_SIZE - 1 - enK.r);
+                let enBunkerScore = 0;
+                const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
+                
+                if (enK_relRank <= 1) {
+                    let caveCount = 0;
+                    [...enRemoraSquares, ...enSideSquares].forEach(sq => {
+                        const p = b[sq.r][sq.c];
+                        if (p && p.owner !== aiOwner && p.type !== 'king') {
+                            caveCount++;
+                            enBunkerScore += 100000000;
+                            if (p.value === 2) enBunkerScore += 50000000;
                         } else {
                             let reserve = enP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                            if (reserve) { enVirtualCaveCount++; enBunkerScore += 9000000; }
+                            if (reserve) { caveCount++; enBunkerScore += 40000000; }
                         }
                     });
-                    if (enVirtualCaveCount === enSideSquares.length && enSideSquares.length > 0) enBunkerScore += 60000000; 
+                    if (caveCount >= [...enRemoraSquares, ...enSideSquares].length && [...enRemoraSquares, ...enSideSquares].length > 0) enBunkerScore += 500000000;
+                } else if (enK_relRank === 2) {
+                    let remoraCount = 0;
+                    enRemoraSquares.forEach(sq => {
+                        const p = b[sq.r][sq.c];
+                        if (p && p.owner !== aiOwner && p.type !== 'king') {
+                            remoraCount++;
+                            enBunkerScore += 100000000;
+                            if (p.value === 2) enBunkerScore += 50000000;
+                        } else {
+                            let reserve = enP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
+                            if (reserve) { remoraCount++; enBunkerScore += 40000000; }
+                        }
+                    });
+                    if (remoraCount >= enRemoraSquares.length && enRemoraSquares.length > 0) enBunkerScore += 300000000;
                 }
+
                 score += myBunkerScore; score -= enBunkerScore;
+                // ----------------------------------------------------
             }
             
             if (isEvasionMode) {
@@ -1161,10 +1132,10 @@
             
             if (opponentCaptured) {
                 if (node.captured) { 
-                    score += 500000000; 
+                    if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000; else score += 300000000; 
                 } else { 
-                    if (!kingInImmediateDanger) score -= 800000000; 
-                    else score -= 1000000000; 
+                    if (!kingInImmediateDanger) score -= 50000000; 
+                    else score -= 800000000; 
                 }
             } else { 
                 if (node.captured) score += 300000000; 
@@ -1251,7 +1222,6 @@
                     }
                     c.qPenalty = quiescencePenalty(c.board, aiOwner, capSq);
                     
-                    // --- V92: MRP Level 2 (Hanging Check) ---
                     if (capSq) {
                         let enKr = -1, enKc = -1;
                         for(let r=0; r<BOARD_SIZE; r++) for(let cIdx=0; cIdx<BOARD_SIZE; cIdx++) {
@@ -1260,10 +1230,9 @@
                              }
                         }
                         if (enKr !== -1 && Math.max(Math.abs(capSq.r - enKr), Math.abs(capSq.c - enKc)) === 1) {
-                            c.qPenalty += 300000000; // Massive penalty for jumping into King's melee radius
+                            c.qPenalty += 300000000; 
                         }
                     }
-                    // ----------------------------------------
                     
                     c.finalScore = c.h - c.qPenalty;
                 }
@@ -1338,7 +1307,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v93): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v94): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1404,19 +1373,19 @@
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v93): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v94): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v93): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v94): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v93): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v94): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
                 logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v93): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v94): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
