@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Dice Chess Ultra v94 - Tony Berard</title>
+    <title>Dice Chess Ultra v96 - Tony Berard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --bg-color: #0f172a; --text-color: #f1f5f9; }
@@ -67,7 +67,7 @@
 <body>
     <header>
         <div class="flex items-center justify-center gap-2">
-            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v94</span>
+            <span class="bg-indigo-600 text-[9px] font-black px-1.5 py-0.5 rounded text-white tracking-tighter uppercase shadow-lg">Ultra AI v96</span>
             <h1 class="text-lg font-black text-white tracking-tight uppercase">Dice Chess</h1>
         </div>
     </header>
@@ -88,7 +88,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v94: Dynamic KSM & '2's Bunker Logic Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v96: Master Baseline Merge Active</p>
                 </div>
             </div>
 
@@ -317,11 +317,12 @@
         let useClock = false, gameActive = false, whiteTime = 900, blackTime = 900, clockInterval = null;
         let turnStartBoardSnapshot = null, turnStartScore = 0, capturedThisTurn = false;
         let playerUnderWatch = false;
+        let pregameTarget = 4; // V95: Dynamic pregame tracker
 
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
         const logBox = document.getElementById('game-log');
-        const SAVE_KEY = 'diceChessUltraV94'; 
+        const SAVE_KEY = 'diceChessUltraV96'; 
         
         function checkSavedGame() {
             const saved = localStorage.getItem(SAVE_KEY);
@@ -330,7 +331,7 @@
 
         function saveGameToStorage() {
             if (analysisIndex !== -1 || gameOver) return;
-            const state = { BOARD_SIZE, board, turn, currentAP, fullMoveCount, moveHistory, currentTurnActions, whiteTime, blackTime, useClock, gameActive, turnStartScore, capturedThisTurn, turnStartBoardSnapshot, playerUnderWatch };
+            const state = { BOARD_SIZE, board, turn, currentAP, fullMoveCount, moveHistory, currentTurnActions, whiteTime, blackTime, useClock, gameActive, turnStartScore, capturedThisTurn, turnStartBoardSnapshot, playerUnderWatch, pregameTarget };
             localStorage.setItem(SAVE_KEY, JSON.stringify(state));
         }
 
@@ -343,6 +344,7 @@
                 blackTime = state.blackTime; useClock = state.useClock; gameActive = state.gameActive;
                 turnStartScore = state.turnStartScore; capturedThisTurn = state.capturedThisTurn; turnStartBoardSnapshot = state.turnStartBoardSnapshot;
                 playerUnderWatch = state.playerUnderWatch || false;
+                pregameTarget = state.pregameTarget || 4;
                 
                 document.getElementById('start-overlay').style.display = 'none';
                 clearInterval(clockInterval); clockInterval = setInterval(tickClock, 1000);
@@ -362,6 +364,7 @@
             analysisIndex = -1; historySnapshots = [];
             whatIfOriginalSnapshots = null; whatIfStartIndex = -1;
             playerUnderWatch = false;
+            pregameTarget = 4; 
             
             if (isReset) {
                 localStorage.removeItem(SAVE_KEY);
@@ -379,7 +382,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v94 Init. Dynamic KSM & '2's Bunker Logic Active.`, "text-green-400 font-black uppercase");
+            if (isReset) log(`v96 Baseline Initialized. Standing Ready for Diagnostics.`, "text-sky-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -443,15 +446,6 @@
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
-        }
-
-        function updateClockDisplay() {
-            const format = (s) => { const m = Math.floor(s / 60); const r = s % 60; return `${m}:${r < 10 ? '0' : ''}${r}`; };
-            const wtEl = document.getElementById('white-time'), btEl = document.getElementById('black-time');
-            if (!useClock) { wtEl.innerText = "OFF"; btEl.innerText = "OFF"; wtEl.classList.add('clock-off'); btEl.classList.add('clock-off'); } 
-            else { wtEl.innerText = format(Math.max(0, whiteTime)); btEl.innerText = format(Math.max(0, blackTime)); wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off'); }
-            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1) ? 'white' : '#334155';
-            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1) ? '#818cf8' : '#334155';
         }
 
         function captureTurnState() { 
@@ -570,6 +564,9 @@
         function endTurn() {
             if(gameOver || aiThinking || !gameActive || analysisIndex !== -1) return;
             if(!capturedThisTurn && calcAS(board, turn) <= turnStartScore) { log("Illegal Turn: AS rule failure.", "text-red-500 font-bold uppercase"); return; }
+            
+            if (capturedThisTurn && fullMoveCount <= pregameTarget) pregameTarget++;
+
             const actStr = currentTurnActions.join(', ');
             if(turn === 'white') moveHistory.push({ n: fullMoveCount, w: actStr, b: '' }); else { moveHistory[moveHistory.length-1].b = actStr; fullMoveCount++; }
             turn = turn === 'white' ? 'black' : 'white';
@@ -619,7 +616,6 @@
         // --- AI ENGINE ---
         
         function checkForImmediateLethal(b, aiOwner, ap) {
-            const enK = null;
             let enKr = -1, enKc = -1;
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c] && b[r][c].owner !== aiOwner && b[r][c].type === 'king') { enKr = r; enKc = c; break; }
             if (enKr === -1) return null;
@@ -663,17 +659,6 @@
             else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
         }
 
-        function didAIInitiateTrade(aiOwner) {
-            if (moveHistory.length < 2) return false;
-            const lastMove = moveHistory[moveHistory.length - 1];
-            if (aiOwner === 'black') {
-                if (moveHistory.length >= 2 && moveHistory[moveHistory.length-2].b && moveHistory[moveHistory.length-2].b.includes('x')) return true;
-            } else {
-                if (lastMove.w && lastMove.w.includes('x')) return true;
-            }
-            return false;
-        }
-
         function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
             let attackers = [];
             for (let i = 0; i < potentialAttackers.length; i++) {
@@ -683,7 +668,7 @@
                 if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
                 let clear = true;
                 const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
-                for (let j = 1; j < dist; j++) if (b[p.r + j * sr][p.c + j * sc]) { clear = false; break; }
+                for (let j = 1; j < dist; j++) if (b[p.r + j * sr][b[p.r + j * sr][p.c + j * sc] ? p.c + j * sc : p.c + j * sc]) { clear = false; break; }
                 if (!clear) continue;
                 if (p.type === 'king') {
                     if (dist === 1) attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: 7, apCost: 5 });
@@ -782,7 +767,6 @@
                         }
                     }
                     
-                    // V89 Trade Expectation Discount
                     if (capSq && p.r === capSq.r && p.c === capSq.c) {
                         currentPieceLoss *= 0.05; 
                     }
@@ -797,7 +781,6 @@
             const isBehind = diff < 0;
             const baseVal = 100000000; 
             const pipVal = 1000;
-            const enK = enP.find(p => p.type === 'king');
             
             let myDeadPieces = new Set();
             for(let i=0; i<myP.length; i++) {
@@ -814,12 +797,10 @@
                         let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b);
                         const pieceTrueValue = baseVal + (p.value * pipVal);
                         
-                        // --- V91: SHADOW GUARD HEURISTIC ---
                         if (defenders.length > 0) {
                             let isShadowGuarded = defenders.some(d => Math.max(Math.abs(d.r - p.r), Math.abs(d.c - p.c)) >= 3);
                             if (isShadowGuarded) phScore += 15000000; 
                         }
-                        // -----------------------------------
                         
                         if (defenders.length < attackers.length) {
                             phScore -= pieceTrueValue * ((isBehind && pVal !== 1) ? 1.5 : 1.1); 
@@ -866,7 +847,6 @@
             let kingInImmediateDanger = (checkersOnMe.length > 0);
             if (kingInImmediateDanger) return -50000000000; 
             
-            // --- V92: SPRINTING LANDMINE FEAR ---
             let sprintPen = 0;
             enP.forEach(eP => {
                 if (eP.type !== 'king' && eP.value <= 2) {
@@ -877,7 +857,30 @@
                 }
             });
             score -= sprintPen;
-            // ------------------------------------
+
+            if (fullMoveCount <= pregameTarget && !isEvasionMode) {
+                let pregameScore = 0;
+                myP.forEach(p => {
+                    if (p.type === 'king') return;
+                    const isEnemyTerritory = (aiOwner === 'white') ? p.r < Math.floor(BOARD_SIZE/2) : p.r >= Math.ceil(BOARD_SIZE/2);
+                    
+                    if (isEnemyTerritory && !node.captured) {
+                        pregameScore -= 500000000; 
+                    }
+                    
+                    if (p.value === 2 && !isEnemyTerritory) {
+                        const startRow = (aiOwner === 'white') ? BOARD_SIZE - 2 : 1;
+                        if (p.r !== startRow) pregameScore += 80000000;
+                        
+                        let attackers = getAttackers(p.r, p.c, p.value, enP, b);
+                        if (attackers.length > 0) {
+                            let defenders = getAttackers(p.r, p.c, 7, myP, b);
+                            if (defenders.length === 0) pregameScore -= 200000000;
+                        }
+                    }
+                });
+                score += pregameScore;
+            }
             
             const myPhysicalCount = myP.length - 1; 
             const enPhysicalCount = enP.length - 1;
@@ -1015,7 +1018,6 @@
                 });
                 score += myGlacierScore; score -= enGlacierScore; 
 
-                // --- V94: DYNAMIC KSM (Rank-Based Bunker Logic) ---
                 let myK_relRank = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : myK.r;
                 let myBunkerScore = 0;
                 const sideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
@@ -1027,7 +1029,7 @@
                         if (p && p.owner === aiOwner && p.type !== 'king') {
                             caveCount++;
                             myBunkerScore += 100000000; 
-                            if (p.value === 2) myBunkerScore += 50000000; // '2's Mandate
+                            if (p.value === 2) myBunkerScore += 50000000; 
                         } else {
                             let reserve = myP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
                             if (reserve) { caveCount++; myBunkerScore += 40000000; }
@@ -1085,7 +1087,6 @@
                 }
 
                 score += myBunkerScore; score -= enBunkerScore;
-                // ----------------------------------------------------
             }
             
             if (isEvasionMode) {
@@ -1307,7 +1308,7 @@
         async function runAI() {
             let lethalActions = checkForImmediateLethal(board, turn, currentAP);
             if (lethalActions) {
-                log(`PH ENGINE (v94): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
+                log(`PH ENGINE (v96): Immediate Lethal Snipe Detected! Executing...`, "text-red-500 font-black uppercase");
                 aiThinking = true;
                 for (let a of lethalActions) {
                     if (a.t === 'inc' || a.t === 'dec') { selectedSquare = {r: a.r, c: a.c}; handleMod(a.t === 'inc'); }
@@ -1373,19 +1374,19 @@
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
-            let statusText = `PH ENGINE (v94): Width ${targetWidth}...`;
+            let statusText = `PH ENGINE (v96): Width ${targetWidth}...`;
             let logColor = "text-slate-500 italic uppercase";
 
             if (deficit >= 2 || startInCheck) {
                 targetWidth = panicWidth;
-                statusText = `PH ENGINE (v94): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v96): ABSOLUTE PANIC OVERRIDE! Width ${targetWidth}...`;
                 logColor = "text-red-500 font-black italic uppercase";
             } else if (isFreefall) {
-                statusText = `PH ENGINE (v94): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v96): FREEFALL PROTOCOL ENGAGED! Width ${targetWidth}...`;
                 logColor = "text-sky-400 font-bold italic uppercase";
             } else if (deficit === 1 || opponentCaptured) {
                 targetWidth = kickWidth;
-                statusText = `PH ENGINE (v94): PANIC KICK ACTIVE! Width ${targetWidth}...`;
+                statusText = `PH ENGINE (v96): PANIC KICK ACTIVE! Width ${targetWidth}...`;
                 logColor = "text-orange-500 font-bold italic uppercase";
             }
 
@@ -1394,7 +1395,7 @@
             
             log(statusText, logColor);
             
-            let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore };
+            let root = { board: JSON.parse(JSON.stringify(board)), ap: 6, actions: [], captured: false, startScore: turnStartScore, pregameTarget };
             let bestTurn = await performSearchAsync(root, targetWidth, turn, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial);
             
             if(!bestTurn || bestTurn.finalScore <= -600000000) {
@@ -1432,7 +1433,6 @@
             return nb;
         }
 
-        // --- RENDER & UTILITIES ---
         function render() {
             boardEl.innerHTML = '';
             boardEl.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
