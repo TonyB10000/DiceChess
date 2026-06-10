@@ -88,7 +88,7 @@
                         </select>
                     </div>
                     <button id="resume-game-btn" class="resume-btn uppercase">RESUME SAVED GAME</button>
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v96: Master Baseline Merge Active</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2 text-center text-amber-400">v96: Tension Matrix & True Freefall Active</p>
                 </div>
             </div>
 
@@ -317,7 +317,7 @@
         let useClock = false, gameActive = false, whiteTime = 900, blackTime = 900, clockInterval = null;
         let turnStartBoardSnapshot = null, turnStartScore = 0, capturedThisTurn = false;
         let playerUnderWatch = false;
-        let pregameTarget = 4; // V95: Dynamic pregame tracker
+        let pregameTarget = 4;
 
         const boardEl = document.getElementById('board'), turnEl = document.getElementById('turn-indicator');
         const apEl = document.getElementById('ap-counter'), scoreEl = document.getElementById('adv-score-display');
@@ -382,7 +382,7 @@
             clockInterval = setInterval(tickClock, 1000);
             document.getElementById('start-overlay').style.display = 'flex';
             captureTurnState(); saveSnapshot(); render(); updateClockDisplay();
-            if (isReset) log(`v96 Baseline Initialized. Standing Ready for Diagnostics.`, "text-sky-400 font-black uppercase");
+            if (isReset) log(`v96 Init. True Freefall & Tension Matrix Resolved.`, "text-sky-400 font-black uppercase");
         }
 
         function saveSnapshot() { historySnapshots.push({ board: JSON.parse(JSON.stringify(board)), turn, ap: currentAP, fullMoveCount, history: JSON.parse(JSON.stringify(moveHistory)) }); }
@@ -446,6 +446,15 @@
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
+        }
+
+        function updateClockDisplay() {
+            const format = (s) => { const m = Math.floor(s / 60); const r = s % 60; return `${m}:${r < 10 ? '0' : ''}${r}`; };
+            const wtEl = document.getElementById('white-time'), btEl = document.getElementById('black-time');
+            if (!useClock) { wtEl.innerText = "OFF"; btEl.innerText = "OFF"; wtEl.classList.add('clock-off'); btEl.classList.add('clock-off'); } 
+            else { wtEl.innerText = format(Math.max(0, whiteTime)); btEl.innerText = format(Math.max(0, blackTime)); wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off'); }
+            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1) ? 'white' : '#334155';
+            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1) ? '#818cf8' : '#334155';
         }
 
         function captureTurnState() { 
@@ -659,6 +668,17 @@
             else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
         }
 
+        function didAIInitiateTrade(aiOwner) {
+            if (moveHistory.length < 2) return false;
+            const lastMove = moveHistory[moveHistory.length - 1];
+            if (aiOwner === 'black') {
+                if (moveHistory.length >= 2 && moveHistory[moveHistory.length-2].b && moveHistory[moveHistory.length-2].b.includes('x')) return true;
+            } else {
+                if (lastMove.w && lastMove.w.includes('x')) return true;
+            }
+            return false;
+        }
+
         function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
             let attackers = [];
             for (let i = 0; i < potentialAttackers.length; i++) {
@@ -668,7 +688,9 @@
                 if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
                 let clear = true;
                 const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
-                for (let j = 1; j < dist; j++) if (b[p.r + j * sr][b[p.r + j * sr][p.c + j * sc] ? p.c + j * sc : p.c + j * sc]) { clear = false; break; }
+                
+                for (let j = 1; j < dist; j++) if (b[p.r + j * sr][p.c + j * sc]) { clear = false; break; }
+                
                 if (!clear) continue;
                 if (p.type === 'king') {
                     if (dist === 1) attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: 7, apCost: 5 });
@@ -900,14 +922,11 @@
             let enRemoraCount = 0;
             enRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enRemoraCount++; });
 
-            let bunkerCollapsed = (myRemoraCount === 0);
             let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
             let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
-            let isMaterialDown = (myPhysicalCount < enPhysicalCount);
 
             let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
                              (myPhysicalCount <= 3) || 
-                             (bunkerCollapsed && isMaterialDown) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             if (isFreefall && !isEvasionMode) {
@@ -1131,16 +1150,18 @@
 
             score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
             
+            // --- V96 TENSION MATRIX & MRP FIX ---
             if (opponentCaptured) {
                 if (node.captured) { 
-                    if (isBehindInMaterial_Start && myPhysicalCount <= enPhysicalCount) score -= 50000000; else score += 300000000; 
+                    score += 350000000; // Mandatory Recapture Protocol (MRP) fulfilled! Massive Reward.
                 } else { 
-                    if (!kingInImmediateDanger) score -= 50000000; 
+                    if (!kingInImmediateDanger) score -= 250000000; // Crushing penalty for ignoring a dropped piece
                     else score -= 800000000; 
                 }
             } else { 
-                if (node.captured) score += 300000000; 
+                if (node.captured) score += 300000000; // Standard capture bonus
             }
+            // ------------------------------------
 
             let enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
             if (enemyCheckers.length > 0) {
@@ -1364,13 +1385,11 @@
             let enRemoraCount = 0;
             enRemoraSquares.forEach(sq => { const p = board[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enRemoraCount++; });
 
-            let bunkerCollapsed = (myRemoraCount === 0);
             let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
             let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
             
             let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
                              (myPhysicalCount <= 3) || 
-                             (bunkerCollapsed && isBehindInMaterial) || 
                              (bothBunkersCollapsed && lowTaxCapacity);
 
             let targetWidth = baseWidth;
