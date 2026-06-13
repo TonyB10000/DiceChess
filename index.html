@@ -548,7 +548,7 @@
 
         function selectSquare(r, c) {
             if(gameOver || aiThinking || !gameActive) return;
-            if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1) return;
+            if(turn === 'black' && document.getElementById('ai-toggle').checked && analysisIndex === -1 && whatIfOriginalSnapshots === null) return;
             if (analysisIndex !== -1) { if (showThreatVision) { selectedSquare = {r,c}; render(); } return; }
             const p = board[r][c];
             if(p && p.owner === turn && currentAP > 0) { selectedSquare = {r, c}; SoundEngine.play(400); }
