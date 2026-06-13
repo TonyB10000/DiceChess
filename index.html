@@ -442,7 +442,7 @@
         }
 
         function tickClock() {
-            if (gameOver || !gameActive || !useClock || analysisIndex !== -1) return;
+            if (gameOver || !gameActive || !useClock || analysisIndex !== -1 || whatIfOriginalSnapshots !== null) return;
             if (turn === 'white') { whiteTime--; if (whiteTime <= 0) endGame('black', "Timeout"); }
             else { blackTime--; if (blackTime <= 0) endGame('white', "Timeout"); }
             updateClockDisplay();
@@ -453,8 +453,8 @@
             const wtEl = document.getElementById('white-time'), btEl = document.getElementById('black-time');
             if (!useClock) { wtEl.innerText = "OFF"; btEl.innerText = "OFF"; wtEl.classList.add('clock-off'); btEl.classList.add('clock-off'); } 
             else { wtEl.innerText = format(Math.max(0, whiteTime)); btEl.innerText = format(Math.max(0, blackTime)); wtEl.classList.remove('clock-off'); btEl.classList.remove('clock-off'); }
-            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1) ? 'white' : '#334155';
-            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1) ? '#818cf8' : '#334155';
+            document.getElementById('white-clock-panel').style.borderColor = (turn === 'white' && gameActive && useClock && analysisIndex === -1 && whatIfOriginalSnapshots === null) ? 'white' : '#334155';
+            document.getElementById('black-clock-panel').style.borderColor = (turn === 'black' && gameActive && useClock && analysisIndex === -1 && whatIfOriginalSnapshots === null) ? '#818cf8' : '#334155';
         }
 
         function captureTurnState() { 
@@ -588,6 +588,8 @@
         function stepForward() { if (analysisIndex === -1) return; analysisIndex++; if (analysisIndex >= historySnapshots.length - 1) { analysisIndex = -1; applySnapshot(historySnapshots.length - 1); } else applySnapshot(analysisIndex); }
         function applySnapshot(idx) { const s = historySnapshots[idx]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = s.ap; fullMoveCount = s.fullMoveCount; moveHistory = JSON.parse(JSON.stringify(s.history)); render(); }
         
+        let whatIfWasGameOver = false;
+
         function whatIf() { 
             if (analysisIndex === -1) return;
             whatIfOriginalSnapshots = JSON.parse(JSON.stringify(historySnapshots)); 
@@ -595,12 +597,40 @@
             historySnapshots = historySnapshots.slice(0, analysisIndex + 1); 
             moveHistory = JSON.parse(JSON.stringify(historySnapshots[analysisIndex].history)); 
             analysisIndex = -1;
-            currentAP = 6; currentTurnActions = []; selectedSquare = null; captureTurnState();
+            whatIfWasGameOver = gameOver;
+            gameOver = false;
+            gameActive = true;
+            currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6;
+            currentTurnActions = []; selectedSquare = null; captureTurnState();
             log("Branch Created. What If Active.", "text-purple-400 font-black uppercase"); 
             render();
         }
-        function leaveWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)); analysisIndex = whatIfStartIndex; whatIfOriginalSnapshots = null; whatIfStartIndex = -1; log("Left What If Mode.", "text-yellow-400 font-bold uppercase"); applySnapshot(analysisIndex); }
-        function freshWhatIf() { if (!whatIfOriginalSnapshots) return; historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1); moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history)); const s = historySnapshots[whatIfStartIndex]; board = JSON.parse(JSON.stringify(s.board)); turn = s.turn; currentAP = 6; fullMoveCount = s.fullMoveCount; currentTurnActions = []; selectedSquare = null; analysisIndex = -1; captureTurnState(); log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); render(); }
+        function leaveWhatIf() { 
+            if (!whatIfOriginalSnapshots) return; 
+            historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)); 
+            analysisIndex = whatIfStartIndex; 
+            whatIfOriginalSnapshots = null; 
+            whatIfStartIndex = -1; 
+            gameOver = whatIfWasGameOver;
+            log("Left What If Mode.", "text-yellow-400 font-bold uppercase"); 
+            applySnapshot(analysisIndex); 
+        }
+        function freshWhatIf() { 
+            if (!whatIfOriginalSnapshots) return; 
+            historySnapshots = JSON.parse(JSON.stringify(whatIfOriginalSnapshots)).slice(0, whatIfStartIndex + 1); 
+            moveHistory = JSON.parse(JSON.stringify(historySnapshots[whatIfStartIndex].history)); 
+            const s = historySnapshots[whatIfStartIndex]; 
+            board = JSON.parse(JSON.stringify(s.board)); 
+            turn = s.turn; 
+            fullMoveCount = s.fullMoveCount;
+            currentAP = (fullMoveCount === 1 && turn === 'white') ? 3 : 6;
+            currentTurnActions = []; selectedSquare = null; analysisIndex = -1; 
+            gameOver = false;
+            gameActive = true;
+            captureTurnState(); 
+            log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); 
+            render(); 
+        }
 
         function flashTurn() { const o = document.getElementById('flash-overlay'), t = document.getElementById('flash-text'); t.innerText = `${turn.toUpperCase()} TURN`; t.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1'; o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 500); }
         
