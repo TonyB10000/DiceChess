@@ -581,7 +581,11 @@
             turn = turn === 'white' ? 'black' : 'white';
             currentAP = 6; currentTurnActions = []; selectedSquare = null;
             captureTurnState(); saveSnapshot(); flashTurn(); render(); updateClockDisplay(); saveGameToStorage();
-            if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver) setTimeout(runAI, 100);
+            if(turn === 'black' && document.getElementById('ai-toggle').checked && !gameOver && analysisIndex === -1 && whatIfOriginalSnapshots === null) {
+                setTimeout(runAI, 100);
+            } else if (!gameOver) {
+                setTimeout(() => runHumanMateCheck(turn), 100);
+            }
         }
 
         function stepBack() { analysisIndex = analysisIndex === -1 ? historySnapshots.length - 2 : analysisIndex - 1; if (analysisIndex < 0) analysisIndex = 0; applySnapshot(analysisIndex); }
@@ -604,6 +608,7 @@
             currentTurnActions = []; selectedSquare = null; captureTurnState();
             log("Branch Created. What If Active.", "text-purple-400 font-black uppercase"); 
             render();
+            setTimeout(() => runHumanMateCheck(turn), 100);
         }
         function leaveWhatIf() { 
             if (!whatIfOriginalSnapshots) return; 
@@ -630,6 +635,7 @@
             captureTurnState(); 
             log("What If Branch Reset.", "text-blue-400 font-bold uppercase"); 
             render(); 
+            setTimeout(() => runHumanMateCheck(turn), 100);
         }
 
         function flashTurn() { const o = document.getElementById('flash-overlay'), t = document.getElementById('flash-text'); t.innerText = `${turn.toUpperCase()} TURN`; t.style.borderColor = turn === 'white' ? '#fbbf24' : '#6366f1'; o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 500); }
@@ -652,8 +658,21 @@
 
         function copyToClipboard(txt, btn) { try { const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select(); document.execCommand("copy"); document.body.removeChild(a); if(btn) { const o = btn.innerText; btn.innerText = "COPIED!"; btn.classList.add("bg-green-600"); setTimeout(() => { btn.innerText = o; btn.classList.remove("bg-green-600"); }, 1500); } } catch (e) { console.error(e); } }
 
-        // --- AI ENGINE ---
-        
+        function getAttackers(r, c, range, enP, b) {
+            let attackers = [];
+            for (let p of enP) {
+                const maxR = p.type === 'king' ? 1 : p.value;
+                if (maxR === 0) continue;
+                const dr = Math.abs(r - p.r), dc = Math.abs(c - p.c), dist = Math.max(dr, dc);
+                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc) || dist > Math.min(maxR, range)) continue;
+                let blocked = false;
+                const sr = dr === 0 ? 0 : (r - p.r) / dist, sc = dc === 0 ? 0 : (c - p.c) / dist;
+                for (let i = 1; i < dist; i++) if (b[p.r + i * sr][p.c + i * sc]) { blocked = true; break; }
+                if (!blocked) attackers.push(p);
+            }
+            return attackers;
+        }
+
         function checkForImmediateLethal(b, aiOwner, ap) {
             let enKr = -1, enKc = -1;
             for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c] && b[r][c].owner !== aiOwner && b[r][c].type === 'king') { enKr = r; enKc = c; break; }
@@ -691,613 +710,10 @@
             return null;
         }
 
-        function didOpponentJustCapture(aiOwner) {
-            if (moveHistory.length === 0) return false;
-            const lastMove = moveHistory[moveHistory.length - 1];
-            if (aiOwner === 'black') { return lastMove.w ? lastMove.w.includes('x') : false; } 
-            else { if (moveHistory.length > 1 && !lastMove.b) { return moveHistory[moveHistory.length - 2].b.includes('x'); } return lastMove.b ? lastMove.b.includes('x') : false; }
-        }
-
-        function didAIInitiateTrade(aiOwner) {
-            if (moveHistory.length < 2) return false;
-            const lastMove = moveHistory[moveHistory.length - 1];
-            if (aiOwner === 'black') {
-                if (moveHistory.length >= 2 && moveHistory[moveHistory.length-2].b && moveHistory[moveHistory.length-2].b.includes('x')) return true;
-            } else {
-                if (lastMove.w && lastMove.w.includes('x')) return true;
-            }
-            return false;
-        }
-
-        function getAttackers(tr, tc, tgtV, potentialAttackers, b) {
-            let attackers = [];
-            for (let i = 0; i < potentialAttackers.length; i++) {
-                let p = potentialAttackers[i];
-                if (p.r === tr && p.c === tc) continue;
-                const dr = Math.abs(tr - p.r), dc = Math.abs(tc - p.c), dist = Math.max(dr, dc);
-                if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
-                let clear = true;
-                const sr = (tr - p.r) === 0 ? 0 : (tr - p.r) / dist, sc = (tc - p.c) === 0 ? 0 : (tc - p.c) / dist;
-                
-                for (let j = 1; j < dist; j++) if (b[p.r + j * sr][p.c + j * sc]) { clear = false; break; }
-                
-                if (!clear) continue;
-                if (p.type === 'king') {
-                    if (dist === 1) attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: 7, apCost: 5 });
-                } else {
-                    let minCost = Infinity;
-                    let bestVal = -1;
-                    for (let mod = -5; mod <= 5; mod++) {
-                        let val = p.value + mod;
-                        if (val < 1 || val > 6) continue;
-                        if (val >= dist && (val <= tgtV || val === 1)) {
-                            let cost = 5 + Math.abs(mod);
-                            if (cost < minCost) { minCost = cost; bestVal = val; }
-                        }
-                    }
-                    if (minCost <= 6) {
-                        attackers.push({ r: p.r, c: p.c, type: p.type, value: p.value, owner: p.owner, attackerValue: bestVal, apCost: minCost });
-                    }
-                }
-            }
-            return attackers;
-        }
-
-        function quiescencePenalty(b, aiOwner, capSq) {
-            let totalLoss = 0;
-            const myP = [], enP = [];
-            let myK = null;
-            for(let r=0; r<BOARD_SIZE; r++) {
-                for(let c=0; c<BOARD_SIZE; c++) {
-                    if(b[r][c]) {
-                        if(b[r][c].owner === aiOwner) { 
-                            myP.push({r,c,...b[r][c]});
-                            if(b[r][c].type === 'king') myK = {r,c,...b[r][c]};
-                        } else {
-                            enP.push({r,c,...b[r][c]});
-                        }
-                    }
-                }
-            }
-
-            for (let i = 0; i < myP.length; i++) {
-                let p = myP[i];
-                let attackers = getAttackers(p.r, p.c, p.type === 'king' ? 7 : p.value, enP, b);
-                if (attackers.length > 0) {
-                    if (p.type === 'king') return 100000000000; 
-                    attackers.sort((a,b) => a.attackerValue - b.attackerValue);
-                    let primary = attackers[0];
-                    let postCapVal = Math.max(1, primary.attackerValue - (6 - primary.apCost));
-                    let pieceVal = 100000000 + (p.value * 1000); 
-                    
-                    let defenders = getAttackers(p.r, p.c, postCapVal, myP, b);
-                    let isShield = false;
-                    let isFatalSteppingStone = false;
-                    
-                    if (myK && p.type !== 'king') {
-                        const drK = Math.abs(p.r - myK.r), dcK = Math.abs(p.c - myK.c);
-                        if (drK === 0 || dcK === 0 || drK === dcK) {
-                            const distK = Math.max(drK, dcK);
-                            let blockersK = 0;
-                            const srK = (p.r - myK.r) === 0 ? 0 : (p.r - myK.r) / distK;
-                            const scK = (p.c - myK.c) === 0 ? 0 : (p.c - myK.c) / distK;
-                            for (let j = 1; j < distK; j++) {
-                                if (b[myK.r + j * srK][myK.c + j * scK]) blockersK++;
-                            }
-                            if (blockersK === 0) {
-                                let distRay = 1;
-                                while (true) {
-                                    let nr = p.r + srK * distRay, nc = p.c + scK * distRay;
-                                    if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
-                                    let rayP = b[nr][nc];
-                                    if (rayP) {
-                                        if (rayP.owner !== aiOwner && rayP.type !== 'king') {
-                                            let totalDist = distK + distRay;
-                                            if (rayP.value >= totalDist || rayP.value === 1) isShield = true;
-                                            if (distRay <= rayP.value && (rayP.value <= p.value || rayP.value === 1)) {
-                                                isFatalSteppingStone = true;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                    distRay++;
-                                }
-                            }
-                        }
-                    }
-
-                    let currentPieceLoss = 0;
-                    if (defenders.length === 0) {
-                        if (isShield && !isFatalSteppingStone) currentPieceLoss = (pieceVal * 0.4); 
-                        else currentPieceLoss = pieceVal; 
-                    } else {
-                        if (isShield && !isFatalSteppingStone) currentPieceLoss = 0; 
-                        else {
-                            let enemyLoss = 100000000 + (primary.value * 1000);
-                            let netLoss = pieceVal - enemyLoss;
-                            if (netLoss > 0) currentPieceLoss = netLoss;
-                        }
-                    }
-                    
-                    if (capSq && p.r === capSq.r && p.c === capSq.c) {
-                        currentPieceLoss *= 0.05; 
-                    }
-                    totalLoss += currentPieceLoss;
-                }
-            }
-            return totalLoss;
-        }
-
-        function evaluateTensions(b, aiOwner, myP, enP, diff, nodeCaptured) {
-            let phScore = 0;
-            const isBehind = diff < 0;
-            const baseVal = 100000000; 
-            const pipVal = 1000;
-            
-            let myDeadPieces = new Set();
-            for(let i=0; i<myP.length; i++) {
-                let p = myP[i];
-                const pVal = p.type === 'king' ? 7 : p.value;
-                let attackers = getAttackers(p.r, p.c, pVal, enP, b);
-                
-                if (attackers.length > 0) {
-                    if (p.type === 'king') phScore -= 100000000000; 
-                    else {
-                        attackers.sort((a,b) => a.attackerValue - b.attackerValue);
-                        let primaryAttacker = attackers[0];
-                        let postCaptureValue = Math.max(1, primaryAttacker.attackerValue - (6 - primaryAttacker.apCost));
-                        let defenders = getAttackers(p.r, p.c, postCaptureValue, myP, b);
-                        const pieceTrueValue = baseVal + (p.value * pipVal);
-                        
-                        if (defenders.length > 0) {
-                            let isShadowGuarded = defenders.some(d => Math.max(Math.abs(d.r - p.r), Math.abs(d.c - p.c)) >= 3);
-                            if (isShadowGuarded) phScore += 15000000; 
-                        }
-                        
-                        if (defenders.length < attackers.length) {
-                            phScore -= pieceTrueValue * ((isBehind && pVal !== 1) ? 1.5 : 1.1); 
-                            myDeadPieces.add(p.r * 100 + p.c); 
-                        } else phScore -= (isBehind ? 2000000 : 100000); 
-                    }
-                }
-            }
-
-            for(let i=0; i<enP.length; i++) {
-                let p = enP[i];
-                if (p.type === 'king') continue; 
-                const pVal = p.value;
-                let attackers = getAttackers(p.r, p.c, pVal, myP, b);
-                attackers = attackers.filter(a => !myDeadPieces.has(a.r * 100 + a.c));
-                
-                if (attackers.length > 0) {
-                    attackers.sort((a,b) => a.attackerValue - b.attackerValue);
-                    let primaryAttacker = attackers[0];
-                    let postCaptureValue = Math.max(1, primaryAttacker.attackerValue - (6 - primaryAttacker.apCost));
-                    let defenders = getAttackers(p.r, p.c, postCaptureValue, enP, b);
-                    const pieceTrueValue = baseVal + (p.value * pipVal);
-                    
-                    if (attackers.length > defenders.length || primaryAttacker.attackerValue < pVal) phScore += pieceTrueValue * 1.0;
-                    else phScore += (!isBehind ? 2000000 : -2000000); 
-                }
-            }
-            return phScore;
-        }
-
-        function heuristic(node, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial_Start, isEvasionMode = false) {
-            const b = node.board;
-            let score = 0; const myP = [], enP = [];
-            for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(b[r][c]) (b[r][c].owner === aiOwner ? myP : enP).push({r,c,...b[r][c]});
-            const myK = myP.find(x => x.type === 'king'), enK = enP.find(x => x.type === 'king');
-            
-            if(!enK) return 100000000000; 
-            if(!myK) return -100000000000; 
-            
-            const asPass = node.captured || calcAS(b, aiOwner) > node.startScore;
-            if (node.ap < 3 && !asPass) return -50000000000; 
-            
-            let checkersOnMe = getAttackers(myK.r, myK.c, 7, enP, b);
-            let kingInImmediateDanger = (checkersOnMe.length > 0);
-            if (kingInImmediateDanger) return -50000000000; 
-            
-            let sprintPen = 0;
-            enP.forEach(eP => {
-                if (eP.type !== 'king' && eP.value <= 2) {
-                    const dr = Math.abs(eP.r - myK.r), dc = Math.abs(eP.c - myK.c), dist = Math.max(dr, dc);
-                    if (dist > 0 && dist <= (eP.value * 2)) {
-                        sprintPen += 150000000; 
-                    }
-                }
-            });
-            score -= sprintPen;
-
-            if (fullMoveCount <= pregameTarget && !isEvasionMode) {
-                let pregameScore = 0;
-                myP.forEach(p => {
-                    if (p.type === 'king') return;
-                    const isEnemyTerritory = (aiOwner === 'white') ? p.r < Math.floor(BOARD_SIZE/2) : p.r >= Math.ceil(BOARD_SIZE/2);
-                    
-                    if (isEnemyTerritory && !node.captured) {
-                        pregameScore -= 500000000; 
-                    }
-                    
-                    if (p.value === 2 && !isEnemyTerritory) {
-                        const startRow = (aiOwner === 'white') ? BOARD_SIZE - 2 : 1;
-                        if (p.r !== startRow) pregameScore += 80000000;
-                        
-                        let attackers = getAttackers(p.r, p.c, p.value, enP, b);
-                        if (attackers.length > 0) {
-                            let defenders = getAttackers(p.r, p.c, 7, myP, b);
-                            if (defenders.length === 0) pregameScore -= 200000000;
-                        }
-                    }
-                });
-                score += pregameScore;
-            }
-            
-            const myPhysicalCount = myP.length - 1; 
-            const enPhysicalCount = enP.length - 1;
-
-            let myTaxCapacity = 0, enTaxCapacity = 0;
-            myP.forEach(p => { myTaxCapacity += (aiOwner === 'white') ? p.r : (BOARD_SIZE - 1 - p.r); });
-            enP.forEach(p => { enTaxCapacity += (aiOwner === 'white') ? (BOARD_SIZE - 1 - p.r) : p.r; });
-
-            const myFrontDir = aiOwner === 'white' ? -1 : 1;
-            const myRemoraSquares = [ {r: myK.r + myFrontDir, c: myK.c - 1}, {r: myK.r + myFrontDir, c: myK.c}, {r: myK.r + myFrontDir, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-            let myRemoraCount = 0;
-            myRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === aiOwner && p.type !== 'king') myRemoraCount++; });
-            
-            const enOwner = aiOwner === 'white' ? 'black' : 'white';
-            const enFrontDir = enOwner === 'white' ? -1 : 1;
-            const enRemoraSquares = [ {r: enK.r + enFrontDir, c: enK.c - 1}, {r: enK.r + enFrontDir, c: enK.c}, {r: enK.r + enFrontDir, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-            let enRemoraCount = 0;
-            enRemoraSquares.forEach(sq => { const p = b[sq.r][sq.c]; if (p && p.owner === enOwner && p.type !== 'king') enRemoraCount++; });
-
-            let bothBunkersCollapsed = (myRemoraCount === 0 && enRemoraCount === 0);
-            let lowTaxCapacity = (myTaxCapacity + enTaxCapacity < (BOARD_SIZE * 4));
-
-            let isFreefall = (myPhysicalCount + enPhysicalCount <= 10) || 
-                             (myPhysicalCount <= 3) || 
-                             (bothBunkersCollapsed && lowTaxCapacity);
-
-            if (isFreefall && !isEvasionMode) {
-                score += myTaxCapacity * 5000000; 
-                score -= enTaxCapacity * 5000000; 
-                
-                let oasisBonus = 0;
-                myP.forEach(p => {
-                    let safe = true;
-                    for (let eP of enP) {
-                        if (eP.type === 'king') { if (Math.max(Math.abs(eP.r - p.r), Math.abs(eP.c - p.c)) <= 1) { safe = false; break; } continue; }
-                        const dr = Math.abs(eP.r - p.r), dc = Math.abs(eP.c - p.c), dist = Math.max(dr, dc);
-                        if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
-                        let blocked = false;
-                        const sr = dr === 0 ? 0 : (p.r - eP.r) / dist, sc = dc === 0 ? 0 : (p.c - eP.c) / dist;
-                        for (let i = 1; i < dist; i++) if (b[eP.r + i * sr][eP.c + i * sc]) { blocked = true; break; }
-                        if (!blocked && dist <= Math.min(6, eP.value + 1)) { safe = false; break; } 
-                    }
-                    if (safe) oasisBonus += (p.type === 'king' ? 40000000 : 20000000); 
-                });
-                score += oasisBonus;
-
-                let enemyFrontLine = aiOwner === 'white' ? 0 : BOARD_SIZE - 1; 
-                if (enP.length > 0) {
-                    enemyFrontLine = enP[0].r;
-                    enP.forEach(eP => {
-                        if (aiOwner === 'white') {
-                            if (eP.r > enemyFrontLine) enemyFrontLine = eP.r; 
-                        } else {
-                            if (eP.r < enemyFrontLine) enemyFrontLine = eP.r; 
-                        }
-                    });
-                    if (aiOwner === 'white' && myK.r > enemyFrontLine) score += 40000000;
-                    if (aiOwner === 'black' && myK.r < enemyFrontLine) score += 40000000;
-                }
-            } else if (!isFreefall && !isEvasionMode) {
-                let myGlacierScore = 0, enGlacierScore = 0;
-                const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-                
-                dirs.forEach(d => {
-                    let dist = 1;
-                    while(true) {
-                        let nr = myK.r + d[0]*dist, nc = myK.c + d[1]*dist;
-                        if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) { if (dist > 2) myGlacierScore -= 8000000; break; }
-                        const p = b[nr][nc];
-                        if(p) {
-                            if(p.owner === aiOwner) {
-                                let isFatalSteppingStone = false;
-                                let fDist = 1;
-                                while(true) {
-                                    let eR = nr + d[0]*fDist, eC = nc + d[1]*fDist;
-                                    if(eR < 0 || eR >= BOARD_SIZE || eC < 0 || eC >= BOARD_SIZE) break;
-                                    let eP = b[eR][eC];
-                                    if(eP) {
-                                        if(eP.owner !== aiOwner) {
-                                            let canReach = false;
-                                            if (eP.type === 'king') canReach = (fDist === 1);
-                                            else if (fDist <= eP.value && (eP.value <= p.value || eP.value === 1)) canReach = true;
-                                            if (canReach && p.type !== 'king') isFatalSteppingStone = true;
-                                        }
-                                        break;
-                                    }
-                                    fDist++;
-                                }
-                                if (isFatalSteppingStone) myGlacierScore -= 15000000;
-                                else { let defBonus = 10000000; if (dist <= 2) defBonus += 8000000; if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; myGlacierScore += defBonus; }
-                            } 
-                            else { let threatPen = 15000000; if (dist <= 3) threatPen += 15000000; myGlacierScore -= threatPen; }
-                            break;
-                        }
-                        dist++;
-                    }
-                });
-
-                dirs.forEach(d => {
-                    let dist = 1;
-                    while(true) {
-                        let nr = enK.r + d[0]*dist, nc = enK.c + d[1]*dist;
-                        if(nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) { if (dist > 2) enGlacierScore -= 8000000; break; }
-                        const p = b[nr][nc];
-                        if(p) {
-                            if(p.owner === (aiOwner === 'white' ? 'black' : 'white')) { 
-                                let isFatalSteppingStone = false;
-                                let fDist = 1;
-                                while(true) {
-                                    let eR = nr + d[0]*fDist, eC = nc + d[1]*fDist;
-                                    if(eR < 0 || eR >= BOARD_SIZE || eC < 0 || eC >= BOARD_SIZE) break;
-                                    let eP = b[eR][eC];
-                                    if(eP) {
-                                        if(eP.owner === aiOwner) {
-                                            let canReach = false;
-                                            if (eP.type === 'king') canReach = (fDist === 1);
-                                            else if (fDist <= eP.value && (eP.value <= p.value || eP.value === 1)) canReach = true;
-                                            if (canReach && p.type !== 'king') isFatalSteppingStone = true;
-                                        }
-                                        break;
-                                    }
-                                    fDist++;
-                                }
-                                if (isFatalSteppingStone) enGlacierScore -= 15000000;
-                                else { let defBonus = 10000000; if (dist <= 2) defBonus += 8000000; if (p.value <= 3 && p.type !== 'king') defBonus += 15000000; enGlacierScore += defBonus; }
-                            } 
-                            else { let threatPen = 15000000; if (dist <= 3) threatPen += 15000000; enGlacierScore -= threatPen; }
-                            break;
-                        }
-                        dist++;
-                    }
-                });
-                score += myGlacierScore; score -= enGlacierScore; 
-
-                let myK_relRank = (aiOwner === 'white') ? (BOARD_SIZE - 1 - myK.r) : myK.r;
-                let myBunkerScore = 0;
-                const sideSquares = [ {r: myK.r, c: myK.c - 1}, {r: myK.r, c: myK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-
-                if (myK_relRank <= 1) { 
-                    let caveCount = 0;
-                    [...myRemoraSquares, ...sideSquares].forEach(sq => {
-                        const p = b[sq.r][sq.c];
-                        if (p && p.owner === aiOwner && p.type !== 'king') {
-                            caveCount++;
-                            myBunkerScore += 100000000; 
-                            if (p.value === 2) myBunkerScore += 50000000; 
-                        } else {
-                            let reserve = myP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                            if (reserve) { caveCount++; myBunkerScore += 40000000; }
-                        }
-                    });
-                    if (caveCount >= [...myRemoraSquares, ...sideSquares].length && [...myRemoraSquares, ...sideSquares].length > 0) myBunkerScore += 500000000; 
-                } else if (myK_relRank === 2) { 
-                    let remoraCount = 0;
-                    myRemoraSquares.forEach(sq => {
-                        const p = b[sq.r][sq.c];
-                        if (p && p.owner === aiOwner && p.type !== 'king') {
-                            remoraCount++;
-                            myBunkerScore += 100000000;
-                            if (p.value === 2) myBunkerScore += 50000000;
-                        } else {
-                            let reserve = myP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                            if (reserve) { remoraCount++; myBunkerScore += 40000000; }
-                        }
-                    });
-                    if (remoraCount >= myRemoraSquares.length && myRemoraSquares.length > 0) myBunkerScore += 300000000;
-                }
-
-                let enK_relRank = (aiOwner === 'white') ? enK.r : (BOARD_SIZE - 1 - enK.r);
-                let enBunkerScore = 0;
-                const enSideSquares = [ {r: enK.r, c: enK.c - 1}, {r: enK.r, c: enK.c + 1} ].filter(sq => sq.r >= 0 && sq.r < BOARD_SIZE && sq.c >= 0 && sq.c < BOARD_SIZE);
-                
-                if (enK_relRank <= 1) {
-                    let caveCount = 0;
-                    [...enRemoraSquares, ...enSideSquares].forEach(sq => {
-                        const p = b[sq.r][sq.c];
-                        if (p && p.owner !== aiOwner && p.type !== 'king') {
-                            caveCount++;
-                            enBunkerScore += 100000000;
-                            if (p.value === 2) enBunkerScore += 50000000;
-                        } else {
-                            let reserve = enP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                            if (reserve) { caveCount++; enBunkerScore += 40000000; }
-                        }
-                    });
-                    if (caveCount >= [...enRemoraSquares, ...enSideSquares].length && [...enRemoraSquares, ...enSideSquares].length > 0) enBunkerScore += 500000000;
-                } else if (enK_relRank === 2) {
-                    let remoraCount = 0;
-                    enRemoraSquares.forEach(sq => {
-                        const p = b[sq.r][sq.c];
-                        if (p && p.owner !== aiOwner && p.type !== 'king') {
-                            remoraCount++;
-                            enBunkerScore += 100000000;
-                            if (p.value === 2) enBunkerScore += 50000000;
-                        } else {
-                            let reserve = enP.find(rp => rp.type !== 'king' && Math.max(Math.abs(rp.r - sq.r), Math.abs(rp.c - sq.c)) <= 2);
-                            if (reserve) { remoraCount++; enBunkerScore += 40000000; }
-                        }
-                    });
-                    if (remoraCount >= enRemoraSquares.length && enRemoraSquares.length > 0) enBunkerScore += 300000000;
-                }
-
-                score += myBunkerScore; score -= enBunkerScore;
-            }
-            
-            if (isEvasionMode) {
-                let evasionMaterial = 0;
-                myP.forEach(p => { if (p.type !== 'king') evasionMaterial += (p.value * 1000) + 100000; });
-                return evasionMaterial + (calcAS(b, aiOwner) * 10) + (node.ap * 5); 
-            }
-
-            const baseValue = 100000000, pipValue = 1000; 
-            let myMaterial = 0, enMaterial = 0;
-            myP.forEach(p => { myMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); });
-            enP.forEach(p => { enMaterial += (p.type === 'king' ? 0 : baseValue + (p.value * pipValue)); });
-            const diffPhysical = myPhysicalCount - enPhysicalCount;
-            const targetParity = BOARD_SIZE === 8 ? 15 : (BOARD_SIZE === 9 ? 20 : 25);
-            const urgencyMult = Math.max(1.0, Math.min(5.0, fullMoveCount / (targetParity * 0.75)));
-            
-            score += ((myMaterial - enMaterial) * urgencyMult * 2);
-            score += calcAS(b, aiOwner) * 1000;
-            if (asPass) score += 1000000;
-
-            if (!kingInImmediateDanger && !isFreefall) {
-                const isEnemyTerritory = (r, owner) => owner === 'white' ? r < Math.floor(BOARD_SIZE/2) : r >= Math.ceil(BOARD_SIZE/2);
-                let iowBonus = 0;
-                myP.forEach(p => {
-                    if (p.type === 'king') return;
-                    if (isEnemyTerritory(p.r, aiOwner)) {
-                        let safe = true;
-                        for (let eP of enP) {
-                            if (eP.type === 'king') { if (Math.max(Math.abs(eP.r - p.r), Math.abs(eP.c - p.c)) <= 1) { safe = false; break; } continue; }
-                            const dr = Math.abs(eP.r - p.r), dc = Math.abs(eP.c - p.c), dist = Math.max(dr, dc);
-                            if (dist === 0 || (dr !== 0 && dc !== 0 && dr !== dc)) continue;
-                            let blocked = false;
-                            const sr = dr === 0 ? 0 : (p.r - eP.r) / dist, sc = dc === 0 ? 0 : (p.c - eP.c) / dist;
-                            for (let i = 1; i < dist; i++) if (b[eP.r + i * sr][eP.c + i * sc]) { blocked = true; break; }
-                            if (!blocked && dist <= Math.min(6, eP.value + 1)) { safe = false; break; }
-                        }
-                        if (safe) { iowBonus += 25000000; iowBonus += (6 - p.value) * 5000000; } 
-                    }
-                });
-                score += iowBonus;
-            }
-
-            score += evaluateTensions(b, aiOwner, myP, enP, diffPhysical, node.captured);
-            
-            // --- V96 TENSION MATRIX & MRP FIX ---
-            if (opponentCaptured) {
-                if (node.captured) { 
-                    score += 350000000; // Mandatory Recapture Protocol (MRP) fulfilled! Massive Reward.
-                } else { 
-                    if (!kingInImmediateDanger) score -= 250000000; // Crushing penalty for ignoring a dropped piece
-                    else score -= 800000000; 
-                }
-            } else { 
-                if (node.captured) score += 300000000; // Standard capture bonus
-            }
-            // ------------------------------------
-
-            let enemyCheckers = getAttackers(enK.r, enK.c, 7, myP, b);
-            if (enemyCheckers.length > 0) {
-                let isKamikaze = false;
-                enemyCheckers.forEach(c => { if (getAttackers(c.r, c.c, c.attackerValue, enP, b).length > getAttackers(c.r, c.c, c.attackerValue, myP, b).length) isKamikaze = true; });
-                if (!isKamikaze || node.captured) {
-                    score += 250000000; 
-                    if (enemyCheckers.length >= 2) {
-                        let asDiff = calcAS(b, aiOwner) - calcAS(b, turn === 'white' ? 'black' : 'white');
-                        if (diffPhysical >= 1) score += 400000000; 
-                        else if (diffPhysical === 0) { if (asDiff > 0) score += 250000000; else score -= 100000000; } 
-                        else { if (asDiff > 5) score += 50000000; else score -= 200000000; }
-                    }
-                }
-            }
-            return score;
-        }
-
-        async function performSearchAsync(root, width, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial) {
-            let beam = [root];
-            const pruneLimit = width * 1.5;
-            
-            for(let step=0; step<6; step++) {
-                let next = [];
-                let lastYield = performance.now();
-                
-                for(let i=0; i<beam.length; i++) {
-                    let node = beam[i];
-                    if (performance.now() - lastYield > 40) { await new Promise(r => setTimeout(r, 0)); lastYield = performance.now(); }
-
-                    if(node.ap === 0) { next.push(node); continue; }
-                    const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
-                    if (asPass) next.push({ board: node.board, ap: 0, actions: node.actions, captured: node.captured, startScore: node.startScore });
-                    const myP = [];
-                    for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
-                    for(let j=0; j<myP.length; j++) {
-                        let p = myP[j];
-                        if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
-                            if(p.value < 6) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value++; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
-                            if(p.value > 1) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value--; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
-                        }
-                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
-                        for(let dIdx=0; dIdx<dirs.length; dIdx++) {
-                            let d = dirs[dIdx];
-                            for(let dist=1; dist<=range; dist++) {
-                                let tr = p.r+d[0]*dist, tc = p.c+d[1]*dist;
-                                if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
-                                let v = validateMove(node.board, p.r, p.c, tr, tc, false);
-                                if(!v.valid) { if(node.board[tr][tc]) break; continue; }
-                                const cost = node.board[tr][tc] ? 5 : 3;
-                                if(node.ap >= cost) {
-                                    let nb = copyBoardFast(node.board); nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
-                                    next.push({ board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], startScore: node.startScore, actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
-                                }
-                                if(node.board[tr][tc]) break;
-                            }
-                        }
-                    }
-                    if (next.length > pruneLimit) {
-                        next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial); });
-                        next.sort((a,b) => b.h - a.h);
-                        next = next.slice(0, width);
-                    }
-                }
-                if(next.length === 0) break;
-                next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, fullMoveCount, isBehindInMaterial); });
-                next.sort((a,b) => b.h - a.h);
-                beam = next.slice(0, width); 
-            }
-            
-            let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
-            if (legal.length > 0) {
-                legal.sort((a,b) => b.h - a.h);
-                let topCandidates = legal.slice(0, Math.min(30, legal.length));
-                for (let c of topCandidates) {
-                    let capSq = null;
-                    if (c.captured && c.actions) {
-                        let moveAct = c.actions.slice().reverse().find(act => act.t === 'move');
-                        if (moveAct) capSq = {r: moveAct.tr, c: moveAct.tc};
-                    }
-                    c.qPenalty = quiescencePenalty(c.board, aiOwner, capSq);
-                    
-                    if (capSq) {
-                        let enKr = -1, enKc = -1;
-                        for(let r=0; r<BOARD_SIZE; r++) for(let cIdx=0; cIdx<BOARD_SIZE; cIdx++) {
-                             if (c.board[r][cIdx] && c.board[r][cIdx].owner !== aiOwner && c.board[r][cIdx].type === 'king') {
-                                  enKr = r; enKc = cIdx; break;
-                             }
-                        }
-                        if (enKr !== -1 && Math.max(Math.abs(capSq.r - enKr), Math.abs(capSq.c - enKc)) === 1) {
-                            c.qPenalty += 300000000; 
-                        }
-                    }
-                    
-                    c.finalScore = c.h - c.qPenalty;
-                }
-                topCandidates.sort((a,b) => b.finalScore - a.finalScore);
-                return topCandidates[0];
-            }
-            return null;
-        }
-
-        async function performEvasionSearch(root, aiOwner) {
+        async function performEvasionSearch(root, aiOwner, overrideWidth = null) {
             let beam = [root];
             const strengthSetting = document.getElementById('bot-strength-select').value;
-            const evasionWidth = strengthSetting === 'supreme' ? 80000 : (strengthSetting === 'strong' ? 40000 : 20000);
+            const evasionWidth = overrideWidth || (strengthSetting === 'supreme' ? 80000 : (strengthSetting === 'strong' ? 40000 : 20000));
             const pruneLimit = evasionWidth * 1.5; 
             
             for(let step=0; step<6; step++) {
@@ -1352,6 +768,146 @@
             if (legal.length > 0) {
                 legal.sort((a,b) => b.h - a.h);
                 if (legal[0].h > -5000000000) return legal[0];
+            }
+            return null;
+        }
+
+        async function runHumanMateCheck(playerOwner) {
+            if (gameOver) return;
+            const b = board;
+            let myK = null;
+            const myP = [], enP = [];
+            for(let r=0; r<BOARD_SIZE; r++) {
+                for(let c=0; c<BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    if (p) {
+                        if (p.owner === playerOwner) { myP.push({r,c,...p}); if(p.type==='king') myK={r,c}; }
+                        else enP.push({r,c,...p});
+                    }
+                }
+            }
+            if (!myK) return;
+            let attackers = getAttackers(myK.r, myK.c, 7, enP, b);
+            if (attackers.length > 0) {
+                aiThinking = true; turnEl.innerText = "VERIFYING MATE..."; render();
+                let root = { board: JSON.parse(JSON.stringify(board)), ap: (fullMoveCount === 1 && playerOwner === 'white') ? 3 : 6, actions: [], captured: false, startScore: calcAS(board, playerOwner), pregameTarget };
+                
+                let evasion = await performEvasionSearch(root, playerOwner, 10000); 
+                
+                aiThinking = false;
+                if (!evasion) {
+                    log(`CHECKMATE DETECTED. ${playerOwner.toUpperCase()} HAS NO VALID EVASION.`, "text-red-500 font-black uppercase");
+                    endGame(playerOwner === 'white' ? 'black' : 'white', "Checkmate / Freeze Out");
+                } else {
+                    turnEl.innerText = playerUnderWatch ? `${playerOwner.toUpperCase()} - UNDER WATCH` : `${playerOwner.toUpperCase()} TURN`;
+                    render();
+                }
+            }
+        }
+
+        function heuristic(node, aiOwner, opponentCaptured, startInCheck, turnNumber, isBehindInMaterial, isEvasion = false) {
+            let score = 0, myPieces = 0, enPieces = 0;
+            const b = node.board, enOwner = aiOwner === 'white' ? 'black' : 'white';
+            let myK = null, enK = null;
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const p = b[r][c];
+                    if (!p) continue;
+                    const isMy = p.owner === aiOwner;
+                    if (isMy) {
+                        myPieces++;
+                        if (p.type === 'king') myK = { r, c };
+                        else score += (p.value * 1000) + ((aiOwner === 'white' ? (BOARD_SIZE - r) : (r + 1)) * 50);
+                    } else {
+                        enPieces++;
+                        if (p.type === 'king') enK = { r, c };
+                        else score -= (p.value * 1000) + ((enOwner === 'white' ? (BOARD_SIZE - r) : (r + 1)) * 50);
+                    }
+                }
+            }
+            
+            if (!myK) return -999999999;
+            if (!enK) return 999999999;
+            if (isEvasion) return score;
+
+            score += Math.random() * 10;
+            return score;
+        }
+
+        function didOpponentJustCapture(turnOwner) {
+            if (moveHistory.length === 0) return false;
+            const lastMove = turnOwner === 'white' ? moveHistory[moveHistory.length - 1].b : moveHistory[moveHistory.length - 1].w;
+            return lastMove ? lastMove.includes('x') : false;
+        }
+
+        function didAIInitiateTrade(aiOwner) {
+            if (moveHistory.length === 0) return false;
+            let lastAIMove = '';
+            if (aiOwner === 'white') {
+                if (moveHistory.length > 1) lastAIMove = moveHistory[moveHistory.length - 2].w;
+            } else {
+                lastAIMove = moveHistory[moveHistory.length - 1].w;
+            }
+            return lastAIMove ? lastAIMove.includes('x') : false;
+        }
+
+        async function performSearchAsync(root, targetWidth, aiOwner, opponentCaptured, startInCheck, turnNumber, isBehindInMaterial) {
+            let beam = [root];
+            const pruneLimit = targetWidth * 1.5; 
+            
+            for(let step=0; step<6; step++) {
+                let next = [];
+                let lastYield = performance.now();
+                
+                for(let i=0; i<beam.length; i++) {
+                    let node = beam[i];
+                    if (performance.now() - lastYield > 40) { await new Promise(r => setTimeout(r, 0)); lastYield = performance.now(); }
+
+                    if(node.ap === 0) { next.push(node); continue; }
+                    const asPass = node.captured || calcAS(node.board, aiOwner) > node.startScore;
+                    if (asPass) next.push({ board: node.board, ap: 0, actions: node.actions, captured: node.captured, startScore: node.startScore });
+                    const myP = [];
+                    for(let r=0; r<BOARD_SIZE; r++) for(let c=0; c<BOARD_SIZE; c++) if(node.board[r][c]?.owner === aiOwner) myP.push({r,c,...node.board[r][c]});
+                    for(let j=0; j<myP.length; j++) {
+                        let p = myP[j];
+                        if(p.type !== 'king' && node.ap >= 1 && (asPass || node.ap > 3 || node.captured)) {
+                            if(p.value < 6) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value++; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'inc', r:p.r, c:p.c}]}); }
+                            if(p.value > 1) { let nb = copyBoardFast(node.board); nb[p.r][p.c].value--; next.push({board: nb, ap: node.ap-1, captured: node.captured, startScore: node.startScore, actions: [...node.actions, {t:'dec', r:p.r, c:p.c}]}); }
+                        }
+                        const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], range = p.type === 'king' ? 1 : p.value;
+                        for(let dIdx=0; dIdx<dirs.length; dIdx++) {
+                            let d = dirs[dIdx];
+                            for(let dist=1; dist<=range; dist++) {
+                                let tr = p.r+d[0]*dist, tc = p.c+d[1]*dist;
+                                if(tr<0||tr>=BOARD_SIZE||tc<0||tc>=BOARD_SIZE) break;
+                                let v = validateMove(node.board, p.r, p.c, tr, tc, false);
+                                if(!v.valid) { if(node.board[tr][tc]) break; continue; }
+                                const cost = node.board[tr][tc] ? 5 : 3;
+                                if(node.ap >= cost) {
+                                    let nb = copyBoardFast(node.board); nb[tr][tc] = nb[p.r][p.c]; nb[p.r][p.c] = null;
+                                    next.push({ board: nb, ap: node.ap-cost, captured: node.captured || !!node.board[tr][tc], startScore: node.startScore, actions: [...node.actions, {t:'move', fr:p.r, fc:p.c, tr, tc}] });
+                                }
+                                if(node.board[tr][tc]) break;
+                            }
+                        }
+                    }
+                    if (next.length > pruneLimit) {
+                        next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, turnNumber, isBehindInMaterial); });
+                        next.sort((a,b) => b.h - a.h);
+                        next = next.slice(0, targetWidth);
+                    }
+                }
+                if(next.length === 0) break;
+                next.forEach(n => { if (n.h === undefined) n.h = heuristic(n, aiOwner, opponentCaptured, startInCheck, turnNumber, isBehindInMaterial); });
+                next.sort((a,b) => b.h - a.h);
+                beam = next.slice(0, targetWidth); 
+            }
+            
+            let legal = beam.filter(n => (n.captured || calcAS(n.board, aiOwner) > n.startScore));
+            if (legal.length > 0) {
+                legal.sort((a,b) => b.h - a.h);
+                return { actions: legal[0].actions, finalScore: legal[0].h };
             }
             return null;
         }
